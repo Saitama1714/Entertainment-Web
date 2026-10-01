@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Daten vorbereiten · Filmsammlung</title>
+    <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+    <script src="js/boot.js"></script>
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/site.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Zum Inhalt springen</a>
+
+    <header class="appbar">
+      <div class="appbar-inner">
+        <a class="brand brand--medallion" href="index.html" aria-label="Filmsammlung – Startseite">
+          <img src="assets/logo.svg" alt="" width="150" height="150" decoding="async">
+          <span class="brand-fallback" aria-hidden="true">Filmsammlung</span>
+        </a>
+        <div class="appbar-actions">
+          <label class="visually-hidden" for="theme-select">Design</label>
+          <select id="theme-select" class="compact">
+            <option value="system">System</option>
+            <option value="light">Hell</option>
+            <option value="dark">Dunkel</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <main class="shell" id="main">
+      <div class="page-head">
+        <div class="page-head-text">
+          <h1>Daten vorbereiten</h1>
+          <p>Macht aus deiner Dashboard-Sicherung die Datei <code>sammlung.json</code> für die Website.
+             Alles passiert nur hier in deinem Browser – die Sicherung wird nirgendwohin hochgeladen.</p>
+        </div>
+      </div>
+
+      <div class="panel tool-panel">
+        <ol class="tool-steps">
+          <li>
+            <h2>Sicherung wählen</h2>
+            <p class="meta">Im Dashboard unter Einstellungen → Daten → „Sicherung speichern“.</p>
+            <label class="small-button import-label">Sicherungsdatei wählen
+              <input id="backup-input" type="file" accept="application/json,.json" aria-label="Sicherungsdatei wählen">
+            </label>
+            <p class="status-line" id="backup-status" aria-live="polite"></p>
+          </li>
+          <li>
+            <h2>Was soll auf die Website?</h2>
+            <p class="meta">Titel, Jahr, Cover, Genre, Regie, Laufzeit und die IMDb-Angaben sind immer dabei.
+               Dein OMDb-Schlüssel, Favoriten und Einstellungen kommen nie mit.</p>
+            <fieldset class="tool-options" id="tool-options">
+              <legend class="visually-hidden">Wahlweise Angaben</legend>
+            </fieldset>
+            <p class="tool-warning" id="public-warning">Die Website ist für jeden mit dem Link sichtbar.</p>
+          </li>
+          <li>
+            <h2>Datei speichern</h2>
+            <button class="button" type="button" id="download-button" disabled>sammlung.json speichern</button>
+            <p class="status-line" id="result-status" aria-live="polite"></p>
+            <p class="meta">Danach im Projektordner die Datei <code>data/sammlung.json</code> durch die neue ersetzen,
+               in GitHub Desktop committen und „Push origin“ – nach ein, zwei Minuten ist die Website aktuell.</p>
+          </li>
+        </ol>
+      </div>
+    </main>
+
+    <div id="modal-root"></div>
+    <script type="module" src="js/pages/werkzeug.js"></script>
+  </body>
+</html>

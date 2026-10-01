@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Meine Filmsammlung">
+    <title>Filmsammlung</title>
+    <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+    <script src="js/boot.js" data-intro></script>
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/curtain.css">
+    <link rel="stylesheet" href="css/site.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Zum Inhalt springen</a>
+
+    <div class="curtain curtain--left" aria-hidden="true"><div class="curtain-fabric"></div></div>
+    <div class="curtain curtain--right" aria-hidden="true"><div class="curtain-fabric"></div></div>
+
+    <div class="corner-decor" id="corner-decor" aria-hidden="true"></div>
+
+    <header class="appbar">
+      <div class="appbar-inner">
+        <a class="brand brand--medallion" href="index.html" aria-label="Filmsammlung – Startseite">
+          <img src="assets/logo.svg" alt="" width="150" height="150" decoding="async">
+          <span class="brand-fallback" aria-hidden="true">Filmsammlung</span>
+        </a>
+        <div class="appbar-actions">
+          <label class="visually-hidden" for="theme-select">Design</label>
+          <select id="theme-select" class="compact">
+            <option value="system">System</option>
+            <option value="light">Hell</option>
+            <option value="dark">Dunkel</option>
+          </select>
+          <button class="button quiet" id="view-button" type="button">Ansicht</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="shell" id="main">
+      <div class="page-head">
+        <div class="page-head-text">
+          <h1 id="site-title">Filmsammlung</h1>
+          <p class="meta" aria-live="polite"><span id="collection-count">Wird geladen …</span><span id="collection-stand" class="stand"></span></p>
+        </div>
+      </div>
+
+      <div class="view-tabs" role="tablist" aria-label="Ansicht der Sammlung">
+        <button class="view-tab" type="button" id="tab-titles" role="tab"
+                aria-selected="true" aria-controls="titles-panel">Titel</button>
+        <button class="view-tab" type="button" id="tab-stats" role="tab"
+                aria-selected="false" tabindex="-1" aria-controls="stats-panel">Auf einen Blick</button>
+      </div>
+
+      <section id="titles-panel" role="tabpanel" aria-labelledby="tab-titles" tabindex="0">
+        <div class="search-row">
+          <label class="visually-hidden" for="movie-search">Sammlung durchsuchen</label>
+          <input class="search" id="movie-search" type="search" placeholder="Nach Titel, Regie oder Genre suchen">
+        </div>
+
+        <div class="toolbar-row" id="toolbar-row" hidden>
+          <div class="filter-chips" id="filter-chips" aria-label="Nach Art, Medium, Status oder Liste filtern" tabindex="-1"></div>
+          <label class="sort-field">
+            <span class="visually-hidden">Sortierung</span>
+            <select id="movie-sort" class="compact"></select>
+          </label>
+        </div>
+
+        <div id="movies-grid" class="movie-grid spaced" aria-live="polite"></div>
+      </section>
+
+      <section id="stats-panel" role="tabpanel" aria-labelledby="tab-stats" hidden tabindex="0">
+        <div class="stats-tile">
+          <div class="stats-numbers" id="stats-numbers" aria-live="polite"></div>
+          <div class="stats-picker" id="stats-picker" hidden>
+            <div class="stats-controls">
+              <button class="button secondary" type="button" id="stats-shuffle"></button>
+              <label>
+                <span class="visually-hidden">Vorschläge beschränken auf</span>
+                <select id="stats-kind" class="compact">
+                  <option value="">Alles</option>
+                  <option value="film">Film</option>
+                  <option value="series">Serie</option>
+                </select>
+              </label>
+            </div>
+            <div class="movie-grid stats-picks" id="stats-picks" aria-live="polite"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="modal-root"></div>
+    <script type="module" src="js/pages/sammlung.js"></script>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+# Dashboard-Sicherungen nie ins Repo: sie enthalten den OMDb-Schlüssel und alles Private
+dashboard-backup*.json
+*sicherung*.json
+node_modules/
+tests/browser/screenshots/
+__pycache__/

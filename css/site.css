@@ -1,0 +1,39 @@
+/*
+ * Ergänzungen nur für die Website. css/app.css und css/curtain.css sind
+ * unverändert aus dem Dashboard übernommen - so lassen sich spätere
+ * Verbesserungen dort einfach herüberkopieren.
+ */
+
+/* Ohne Navigation: Knöpfe der Kopfleiste nach rechts */
+.appbar-actions { margin-left: auto; }
+
+/* „123 Titel · Stand: 1. Oktober 2026" */
+.stand:not(:empty)::before { content: "·"; margin: 0 .5em; }
+
+/* Detailseite: Blättern */
+.detail-pager {
+  display: flex; justify-content: space-between; gap: var(--s-3);
+  margin-top: var(--s-7); padding-top: var(--s-5);
+  border-top: 1px solid var(--line);
+}
+.detail-pager a[aria-disabled="true"] { opacity: .4; pointer-events: none; }
+.detail-pager a { text-decoration: none; }
+
+/* Werkzeug „Daten vorbereiten" */
+.tool-panel { max-width: 760px; }
+.tool-steps { margin: 0; padding-left: 1.4em; display: grid; gap: var(--s-6); }
+.tool-steps li::marker { font-family: var(--font-display); color: var(--brass); }
+.tool-steps h2 { font-size: 1.15rem; margin-bottom: var(--s-2); }
+.tool-steps .meta { margin-bottom: var(--s-3); }
+.tool-steps .status-line { margin-top: var(--s-2); }
+.tool-options { border: 0; padding: 0; margin: 0; display: grid; gap: var(--s-2); }
+.tool-option { display: flex; align-items: center; gap: var(--s-2); cursor: pointer; }
+.tool-option input { width: 18px; height: 18px; accent-color: var(--brass); }
+.tool-warning { margin-top: var(--s-3); font-size: .84rem; color: var(--brass); }
+code { font-size: .92em; padding: 1px 5px; border-radius: 4px; background: color-mix(in srgb, var(--text) 8%, transparent); }
+
+/* Ecken-Deko (Popcorn) nur, wenn neben dem Inhalt Platz ist - sonst läge sie
+   über den Karten der Sammlung */
+@media (max-width: 1535px) {
+  .corner-decor { display: none; }
+}

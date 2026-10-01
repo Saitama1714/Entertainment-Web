@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Titel · Filmsammlung</title>
+    <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+    <script src="js/boot.js"></script>
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/site.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Zum Inhalt springen</a>
+
+    <header class="appbar">
+      <div class="appbar-inner">
+        <a class="brand brand--medallion" href="index.html" aria-label="Filmsammlung – Startseite">
+          <img src="assets/logo.svg" alt="" width="150" height="150" decoding="async">
+          <span class="brand-fallback" aria-hidden="true">Filmsammlung</span>
+        </a>
+        <div class="appbar-actions">
+          <label class="visually-hidden" for="theme-select">Design</label>
+          <select id="theme-select" class="compact">
+            <option value="system">System</option>
+            <option value="light">Hell</option>
+            <option value="dark">Dunkel</option>
+          </select>
+          <a class="button quiet" href="index.html" id="back-link">Zur Sammlung</a>
+          <button class="button quiet" id="view-button" type="button">Ansicht</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="shell" id="main">
+      <div class="page-head">
+        <h1 id="movie-title">Wird geladen …</h1>
+      </div>
+      <div id="movie-details" aria-live="polite"></div>
+      <nav class="detail-pager" id="detail-pager" aria-label="Blättern" hidden>
+        <a class="small-button" id="prev-title" rel="prev">← Vorheriger Titel</a>
+        <a class="small-button" id="next-title" rel="next">Nächster Titel →</a>
+      </nav>
+    </main>
+
+    <div id="modal-root"></div>
+    <script type="module" src="js/pages/titel.js"></script>
+  </body>
+</html>

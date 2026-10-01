@@ -6,14 +6,21 @@
  * Einstellungen, Favoriten, interne Felder - bleibt immer draußen, auch wenn
  * das Dashboard später neue Felder bekommt.
  *
+ * 1:1 wie im Dashboard: Jeder Titel wird zuerst genauso aufbereitet wie im
+ * Dashboard selbst (newMovie() aus js/collection.js - identisch mit dem
+ * Dashboard). Veröffentlicht wird also, was das Dashboard anzeigt, nicht die
+ * rohe Sicherung. tests/parity.test.mjs prüft das Feld für Feld.
+ *
  * Reine Funktionen, keine DOM-Abhängigkeit (getestet in tests/publish.test.mjs).
  */
+import { newMovie } from "../collection.js";
 
 /** Diese Felder sind immer dabei (öffentliche Angaben von IMDb plus Cover). */
 export const BASE_FIELDS = [
   "id", "createdAt", "title", "originalTitle", "year", "titleType", "genre",
   "directors", "runtimeMinutes", "releaseDate", "imdbRating", "numVotes",
   "imdbUrl", "imdbId", "imdbDescription", "cover",
+  "imdbCreated", "imdbModified", "position",
 ];
 
 /**
@@ -31,30 +38,41 @@ export const OPTIONAL_GROUPS = [
 /** Vorauswahl der Häkchen: { medium: true, … }. */
 export const defaultOptions = () => Object.fromEntries(OPTIONAL_GROUPS.map(group => [group.key, group.standard]));
 
-/** Nur echte Web-Adressen als Cover/IMDb-Link (keine javascript:-Links o. Ä.). */
-function webUrl(value) {
+/**
+ * Links unverändert übernehmen, aber nur echte Web-Adressen (Cover zusätzlich
+ * eingebettete Bilder) - keine javascript:-Links o. Ä. auf einer öffentlichen
+ * Seite. Im Dashboard würde so ein Cover ohnehin nur als Platzhalter erscheinen.
+ */
+function safeLink(field, value) {
+  const text = String(value).trim();
+  if (field === "cover" && /^data:image\//i.test(text)) return String(value);
   try {
-    const url = new URL(String(value));
-    return url.protocol === "https:" || url.protocol === "http:" ? url.href : "";
+    const url = new URL(text);
+    return url.protocol === "https:" || url.protocol === "http:" ? String(value) : "";
   } catch {
     return "";
   }
 }
 
-/** Ein Titel, reduziert auf die erlaubten Felder. */
-function publicMovie(movie, fields) {
+/**
+ * Ein Titel, reduziert auf die erlaubten Felder - nach der Aufbereitung des
+ * Dashboards. Leere Textfelder entfallen (die Website ergänzt sie wieder als
+ * leer); Medium, Gesehen und Listen stehen immer drin, weil dort „leer" bzw.
+ * „fehlt" etwas anderes bedeuten könnte.
+ */
+function publicMovie(raw, fields) {
+  const movie = newMovie(raw);
   const out = {};
   for (const field of fields) {
     const value = movie[field];
-    if (field === "seen") { out.seen = value === true; continue; }
-    if (field === "imdbLists") { out.imdbLists = Array.isArray(value) ? value.filter(name => typeof name === "string" && name) : []; continue; }
-    if (value === undefined || value === null || value === "") continue;
+    if (field === "seen" || field === "medium" || field === "imdbLists") { out[field] = value; continue; }
+    if (value === "") continue;
     if (field === "cover" || field === "imdbUrl") {
-      const url = webUrl(value);
-      if (url) out[field] = url;
+      const link = safeLink(field, value);
+      if (link) out[field] = link;
       continue;
     }
-    out[field] = typeof value === "number" ? value : String(value);
+    out[field] = value;
   }
   return out;
 }
@@ -70,7 +88,8 @@ export function readBackup(backup) {
   }
   const movies = backup.data.movies;
   if (!Array.isArray(movies)) throw new Error("Die Sicherung enthält keine Titel.");
-  return movies.filter(movie => movie && typeof movie === "object" && typeof movie.title === "string" && movie.title.trim());
+  // Wie im Dashboard: jeder Eintrag zählt, auch einer ohne Titel
+  return movies.filter(movie => movie && typeof movie === "object" && !Array.isArray(movie));
 }
 
 /**

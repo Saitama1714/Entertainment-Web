@@ -28,25 +28,27 @@ const backup = {
 };
 
 console.log("Sicherung lesen");
-check("Gültige Sicherung: Titel ohne leere/kaputte Einträge", readBackup(backup).map(m => m.id).join() === "m1,m2");
+check("Gültige Sicherung: alle Einträge wie im Dashboard (auch ohne Titel), nur kaputte fallen weg", readBackup(backup).map(m => m.id).join() === "m1,m2,m3");
 check("Falsche Datei → verständliche Meldung", throws(() => readBackup({ foo: 1 })).includes("keine Dashboard-Sicherung") && throws(() => readBackup(null)).includes("keine Dashboard-Sicherung"));
 check("Sicherung ohne Titel-Liste → Meldung", throws(() => readBackup({ version: 1, data: {} })).includes("keine Titel"));
 
 console.log("Was nie mitkommt");
+const std = buildPublicData(backup);
 const all = buildPublicData(backup, Object.fromEntries(OPTIONAL_GROUPS.map(g => [g.key, true])), { now: new Date("2026-10-01T10:00:00Z") });
 const text = JSON.stringify(all);
 check("OMDb-Schlüssel steht nirgends in der Datei", !text.includes(SECRET));
-check("Keine Einstellungen, Favoriten, internen Felder", !/omdbApiKey|pinnedBookmarkIds|theme|curtainIcon|lockedFields|imdbCreated|position|geheimesNeuesFeld/.test(text), text.slice(0, 200));
-check("Gefährliche Links fallen weg (javascript:, data:)", all.movies[1].cover === undefined && all.movies[1].imdbUrl === undefined);
+check("Keine Einstellungen, Favoriten, internen Felder", !/omdbApiKey|pinnedBookmarkIds|theme|curtainIcon|lockedFields|geheimesNeuesFeld/.test(text), text.slice(0, 200));
+check("Gefährliche Links fallen weg (javascript:, data:text)", all.movies[1].cover === undefined && all.movies[1].imdbUrl === undefined);
+check("Links bleiben Zeichen für Zeichen gleich", all.movies[0].cover === backup.data.movies[0].cover && all.movies[0].imdbUrl === backup.data.movies[0].imdbUrl);
 
 console.log("Aufbau der Datei");
 check("Kopf: Version, Zeitpunkte, gewählte Angaben", all.version === 1 && all.generatedAt === "2026-10-01T10:00:00.000Z" && all.exportedAt === backup.exportedAt && all.include.join() === "medium,seen,rating,lists,notes");
 check("Grundangaben immer dabei", ["id", "title", "year", "genre", "directors", "imdbRating", "cover", "imdbUrl"].every(f => f in all.movies[0]));
-check("Leere Felder werden weggelassen (kleinere Datei)", !("originalTitle" in all.movies[0]) && !("medium" in all.movies[1]));
+check("Leere Felder werden weggelassen (kleinere Datei)", !("originalTitle" in all.movies[0]) && !("seenAt" in all.movies[1]));
+check("Kein Medium bleibt „kein Medium“ (leer ausgeschrieben, nicht weggelassen)", all.movies[1].medium === "" && std.movies[1].medium === "", all.movies[1]);
 check("Gesehen ist immer ein echter Wahrheitswert", all.movies[0].seen === true && all.movies[1].seen === false);
 
 console.log("Häkchen");
-const std = buildPublicData(backup);
 check("Vorauswahl: alles außer Notizen", JSON.stringify(defaultOptions()) === JSON.stringify({ medium: true, seen: true, rating: true, lists: true, notes: false }) && std.include.join() === "medium,seen,rating,lists");
 check("… Notizen sind dann nicht in der Datei", !JSON.stringify(std).includes("Mit Papa") && !("notes" in std.movies[0]));
 const none = buildPublicData(backup, { medium: false, seen: false, rating: false, lists: false, notes: false });
@@ -57,7 +59,7 @@ check("Listen angehakt: als Liste von Namen", JSON.stringify(all.movies[0].imdbL
 
 console.log("Zusammenfassung");
 const info = summarize(std);
-check("Zählt Titel und Cover, nennt die Auswahl", info.total === 2 && info.withCover === 1 && info.labels.length === 4, info);
+check("Zählt Titel und Cover, nennt die Auswahl", info.total === 3 && info.withCover === 1 && info.labels.length === 4, info);
 
 console.log(bad ? `\n✗ ${bad} von ${ok + bad} Prüfungen fehlgeschlagen` : `\n✓ Alle ${ok} Prüfungen bestanden`);
 process.exit(bad ? 1 : 0);

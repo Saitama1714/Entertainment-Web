@@ -96,6 +96,9 @@ def main():
         check("Filtergruppen Art, Medium, Status, Liste", groups == ["Art", "Medium", "Status", "Liste"], groups)
         sorts = pg.eval_on_selector_all("#movie-sort option", "els => els.map(e => e.value)")
         check("Sortierung inkl. eigener Bewertung", "yourRating" in sorts, sorts)
+        chip = pg.text_content(".filter-chip[data-category=media][data-value=''] .chip-count")
+        badges = pg.evaluate("() => Object.fromEntries([...document.querySelectorAll('.movie-card')].map(c => [c.querySelector('.movie-card-title').textContent, c.querySelector('.media-badge')?.getAttribute('title') || '']))")
+        check("Titel ohne Medium: kein Abzeichen, Chip „Kein Medium“ zählt 1 (1:1 wie im Dashboard)", badges["Severance"] == "" and chip == "1" and badges["Heat"] == "Blu-ray" and list(badges.values()).count("DVD") == 2, (badges, chip))
         check("10 Karten, Cover geladen, Badge 4K", pg.locator(".movie-card").count() == 10 and pg.locator(".movie-card .cover-image").count() == 9 and pg.locator(".media-badge").first.is_visible())
         pg.screenshot(path=str(SHOTS / "sammlung.png"), clip={"x": 0, "y": 0, "width": 1280, "height": 800})
         pg.fill("#movie-search", "villeneuve"); pg.wait_for_timeout(450)
@@ -111,7 +114,9 @@ def main():
         pg.click(".movie-card >> nth=0"); pg.wait_for_url("**/titel.html?id=m1")
         pg.wait_for_selector(".details-grid")
         dl = pg.eval_on_selector_all(".detail-field dt", "els => els.map(e => e.textContent)")
-        check("Angaben inkl. Meine Bewertung, Gesehen am, Listen", all(x in dl for x in ["Jahr", "Regie", "Meine Bewertung", "Gesehen am", "IMDb-Listen", "IMDb"]), dl)
+        expected = ["IMDb-Listen", "Jahr", "Genre", "Laufzeit", "Regie", "Veröffentlichung", "Gesehen am", "Meine Bewertung", "IMDb-Bewertung", "IMDb-Stimmen",
+                    "IMDb-Kennung", "Art", "In IMDb aufgenommen", "In IMDb geändert", "Bewertet am", "Position in der Liste", "IMDb"]
+        check("Alle Angaben in der Reihenfolge des Dashboards", dl == expected, dl)
         check("Keine Notizen, keine Knöpfe zum Bearbeiten", "Notizen" not in dl and pg.locator("#edit-movie, #delete-movie, #change-cover").count() == 0)
         check("Status und Medium oben", pg.text_content(".detail-summary").replace(" ", "") == "GesehenUHDBlu-ray", pg.text_content(".detail-summary"))
         check("Fenstertitel", pg.title() == "Arrival · Filmsammlung", pg.title())

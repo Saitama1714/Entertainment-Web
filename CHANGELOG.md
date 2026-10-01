@@ -1,5 +1,26 @@
 # Änderungen
 
+## 1.1.0 – 1:1 wie im Dashboard
+- Das Werkzeug bereitet jeden Titel jetzt mit derselben Funktion auf wie das
+  Dashboard (`newMovie()`) und veröffentlicht damit genau, was das Dashboard
+  anzeigt - auch in Sonderfällen (fehlendes Medium, Gesehen als Text,
+  Einträge ohne Titel, leere Listennamen).
+- Einträge ohne Titel werden nicht mehr weggelassen (das Dashboard zeigt sie).
+- Links (Cover, IMDb) werden Zeichen für Zeichen übernommen statt
+  umformatiert; eingebettete Cover-Bilder (`data:image/…`) bleiben erhalten.
+- Detailseite: zusätzlich IMDb-Kennung, „In IMDb aufgenommen/geändert" und
+  „Position in der Liste"; alle Angaben in derselben Reihenfolge wie im
+  Dashboard. Diese Felder erscheinen, sobald die Datendatei neu erzeugt wurde.
+- Sortierung heißt „Meine Bewertung" (statt „Deine Bewertung").
+- Neuer Abgleich-Test `tests/parity.test.mjs` (Dashboard ↔ Website).
+
+## 1.0.1
+- Fehler behoben: Titel ohne Medium erschienen auf der Website als „DVD".
+  Das Werkzeug hatte leere Medien weggelassen, und die Website las ein
+  fehlendes Medium (wie das Dashboard bei alten Daten) als DVD. Jetzt schreibt
+  das Werkzeug das Medium immer aus, und die Website liest ein fehlendes Medium
+  als „kein Medium" - auch bei bereits veröffentlichten Dateien.
+
 ## 1.0.0 – Erste Version
 - Filmsammlung als Website, nur lesen: Raster mit Suche, Filter-Chips und
   Sortierung, Registerkarte „Auf einen Blick" mit Zahlen und Zufallspicker,

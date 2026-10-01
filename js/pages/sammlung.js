@@ -53,7 +53,10 @@ function restoreView() {
 }
 
 /** Sortier-Optionen, die zur Datendatei passen (ohne eigene Bewertung keine Sortierung danach). */
-const sortOptions = () => SORT_OPTIONS.filter(option => option.value !== "yourRating" || collection.include.has("rating"));
+const sortOptions = () => SORT_OPTIONS
+  .filter(option => option.value !== "yourRating" || collection.include.has("rating"))
+  // Auf der Website spricht der Besitzer: „Meine" statt „Deine" Bewertung
+  .map(option => (option.value === "yourRating" ? { ...option, label: "Meine Bewertung (hoch → niedrig)" } : option));
 
 /** Zeigt die Filter-/Sortierzeile (nur wenn es Titel gibt) und baut die Chips neu. */
 function renderToolbar(searched) {

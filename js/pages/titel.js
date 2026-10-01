@@ -9,8 +9,8 @@ import { showToast } from "../utils/toast.js";
 import { SITE_TITLE } from "../utils/constants.js";
 
 /*
- * Detailseite eines Titels (titel.html?id=…): alle veröffentlichten Angaben,
- * nur lesen. Blättern (Knöpfe oder Pfeiltasten) folgt der Reihenfolge, die
+ * Detailseite eines Titels (titel.html?id=…): alle veröffentlichten Angaben
+ * in derselben Reihenfolge wie die Detailseite des Dashboards, nur lesen. Blättern (Knöpfe oder Pfeiltasten) folgt der Reihenfolge, die
  * man zuletzt in der Sammlung gesehen hat - also mit Suche, Filtern und
  * Sortierung von dort.
  */
@@ -60,19 +60,23 @@ function render() {
       <div class="detail-main">
         ${summary ? `<div class="detail-summary">${summary}</div>` : ""}
         <dl class="details-grid">
+          ${has("lists") ? field("IMDb-Listen", movie.imdbLists.join(", ")) : ""}
           ${field("Originaltitel", movie.originalTitle)}
           ${field("Jahr", movie.year)}
           ${field("Genre", movie.genre)}
           ${field("Laufzeit", movie.runtimeMinutes ? `${movie.runtimeMinutes} Minuten` : "")}
           ${field("Regie", movie.directors)}
           ${field("Veröffentlichung", movie.releaseDate)}
-          ${field("Art", movie.titleType)}
+          ${has("seen") ? field("Gesehen am", movie.seenAt) : ""}
+          ${has("rating") ? field("Meine Bewertung", movie.yourRating) : ""}
           ${field("IMDb-Bewertung", movie.imdbRating)}
           ${field("IMDb-Stimmen", movie.numVotes)}
-          ${has("rating") ? field("Meine Bewertung", movie.yourRating) : ""}
+          ${field("IMDb-Kennung", movie.imdbId)}
+          ${field("Art", movie.titleType)}
+          ${field("In IMDb aufgenommen", movie.imdbCreated)}
+          ${field("In IMDb geändert", movie.imdbModified)}
           ${has("rating") ? field("Bewertet am", movie.dateRated) : ""}
-          ${has("seen") ? field("Gesehen am", movie.seenAt) : ""}
-          ${has("lists") ? field("IMDb-Listen", movie.imdbLists.join(", ")) : ""}
+          ${field("Position in der Liste", movie.position)}
           ${has("notes") ? field("Notizen", movie.notes) : ""}
           ${field("Beschreibung", movie.imdbDescription)}
           ${imdbLink}

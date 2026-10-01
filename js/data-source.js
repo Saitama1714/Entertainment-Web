@@ -15,6 +15,30 @@ import { DATA_URL } from "./utils/constants.js";
 let cache = null;
 
 /**
+ * Bringt den Inhalt der Datendatei in die Form der Dashboard-Module.
+ * Reine Funktion (getestet in tests/parity.test.mjs).
+ * @param {*} data - Geparste data/sammlung.json.
+ * @throws {Error} bei unbekanntem Format.
+ */
+export function parseCollection(data) {
+  if (!data || data.version !== 1 || !Array.isArray(data.movies)) throw new Error("Die Datendatei hat ein unbekanntes Format.");
+  const include = new Set(Array.isArray(data.include) ? data.include : []);
+  // newMovie() setzt bei fehlendem Medium „DVD" (Altbestand im Dashboard).
+  // Hier heißt ein fehlendes Medium aber immer „keins": Das Werkzeug schreibt
+  // es stets aus, wenn es veröffentlicht wird (Dateien aus Werkzeug 1.0.0
+  // haben leere Medien weggelassen).
+  const movies = normalizeMovies(data.movies
+    .filter(movie => movie && typeof movie === "object")
+    .map(movie => ({ ...movie, medium: include.has("medium") && typeof movie.medium === "string" ? movie.medium : "" })));
+  return {
+    movies,
+    include,
+    exportedAt: String(data.exportedAt || ""),
+    generatedAt: String(data.generatedAt || ""),
+  };
+}
+
+/**
  * @returns {Promise<{movies: object[], include: Set<string>, exportedAt: string, generatedAt: string}>}
  * @throws {Error} wenn die Datei fehlt oder kaputt ist.
  */
@@ -24,20 +48,7 @@ export function loadCollection() {
       if (!response.ok) throw new Error(`Die Datendatei fehlt (${DATA_URL}).`);
       return response.json();
     })
-    .then(data => {
-      if (!data || data.version !== 1 || !Array.isArray(data.movies)) throw new Error("Die Datendatei hat ein unbekanntes Format.");
-      const include = new Set(Array.isArray(data.include) ? data.include : []);
-      let movies = normalizeMovies(data.movies.filter(movie => movie && typeof movie === "object"));
-      // newMovie() setzt bei fehlendem Medium „DVD" (Altbestand im Dashboard) -
-      // hier heißt „fehlt" aber „nicht veröffentlicht"
-      if (!include.has("medium")) movies = movies.map(movie => ({ ...movie, medium: "" }));
-      return {
-        movies,
-        include,
-        exportedAt: String(data.exportedAt || ""),
-        generatedAt: String(data.generatedAt || ""),
-      };
-    });
+    .then(parseCollection);
   return cache;
 }
 

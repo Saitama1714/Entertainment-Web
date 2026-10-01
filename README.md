@@ -47,7 +47,7 @@ nicht. Sichtbar ist genau das, was in `data/sammlung.json` steht:
 
 | Immer | Wahlweise (Häkchen im Werkzeug) | Nie |
 |---|---|---|
-| Titel, Originaltitel, Jahr, Art, Genre, Regie, Laufzeit, Veröffentlichung, IMDb-Bewertung und -Stimmen, IMDb-Link, Beschreibung, Cover-Link | Medium, Gesehen-Status und -Datum, eigene Bewertung, Namen der IMDb-Listen, Notizen (Standard: aus) | OMDb-Schlüssel, Favoriten, Einstellungen, interne Felder |
+| Titel, Originaltitel, Jahr, Art, Genre, Regie, Laufzeit, Veröffentlichung, IMDb-Bewertung, -Stimmen, -Kennung und -Link, In IMDb aufgenommen/geändert, Position in der Liste, Beschreibung, Cover-Link | Medium, Gesehen-Status und -Datum, eigene Bewertung, Namen der IMDb-Listen, Notizen (Standard: aus) | OMDb-Schlüssel, Favoriten, Einstellungen, interne Felder |
 
 Hinweis: Alte Stände bleiben im Git-Verlauf abrufbar. Was einmal
 veröffentlicht war, lässt sich durch eine neue Datei nicht ganz zurückholen.
@@ -85,6 +85,16 @@ Den Namen der Seite („Filmsammlung") änderst du in `js/utils/constants.js`
 (`SITE_TITLE`) und in den `<title>`-Zeilen der drei HTML-Dateien.
 
 ## Verhältnis zum Dashboard
+
+**1:1-Abbildung:** Das Werkzeug bereitet jeden Titel genauso auf wie das
+Dashboard selbst (gleiche Funktion `newMovie()`), die Website zeigt Karten,
+Filter, Sortierungen, Suche, Statistik und Detailangaben mit denselben
+Bausteinen. `tests/parity.test.mjs` gleicht beides Feld für Feld ab, auch mit
+Sonderfällen (fehlendes/leeres Medium, Einträge ohne Titel, kaputte Links).
+Bewusste Unterschiede: „Meine Bewertung" statt „Deine Bewertung";
+Notizen nur, wenn im Werkzeug angehakt; Cover- und IMDb-Links, die keine
+Web-Adresse sind (z. B. `javascript:`), werden nicht veröffentlicht - das
+Dashboard zeigt dort ohnehin nur den Platzhalter.
 
 Die Website ist eine Kopie der Entertainment-Teile aus Dashboard 2.13.1.
 Verbesserungen im Dashboard wandern nicht automatisch hierher. `css/app.css`,

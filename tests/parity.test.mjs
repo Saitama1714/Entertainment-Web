@@ -69,7 +69,7 @@ function compare(label, options, skip = []) {
   const sorts = SORT_OPTIONS.filter(o => sortMovies(dashboard, o.value).map(x => x.id).join() !== sortMovies(site, o.value).map(x => x.id).join()).map(o => o.value);
   check("Alle Sortierungen identisch", sorts.length === 0, sorts);
   const fc = (list) => JSON.stringify(Object.fromEntries(Object.entries(facetCounts(list, emptyFilters())).map(([k, v]) => [k, [...v].sort()])));
-  check("Filter-Zahlen identisch (Art, Medium, Status, Liste)", fc(dashboard) === fc(site), fc(dashboard) === fc(site) ? "" : [fc(dashboard), fc(site)]);
+  check("Filter-Zahlen identisch (Art, Genre, Medium, Status, Liste)", fc(dashboard) === fc(site), fc(dashboard) === fc(site) ? "" : [fc(dashboard), fc(site)]);
   check("Listen-Chips identisch", listFilterOptions(dashboard).join() === listFilterOptions(site).join());
   const queries = ["drama", "titel a", "blu", "dvd", "2001", "jemand", "original"];
   const search = queries.filter(q => searchMovies(dashboard, q).map(x => x.id).join() !== searchMovies(site, q).map(x => x.id).join());

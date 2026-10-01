@@ -110,7 +110,7 @@ console.log("toggleFilterValue");
   const f3 = toggleFilterValue(f2, "media", "DVD");
   check("Erneutes Klicken entfernt genau diesen Wert wieder", JSON.stringify(f3.media) === '["Blu-ray"]');
   const f4 = toggleFilterValue(f3, "seen", "seen");
-  check("Andere Kategorie bleibt unabhängig", JSON.stringify(f4) === JSON.stringify({ kind: [], media: ["Blu-ray"], seen: ["seen"], lists: [] }));
+  check("Andere Kategorie bleibt unabhängig", JSON.stringify(f4) === JSON.stringify({ kind: [], genres: [], media: ["Blu-ray"], seen: ["seen"], lists: [] }));
   check("Original-Objekt wird nie mutiert", JSON.stringify(f0) === JSON.stringify(emptyFilters()) && JSON.stringify(f2.media) === '["DVD","Blu-ray"]');
 }
 

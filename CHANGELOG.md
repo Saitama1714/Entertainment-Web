@@ -1,5 +1,15 @@
 # Änderungen
 
+## 1.2.1
+- Filtergruppe „Art" erkennt die deutschen IMDb-Bezeichnungen („Film",
+  „Fernsehserie", „Miniserie" …) wie das Dashboard 2.14.1. Gilt sofort für
+  die vorhandene Datendatei.
+
+## 1.2.0 – Genre-Filter
+- Neue Filtergruppe „Genre" wie im Dashboard 2.14.0 (alle Genres der
+  Sammlung, alphabetisch; mehrere = ODER, mit anderen Gruppen = UND).
+  Funktioniert mit der bestehenden Datendatei, kein neues Umwandeln nötig.
+
 ## 1.1.0 – 1:1 wie im Dashboard
 - Das Werkzeug bereitet jeden Titel jetzt mit derselben Funktion auf wie das
   Dashboard (`newMovie()`) und veröffentlicht damit genau, was das Dashboard

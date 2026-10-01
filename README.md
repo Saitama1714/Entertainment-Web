@@ -15,7 +15,7 @@ Pages – Anleitung in [docs/HOSTING.md](docs/HOSTING.md).
 ## Was die Website kann
 
 - **Titel**: Raster mit Covern, Suche (Titel, Regie, Genre), Filter-Chips
-  (Art, Medium, Status, Liste) und Sortierung. Suche, Filter und Sortierung
+  (Art, Genre, Medium, Status, Liste) und Sortierung. Suche, Filter und Sortierung
   bleiben während des Besuchs erhalten, auch nach einer Detailseite.
 - **Auf einen Blick**: Gesamt/Gesehen/Offen und „Was schauen wir heute?".
 - **Detailseite** je Titel mit allen veröffentlichten Angaben, Blättern per

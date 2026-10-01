@@ -39,7 +39,7 @@ export function previewMovies(movies, count, { rng = Math.random } = {}) {
 }
 
 /*
- * Filter-Chips: Medium, Gesehen-Status, IMDb-Liste. Kombinierbar - innerhalb
+ * Filter-Chips: Art, Genre, Medium, Gesehen-Status, IMDb-Liste. Kombinierbar - innerhalb
  * einer Kategorie ODER-verknüpft ("4K" oder "Blu-ray"), zwischen Kategorien
  * UND-verknüpft ("4K" UND "Gesehen"). Bewusst nicht gespeichert: die Auswahl
  * gilt nur für die laufende Sitzung und setzt sich beim nächsten Öffnen der
@@ -55,14 +55,21 @@ export const MEDIA_FILTER_OPTIONS = [
 /*
  * Art eines Eintrags (Filtergruppe "Art" und Zufallspicker). IMDb kennt 13
  * Arten und schreibt sie je nach Export unterschiedlich ("TV Series",
- * "tvSeries"), OMDb wieder anders ("series"). Verglichen wird deshalb ohne
- * Leer-/Sonderzeichen und Groß-/Kleinschreibung. Alles, was hier nicht steht
- * - auch Einträge ganz ohne Art -, zählt als "Sonstiges".
+ * "tvSeries"), OMDb wieder anders ("series") - und bei deutscher
+ * Spracheinstellung auf Deutsch ("Fernsehserie", "Miniserie"). Verglichen
+ * wird ohne Leer-/Sonderzeichen und Groß-/Kleinschreibung. Alles, was hier
+ * nicht steht - auch Einträge ganz ohne Art -, zählt als "Sonstiges" (z. B.
+ * TV Episode/Fernsehepisode, TV Special/Fernsehspecial).
  */
 const TITLE_KIND_BY_TYPE = {
+  // Englisch (IMDb neu und alt, OMDb)
   movie: "film", feature: "film", tvmovie: "film", video: "film", short: "film",
   tvseries: "series", series: "series", tvminiseries: "series", miniseries: "series",
   videogame: "game", game: "game",
+  // Deutsch (IMDb mit deutscher Spracheinstellung)
+  film: "film", fernsehfilm: "film", kurzfilm: "film",
+  fernsehserie: "series", serie: "series", miniserie: "series", minifernsehserie: "series", fernsehminiserie: "series",
+  videospiel: "game",
 };
 
 /**
@@ -89,7 +96,29 @@ export const SEEN_FILTER_OPTIONS = [
 
 /** Ein leerer Filterzustand (keine Kategorie schränkt ein). */
 export function emptyFilters() {
-  return { kind: [], media: [], seen: [], lists: [] };
+  return { kind: [], genres: [], media: [], seen: [], lists: [] };
+}
+
+/**
+ * Genres eines Eintrags. IMDb liefert sie als Text mit Komma ("Drama, Sci-Fi");
+ * doppelte und leere Angaben fallen weg.
+ * @param {{genre: string}} movie
+ * @returns {string[]}
+ */
+export function genresOf(movie) {
+  return [...new Set(String(movie.genre || "").split(",").map(name => name.trim()).filter(Boolean))];
+}
+
+/**
+ * Die Genres, die in der Sammlung vorkommen (für die Filtergruppe "Genre") -
+ * kommen aus dem IMDb-Import, so wie IMDb sie schreibt.
+ * @param {Array} movies
+ * @returns {string[]} Alphabetisch sortiert (deutsche Regeln).
+ */
+export function genreFilterOptions(movies) {
+  const names = new Set();
+  for (const movie of movies) for (const name of genresOf(movie)) names.add(name);
+  return [...names].sort((a, b) => a.localeCompare(b, "de"));
 }
 
 /** True, sobald irgendeine Kategorie mindestens einen Wert aktiv hat. */
@@ -112,8 +141,8 @@ export function listFilterOptions(movies) {
 /**
  * Schaltet einen einzelnen Wert innerhalb einer Filterkategorie um (an/aus).
  * Liefert einen neuen Filterzustand, verändert `filters` nicht.
- * @param {{kind: string[], media: string[], seen: string[], lists: string[]}} filters
- * @param {"kind"|"media"|"seen"|"lists"} category
+ * @param {{kind: string[], genres: string[], media: string[], seen: string[], lists: string[]}} filters
+ * @param {"kind"|"genres"|"media"|"seen"|"lists"} category
  * @param {string} value
  */
 export function toggleFilterValue(filters, category, value) {
@@ -128,6 +157,7 @@ const seenKey = movie => (movie.seen ? "seen" : "unseen");
 /** Liest die Werte eines Eintrags, nach denen eine Kategorie filtert. */
 const valuesOf = {
   kind: movie => [titleKind(movie)],
+  genres: genresOf,
   media: movie => [movie.medium],
   seen: movie => [seenKey(movie)],
   lists: movie => movie.imdbLists,

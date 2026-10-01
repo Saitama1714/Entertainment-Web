@@ -1,6 +1,6 @@
 import { escapeHtml } from "../utils/dom.js";
 import {
-  KIND_FILTER_OPTIONS, MEDIA_FILTER_OPTIONS, SEEN_FILTER_OPTIONS, listFilterOptions,
+  KIND_FILTER_OPTIONS, MEDIA_FILTER_OPTIONS, SEEN_FILTER_OPTIONS, listFilterOptions, genreFilterOptions,
   facetCounts, hasActiveFilters,
 } from "../logic/movies-logic.js";
 
@@ -30,7 +30,7 @@ function groupHtml(label, category, options, filters, counts) {
 }
 
 /**
- * Baut die komplette Chip-Leiste (Art, Medium, Status, IMDb-Liste).
+ * Baut die komplette Chip-Leiste (Art, Genre, Medium, Status, IMDb-Liste).
  * Welche Listen-Chips es gibt, richtet sich nach der ganzen Sammlung (damit
  * sie beim Tippen in der Suche nicht auftauchen/verschwinden); die Zahlen
  * nach der bereits durchsuchten Teilmenge.
@@ -44,8 +44,10 @@ function groupHtml(label, category, options, filters, counts) {
 export function filterChipsHtml(allMovies, searched, filters, { include = new Set(["medium", "seen", "lists"]) } = {}) {
   const counts = facetCounts(searched, filters);
   const listOptions = listFilterOptions(allMovies).map(name => ({ value: name, label: name }));
+  const genreOptions = genreFilterOptions(allMovies).map(name => ({ value: name, label: name }));
   const groups = [
     groupHtml("Art", "kind", KIND_FILTER_OPTIONS, filters, counts),
+    groupHtml("Genre", "genres", genreOptions, filters, counts),
     include.has("medium") ? groupHtml("Medium", "media", MEDIA_FILTER_OPTIONS, filters, counts) : "",
     include.has("seen") ? groupHtml("Status", "seen", SEEN_FILTER_OPTIONS, filters, counts) : "",
     groupHtml("Liste", "lists", listOptions, filters, counts),

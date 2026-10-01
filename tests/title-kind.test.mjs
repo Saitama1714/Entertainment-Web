@@ -51,5 +51,13 @@ check("Serie: nur s1, s2", picks("series") === "s1,s2");
 check("Alles (leer): alle ungesehenen, auch Spiel und Sonstiges", picks("") === "f1,g1,o1,s1,s2");
 check("Keine offenen Titel dieser Art → leer, kein Absturz", pickRandomUnseen(movies.filter(m => m.id !== "f1"), 2, { kind: "film" }).length === 0);
 
+console.log("Deutsche IMDb-Arten (Export mit deutscher Spracheinstellung)");
+{
+  const kinds = ["Film", "Fernsehfilm", "Kurzfilm", "Video", "Fernsehserie", "Miniserie", "Mini-Fernsehserie", "Videospiel", "Fernsehspecial", "Fernsehepisode"]
+    .map(type => titleKind({ titleType: type }));
+  check("Film/Fernsehfilm/Kurzfilm/Video → Film, Fernsehserie/Miniserie → Serie, Videospiel → Videospiel, Special/Episode → Sonstiges",
+    kinds.join() === "film,film,film,film,series,series,series,game,other,other", kinds);
+}
+
 console.log(`\n${ok} bestanden, ${bad} fehlgeschlagen`);
 process.exit(bad ? 1 : 0);

@@ -30,9 +30,9 @@ const m = (id, extra) => ({
   notes: "", imdbId: `tt${id}`, imdbLists: [], lockedFields: [], ...extra,
 });
 const raw = [
-  m("a1", { medium: "", seen: true, seenAt: "2026-01-02", yourRating: "9", dateRated: "2026-01-03", imdbLists: ["Watchlist"], notes: "privat" }),
-  m("a2", { medium: undefined }),                                   // Medium fehlt ganz → Dashboard zeigt „DVD"
-  m("a3", { medium: "UHD Blu-ray", seen: "true", yourRating: 8 }),   // Gesehen als Text, Bewertung als Zahl
+  m("a1", { importAddedAt: new Date(Date.now() - 2 * 86400000).toISOString(), medium: "", seen: true, seenAt: "2026-01-02", yourRating: "9", dateRated: "2026-01-03", imdbLists: ["Watchlist"], notes: "privat" }),
+  m("a2", { medium: undefined, importChangedAt: new Date(Date.now() - 5 * 86400000).toISOString() }),                                   // Medium fehlt ganz → Dashboard zeigt „DVD"
+  m("a3", { importAddedAt: "2025-01-01T10:00:00.000Z", importChangedAt: "2025-02-01T10:00:00.000Z", medium: "UHD Blu-ray", seen: "true", yourRating: 8 }),   // Gesehen als Text, Bewertung als Zahl
   m("a4", { title: "", year: "" }),                                  // ohne Titel
   m("a5", { imdbLists: ["", "Sci-Fi", 42], titleType: "TV Series", imdbRating: "" }),
   m("a6", { cover: "kein-link", imdbUrl: "javascript:alert(1)" }),   // kaputte Links
@@ -43,7 +43,7 @@ const raw = [
 const backup = JSON.parse(JSON.stringify({ version: 1, exportedAt: "2026-10-01T08:00:00.000Z", data: { movies: raw, omdbApiKey: "x" } }));
 
 const FIELDS = ["title", "originalTitle", "year", "titleType", "genre", "directors", "runtimeMinutes", "releaseDate", "imdbRating", "numVotes",
-  "imdbId", "imdbDescription", "imdbCreated", "imdbModified", "position", "medium", "seen", "seenAt", "yourRating", "dateRated", "imdbLists", "notes", "createdAt", "id"];
+  "imdbId", "imdbDescription", "imdbCreated", "imdbModified", "position", "medium", "seen", "seenAt", "yourRating", "dateRated", "imdbLists", "notes", "createdAt", "id", "importAddedAt", "importChangedAt"];
 const UNSAFE = new Set(["a6"]); // Links absichtlich entfernt - dort nur Platzhalter-Gleichheit prüfen
 
 function compare(label, options, skip = []) {
@@ -69,7 +69,7 @@ function compare(label, options, skip = []) {
   const sorts = SORT_OPTIONS.filter(o => sortMovies(dashboard, o.value).map(x => x.id).join() !== sortMovies(site, o.value).map(x => x.id).join()).map(o => o.value);
   check("Alle Sortierungen identisch", sorts.length === 0, sorts);
   const fc = (list) => JSON.stringify(Object.fromEntries(Object.entries(facetCounts(list, emptyFilters())).map(([k, v]) => [k, [...v].sort()])));
-  check("Filter-Zahlen identisch (Art, Genre, Medium, Status, Liste)", fc(dashboard) === fc(site), fc(dashboard) === fc(site) ? "" : [fc(dashboard), fc(site)]);
+  check("Filter-Zahlen identisch (Art, Genre, Medium, Status, Liste, Import)", fc(dashboard) === fc(site), fc(dashboard) === fc(site) ? "" : [fc(dashboard), fc(site)]);
   check("Listen-Chips identisch", listFilterOptions(dashboard).join() === listFilterOptions(site).join());
   const queries = ["drama", "titel a", "blu", "dvd", "2001", "jemand", "original"];
   const search = queries.filter(q => searchMovies(dashboard, q).map(x => x.id).join() !== searchMovies(site, q).map(x => x.id).join());

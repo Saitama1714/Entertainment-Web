@@ -19,7 +19,8 @@ const backup = {
         directors: "Denis Villeneuve", imdbRating: "7.9", imdbId: "tt2543164", imdbUrl: "https://www.imdb.com/title/tt2543164/",
         cover: "https://m.media-amazon.com/images/arrival.jpg", medium: "UHD Blu-ray", seen: true, seenAt: "2026-02-03",
         yourRating: "9", dateRated: "2026-02-04", notes: "Mit Papa geschaut", imdbLists: ["Watchlist", "Sci-Fi"],
-        lockedFields: ["title"], imdbCreated: "2020-01-01", position: "3", geheimesNeuesFeld: "x" },
+        lockedFields: ["title"], imdbCreated: "2020-01-01", position: "3", geheimesNeuesFeld: "x",
+        importAddedAt: "2026-09-20T08:00:00.000Z", importChangedAt: "2026-09-27T08:00:00.000Z" },
       { id: "m2", createdAt: "2026-01-02T00:00:00Z", title: "Böse", cover: "javascript:alert(1)", imdbUrl: "data:text/html,x", seen: false, medium: "" },
       { id: "m3", title: "   " },
       null,
@@ -44,6 +45,8 @@ check("Links bleiben Zeichen für Zeichen gleich", all.movies[0].cover === backu
 console.log("Aufbau der Datei");
 check("Kopf: Version, Zeitpunkte, gewählte Angaben", all.version === 1 && all.generatedAt === "2026-10-01T10:00:00.000Z" && all.exportedAt === backup.exportedAt && all.include.join() === "medium,seen,rating,lists,notes");
 check("Grundangaben immer dabei", ["id", "title", "year", "genre", "directors", "imdbRating", "cover", "imdbUrl"].every(f => f in all.movies[0]));
+check("Import-Zeitstempel (Filter „Import“) sind immer dabei", std.movies[0].importAddedAt === "2026-09-20T08:00:00.000Z" && all.movies[0].importChangedAt === "2026-09-27T08:00:00.000Z");
+check("… und fehlen bei Titeln ohne Import-Änderung", !("importAddedAt" in all.movies[1]) && !("importChangedAt" in all.movies[1]));
 check("Leere Felder werden weggelassen (kleinere Datei)", !("originalTitle" in all.movies[0]) && !("seenAt" in all.movies[1]));
 check("Kein Medium bleibt „kein Medium“ (leer ausgeschrieben, nicht weggelassen)", all.movies[1].medium === "" && std.movies[1].medium === "", all.movies[1]);
 check("Gesehen ist immer ein echter Wahrheitswert", all.movies[0].seen === true && all.movies[1].seen === false);

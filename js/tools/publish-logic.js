@@ -21,6 +21,8 @@ export const BASE_FIELDS = [
   "directors", "runtimeMinutes", "releaseDate", "imdbRating", "numVotes",
   "imdbUrl", "imdbId", "imdbDescription", "cover",
   "imdbCreated", "imdbModified", "position",
+  // Wann der IMDb-Import den Titel angelegt/verändert hat (Filter "Import")
+  "importAddedAt", "importChangedAt",
 ];
 
 /**

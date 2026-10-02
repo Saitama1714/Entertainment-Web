@@ -14,8 +14,10 @@ Pages – Anleitung in [docs/HOSTING.md](docs/HOSTING.md).
 
 ## Was die Website kann
 
-- **Titel**: Raster mit Covern, Suche (Titel, Regie, Genre), Filter-Chips
-  (Art, Genre, Medium, Status, Liste) und Sortierung. Suche, Filter und Sortierung
+- **Titel**: Raster mit Covern, Suche (Titel, Regie, Genre), Filterleiste
+  mit aufklappbaren Gruppen (Art, Genre, Medium, Status, Liste, Import) und Sortierung (Standard:
+  IMDb-Bewertung). „Import" zeigt, was im Dashboard in den letzten 4 Wochen
+  neu importiert oder durch den Import geändert wurde. Suche, Filter und Sortierung
   bleiben während des Besuchs erhalten, auch nach einer Detailseite.
 - **Auf einen Blick**: Gesamt/Gesehen/Offen und „Was schauen wir heute?".
 - **Detailseite** je Titel mit allen veröffentlichten Angaben, Blättern per
@@ -47,7 +49,7 @@ nicht. Sichtbar ist genau das, was in `data/sammlung.json` steht:
 
 | Immer | Wahlweise (Häkchen im Werkzeug) | Nie |
 |---|---|---|
-| Titel, Originaltitel, Jahr, Art, Genre, Regie, Laufzeit, Veröffentlichung, IMDb-Bewertung, -Stimmen, -Kennung und -Link, In IMDb aufgenommen/geändert, Position in der Liste, Beschreibung, Cover-Link | Medium, Gesehen-Status und -Datum, eigene Bewertung, Namen der IMDb-Listen, Notizen (Standard: aus) | OMDb-Schlüssel, Favoriten, Einstellungen, interne Felder |
+| Titel, Originaltitel, Jahr, Art, Genre, Regie, Laufzeit, Veröffentlichung, IMDb-Bewertung, -Stimmen, -Kennung und -Link, In IMDb aufgenommen/geändert, Position in der Liste, Beschreibung, Cover-Link, Zeitpunkt „vom Import angelegt/geändert" | Medium, Gesehen-Status und -Datum, eigene Bewertung, Namen der IMDb-Listen, Notizen (Standard: aus) | OMDb-Schlüssel, Favoriten, Einstellungen, interne Felder |
 
 Hinweis: Alte Stände bleiben im Git-Verlauf abrufbar. Was einmal
 veröffentlicht war, lässt sich durch eine neue Datei nicht ganz zurückholen.

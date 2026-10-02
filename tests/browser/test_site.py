@@ -34,6 +34,14 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
         pass
 
 
+def pick(pg, category, value):
+    """Option einer Filtergruppe anklicken; klappt die Gruppe vorher auf, falls nötig."""
+    option = f".filter-chip[data-category='{category}'][data-value='{value}']"
+    if not pg.is_visible(option):
+        pg.click(f".filter-drop[data-group='{category}'] .filter-drop-button")
+    pg.click(option)
+
+
 def serve(site, port):
     socketserver.ThreadingTCPServer.allow_reuse_address = True
     server = socketserver.ThreadingTCPServer(("127.0.0.1", port), functools.partial(Quiet, directory=str(site)))
@@ -73,7 +81,16 @@ def main():
         (tmp / "fremd.json").write_text('{"hallo": 1}')
         pg.set_input_files("#backup-input", str(tmp / "fremd.json")); status_has("keine Dashboard-Sicherung")
         check("Fremde JSON-Datei → Meldung", "keine Dashboard-Sicherung" in pg.text_content("#backup-status"))
-        pg.set_input_files("#backup-input", str(BACKUP))
+        # Import-Zeitstempel relativ zu jetzt einsetzen (Filter „Import": letzte 4 Wochen)
+        from datetime import datetime, timedelta, timezone
+        ago = lambda days: (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        fresh = json.loads(BACKUP.read_text(encoding="utf-8"))
+        for movie in fresh["data"]["movies"]:
+            if movie["id"] == "m1": movie["importAddedAt"] = ago(2)
+            if movie["id"] == "m7": movie["importChangedAt"] = ago(9)
+            if movie["id"] == "m8": movie["importAddedAt"] = ago(90)
+        (tmp / "sicherung-frisch.json").write_text(json.dumps(fresh), encoding="utf-8")
+        pg.set_input_files("#backup-input", str(tmp / "sicherung-frisch.json"))
         pg.wait_for_function("() => document.querySelector('#result-status').textContent.includes('Titel')", timeout=3000)
         status = pg.text_content("#result-status")
         check("Sicherung geladen: Zusammenfassung", "10 Titel (9 mit Cover)" in status and "Notizen" not in status, status)
@@ -96,12 +113,19 @@ def main():
         pg.wait_for_timeout(3500)
         check("Zähler und Stand", pg.text_content("#collection-count") == "10 Titel" and pg.text_content("#collection-stand") == "Stand: 30. September 2026", [pg.text_content("#collection-count"), pg.text_content("#collection-stand")])
         groups = pg.eval_on_selector_all(".filter-group-label", "els => els.map(e => e.textContent)")
-        check("Filtergruppen Art, Genre, Medium, Status, Liste", groups == ["Art", "Genre", "Medium", "Status", "Liste"], groups)
+        check("Filtergruppen Art, Genre, Medium, Status, Liste, Import", groups == ["Art", "Genre", "Medium", "Status", "Liste", "Import"], groups)
+        sorts0 = [pg.input_value("#movie-sort"), pg.eval_on_selector_all("#movie-sort option", "els => els.map(e => e.value)")]
+        check("Standard-Sortierung IMDb-Bewertung, ohne „Zuletzt hinzugekommen\"", sorts0[0] == "imdbRating" and "recent" not in sorts0[1], sorts0)
+        pick(pg, "import", "new"); pg.wait_for_timeout(100)
+        check("Import „Neu\": nur Arrival (Spirited Away ist älter als 4 Wochen)", pg.eval_on_selector_all(".movie-card-title", "els => els.map(e => e.textContent)") == ["Arrival"])
+        pick(pg, "import", "changed"); pg.wait_for_timeout(100)
+        check("„Neu\" + „Geändert\": Arrival und Heat", sorted(pg.eval_on_selector_all(".movie-card-title", "els => els.map(e => e.textContent)")) == ["Arrival", "Heat"])
+        pg.click("#filter-reset"); pg.wait_for_timeout(100)
         genres = pg.eval_on_selector_all(".filter-chip[data-category=genres]", "els => els.map(e => e.dataset.value)")
         check("Genre-Chips aus den Daten, alphabetisch", genres[:3] == ["Action", "Adventure", "Animation"] and "Sci-Fi" in genres, genres)
-        pg.click(".filter-chip[data-category=genres][data-value='Sci-Fi']"); pg.wait_for_timeout(100)
+        pick(pg, "genres", "Sci-Fi"); pg.wait_for_timeout(100)
         check("Genre „Sci-Fi“ filtert", pg.locator(".movie-card").count() == 3 and pg.text_content("#collection-count") == "3 von 10 Titeln")
-        pg.click(".filter-chip[data-category=genres][data-value='Sci-Fi']"); pg.wait_for_timeout(100)
+        pick(pg, "genres", "Sci-Fi"); pg.wait_for_timeout(100)
         sorts = pg.eval_on_selector_all("#movie-sort option", "els => els.map(e => e.value)")
         check("Sortierung inkl. eigener Bewertung", "yourRating" in sorts, sorts)
         chip = pg.text_content(".filter-chip[data-category=media][data-value=''] .chip-count")
@@ -111,9 +135,9 @@ def main():
         pg.screenshot(path=str(SHOTS / "sammlung.png"), clip={"x": 0, "y": 0, "width": 1280, "height": 800})
         pg.fill("#movie-search", "villeneuve"); pg.wait_for_timeout(450)
         check("Suche nach Regie", pg.locator(".movie-card").count() == 3 and pg.text_content("#collection-count") == "3 von 10 Titeln")
-        pg.click(".filter-chip[data-category=seen][data-value=unseen]"); pg.wait_for_timeout(100)
+        pick(pg, "seen", "unseen"); pg.wait_for_timeout(100)
         check("Filter „Offen“", pg.locator(".movie-card").count() == 1 and "Dune" in pg.text_content(".movie-card"))
-        pg.click(".filter-chip[data-category=seen][data-value=unseen]"); pg.wait_for_timeout(100)
+        pick(pg, "seen", "unseen"); pg.wait_for_timeout(100)
         pg.select_option("#movie-sort", "yourRating"); pg.wait_for_timeout(100)
         order = pg.eval_on_selector_all(".movie-card-title", "els => els.map(e => e.textContent)")
         check("Sortiert nach eigener Bewertung", order == ["Arrival", "Blade Runner 2049", "Dune: Part Two"], order)

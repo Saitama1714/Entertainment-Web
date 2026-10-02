@@ -1,10 +1,10 @@
 import { loadCollection, standLabel } from "../data-source.js";
 import {
   searchMovies, filterMovies, sortMovies, toggleFilterValue,
-  emptyFilters, hasActiveFilters, SORT_OPTIONS,
+  emptyFilters, hasActiveFilters, SORT_OPTIONS, DEFAULT_SORT,
 } from "../logic/movies-logic.js";
 import { movieGridHtml, settleCachedCovers } from "../ui/movie-card.js";
-import { filterChipsHtml } from "../ui/movie-filters.js";
+import { filterChipsHtml, initFilterBar } from "../ui/movie-filters.js";
 import { renderStats } from "../ui/stats.js";
 import { initSiteShell } from "../ui/site-shell.js";
 import { initShortcuts } from "../ui/shortcuts.js";
@@ -25,7 +25,7 @@ import { CONFIG, SITE_TITLE, CORNER_ICON } from "../utils/constants.js";
 const VIEW_KEY = "site:view";
 let collection = { movies: [], include: new Set() };
 let filters = emptyFilters();
-let sortKey = "recent";
+let sortKey = DEFAULT_SORT;
 
 /** Merkt sich Suche, Filter, Sortierung und Registerkarte für diesen Besuch. */
 function saveView() {
@@ -125,6 +125,7 @@ function bindEvents() {
     `<option value="${option.value}" ${option.value === sortKey ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("");
   $("#movie-sort").onchange = event => { sortKey = event.target.value; renderMovies(); };
 
+  initFilterBar($("#filter-chips")); // Gruppen auf-/zuklappen, Tastatur, Suchfeld
   $("#filter-chips").addEventListener("click", event => {
     const chip = event.target.closest(".filter-chip");
     if (chip) {
@@ -157,7 +158,7 @@ async function init() {
     initTabs(null);
     return;
   }
-  if (!sortOptions().some(option => option.value === sortKey)) sortKey = "recent";
+  if (!sortOptions().some(option => option.value === sortKey)) sortKey = DEFAULT_SORT;
   $("#collection-stand").textContent = standLabel(collection);
 
   bindEvents();

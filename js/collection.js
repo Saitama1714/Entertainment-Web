@@ -31,8 +31,13 @@ export const IMDB_COLUMNS = {
 /** Felder, die aus IMDb kommen und bei jedem Import aktualisiert werden. */
 export const IMDB_FIELDS = Object.keys(IMDB_COLUMNS);
 
-/** Textfelder, die nur das Dashboard pflegt (ein Import fasst sie nie an). */
-const LOCAL_TEXT_FIELDS = ["seenAt", "cover", "notes", "imdbId"];
+/**
+ * Textfelder, die nur das Dashboard pflegt. Ausnahme: importAddedAt und
+ * importChangedAt setzt ausschließlich der IMDb-Import - wann er den Eintrag
+ * angelegt bzw. zuletzt spürbar verändert hat (Filter "Import" unter
+ * Entertainment). Leer = (noch) nie.
+ */
+const LOCAL_TEXT_FIELDS = ["seenAt", "cover", "notes", "imdbId", "importAddedAt", "importChangedAt"];
 
 /**
  * Erstellt ein vollständiges Eintrags-Objekt mit Standardwerten für alle

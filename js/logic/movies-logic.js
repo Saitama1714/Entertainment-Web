@@ -39,7 +39,7 @@ export function previewMovies(movies, count, { rng = Math.random } = {}) {
 }
 
 /*
- * Filter-Chips: Art, Genre, Medium, Gesehen-Status, IMDb-Liste. Kombinierbar - innerhalb
+ * Filter-Chips: Art, Genre, Medium, Gesehen-Status, IMDb-Liste, Import. Kombinierbar - innerhalb
  * einer Kategorie ODER-verknüpft ("4K" oder "Blu-ray"), zwischen Kategorien
  * UND-verknüpft ("4K" UND "Gesehen"). Bewusst nicht gespeichert: die Auswahl
  * gilt nur für die laufende Sitzung und setzt sich beim nächsten Öffnen der
@@ -94,9 +94,52 @@ export const SEEN_FILTER_OPTIONS = [
   { value: "unseen", label: "Offen" },
 ];
 
+/*
+ * Filtergruppe "Import": Einträge, die der IMDb-Import in den letzten
+ * 4 Wochen angelegt ("Neu") oder spürbar verändert ("Geändert") hat. Die
+ * Zeitstempel setzt mergeImdbLists() (importAddedAt/importChangedAt). Ein
+ * Eintrag kann beides sein (neu und danach noch einmal geändert).
+ * Gerechnet wird ab jetzt - die Chips leeren sich also von selbst wieder.
+ */
+export const IMPORT_WINDOW_DAYS = 28;
+
+export const IMPORT_FILTER_OPTIONS = [
+  { value: "new", label: "Neu" },
+  { value: "changed", label: "Geändert" },
+];
+
+/**
+ * Import-Status eines Eintrags im 4-Wochen-Fenster.
+ * @param {{importAddedAt?: string, importChangedAt?: string}} movie
+ * @param {number} [now] - aktuelle Zeit in ms (Tests setzen sie fest).
+ * @returns {string[]} [], ["new"], ["changed"] oder ["new", "changed"].
+ */
+export function importStatus(movie, now = Date.now()) {
+  const since = now - IMPORT_WINDOW_DAYS * 86400000;
+  const recent = value => {
+    const time = Date.parse(value || "");
+    return Number.isFinite(time) && time >= since;
+  };
+  const status = [];
+  if (recent(movie.importAddedAt)) status.push("new");
+  if (recent(movie.importChangedAt)) status.push("changed");
+  return status;
+}
+
+/**
+ * Optionen der Gruppe "Import" - nur, wenn überhaupt ein Eintrag gerade
+ * neu oder geändert ist (sonst entfällt die Gruppe, wie "Liste" vor dem
+ * ersten Import).
+ * @param {Array} movies - komplette Sammlung.
+ * @returns {Array<{value: string, label: string}>}
+ */
+export function importFilterOptions(movies, now = Date.now()) {
+  return movies.some(movie => importStatus(movie, now).length) ? IMPORT_FILTER_OPTIONS : [];
+}
+
 /** Ein leerer Filterzustand (keine Kategorie schränkt ein). */
 export function emptyFilters() {
-  return { kind: [], genres: [], media: [], seen: [], lists: [] };
+  return { kind: [], genres: [], media: [], seen: [], lists: [], import: [] };
 }
 
 /**
@@ -141,8 +184,8 @@ export function listFilterOptions(movies) {
 /**
  * Schaltet einen einzelnen Wert innerhalb einer Filterkategorie um (an/aus).
  * Liefert einen neuen Filterzustand, verändert `filters` nicht.
- * @param {{kind: string[], genres: string[], media: string[], seen: string[], lists: string[]}} filters
- * @param {"kind"|"genres"|"media"|"seen"|"lists"} category
+ * @param {{kind: string[], genres: string[], media: string[], seen: string[], lists: string[], import: string[]}} filters
+ * @param {"kind"|"genres"|"media"|"seen"|"lists"|"import"} category
  * @param {string} value
  */
 export function toggleFilterValue(filters, category, value) {
@@ -161,6 +204,7 @@ const valuesOf = {
   media: movie => [movie.medium],
   seen: movie => [seenKey(movie)],
   lists: movie => movie.imdbLists,
+  import: movie => importStatus(movie),
 };
 
 /**
@@ -202,17 +246,20 @@ export function facetCounts(movies, filters) {
 }
 
 /*
- * Sortierung. "recent" (Standard in Entertainment) zeigt die neuesten
- * zuerst; bei gleichem Zeitstempel gilt die spätere Position als neuer.
+ * Sortierung. Standard in Entertainment (und auf der Website) ist die
+ * IMDb-Bewertung. "Zuletzt hinzugekommen" gibt es als Auswahl nicht mehr -
+ * dafür ist der Filter "Import" da. Die Reihenfolge nach createdAt (neueste
+ * zuerst) entscheidet aber weiterhin bei Gleichstand.
  * Fehlende Werte (keine Bewertung, kein Jahr) landen immer am Ende,
  * unabhängig von der gewählten Richtung. Die Vorschau auf der Startseite
  * nutzt dagegen previewMovies() (Zufallsauswahl, siehe oben).
  */
+export const DEFAULT_SORT = "imdbRating";
+
 export const SORT_OPTIONS = [
-  { value: "recent", label: "Zuletzt hinzugekommen" },
+  { value: "imdbRating", label: "IMDb-Bewertung (hoch → niedrig)" },
   { value: "title", label: "Titel (A–Z)" },
   { value: "yourRating", label: "Deine Bewertung (hoch → niedrig)" },
-  { value: "imdbRating", label: "IMDb-Bewertung (hoch → niedrig)" },
   { value: "yearDesc", label: "Jahr (neu → alt)" },
   { value: "yearAsc", label: "Jahr (alt → neu)" },
 ];
@@ -223,7 +270,7 @@ const toNumber = value => {
   return Number.isFinite(number) ? number : null;
 };
 
-/** "Neueste zuerst": nach createdAt, bei Gleichstand gilt die spätere Position als neuer. */
+/** "Neueste zuerst" (nur noch als Gleichstands-Regel): nach createdAt, sonst die spätere Position. */
 const byRecent = (a, b) => (b.movie.createdAt || "").localeCompare(a.movie.createdAt || "") || b.index - a.index;
 
 /**
@@ -241,7 +288,6 @@ const byNumber = (field, direction) => (a, b) => {
 
 /** Vergleichsfunktion je Sortier-Option. */
 const COMPARATORS = {
-  recent: byRecent,
   title: (a, b) => a.movie.title.localeCompare(b.movie.title, "de") || byRecent(a, b),
   yourRating: byNumber("yourRating", -1),
   imdbRating: byNumber("imdbRating", -1),
@@ -251,13 +297,14 @@ const COMPARATORS = {
 
 /**
  * Sortiert eine Titelliste nach einer der SORT_OPTIONS (ohne das Original
- * zu verändern). Unbekannte Werte fallen auf "recent" zurück.
+ * zu verändern). Unbekannte Werte (auch das frühere "recent") fallen auf
+ * DEFAULT_SORT zurück.
  * @param {Array} movies
  * @param {string} sortKey
  * @returns {Array}
  */
 export function sortMovies(movies, sortKey) {
-  const compare = COMPARATORS[sortKey] || COMPARATORS.recent;
+  const compare = COMPARATORS[sortKey] || COMPARATORS[DEFAULT_SORT];
   return movies
     .map((movie, index) => ({ movie, index }))
     .sort(compare)

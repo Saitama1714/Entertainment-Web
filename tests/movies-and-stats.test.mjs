@@ -1,6 +1,6 @@
 import { newMovie } from "../js/collection.js";
 import {
-  searchMovies, previewMovies, sortMovies, SORT_OPTIONS,
+  searchMovies, previewMovies, sortMovies, SORT_OPTIONS, DEFAULT_SORT,
   filterMovies, facetCounts, listFilterOptions, emptyFilters, hasActiveFilters, toggleFilterValue,
   MEDIA_FILTER_OPTIONS, SEEN_FILTER_OPTIONS,
 } from "../js/logic/movies-logic.js";
@@ -50,11 +50,14 @@ console.log("sortMovies");
 check("title A–Z, deutsche Regeln", sortMovies(movies, "title").map(m => m.title).join("|") === "Arrival|Blade Runner 2049|Dune: Part Two|Matrix, The|Ohne Jahr");
 check("yourRating hoch→niedrig, fehlende Werte ans Ende (stabil nach 'recent')", sortMovies(movies, "yourRating").map(m => m.id).join() === "1,2,3,4,5".split(",").filter(id => ["1","2"].includes(id)).concat(sortMovies(movies,"yourRating").map(m=>m.id).filter(id=>!["1","2"].includes(id))).join());
 const yr = sortMovies(movies, "yourRating").map(m => m.id);
-check("… konkret: 1 (9) vor 2 (8), Rest ohne Bewertung dahinter in 'recent'-Reihenfolge", yr.slice(0,2).join() === "1,2" && yr.slice(2).join() === sortMovies(movies.filter(m=>!["1","2"].includes(m.id)), "recent").map(m=>m.id).join());
+check("… konkret: 1 (9) vor 2 (8), Rest ohne Bewertung dahinter, neueste zuerst (3, 5, 4)", yr.join() === "1,2,3,5,4", yr);
 check("imdbRating hoch→niedrig: 4 (8.7) vor 1 (8.5) vor 2 (8.0) vor 3 (7.9), 5 ohne Wert am Ende", sortMovies(movies, "imdbRating").map(m => m.id).join() === "4,1,2,3,5");
 check("Jahr neu→alt: 1 (2024) vor 2 (2017) vor 3 (2016) vor 4 (1999), 5 ohne Jahr am Ende", sortMovies(movies, "yearDesc").map(m => m.id).join() === "1,2,3,4,5");
 check("Jahr alt→neu: 4 (1999) zuerst, 5 ohne Jahr TROTZDEM am Ende (nicht am Anfang)", sortMovies(movies, "yearAsc").map(m => m.id).join() === "4,3,2,1,5");
-check("Unbekannter sortKey fällt auf 'recent' zurück", sortMovies(movies, "quatsch").map(m => m.id).join() === sortMovies(movies, "recent").map(m => m.id).join());
+check("Unbekannter sortKey fällt auf IMDb-Bewertung zurück", sortMovies(movies, "quatsch").map(m => m.id).join() === sortMovies(movies, "imdbRating").map(m => m.id).join());
+check("Auch das frühere 'recent' fällt auf IMDb-Bewertung zurück", sortMovies(movies, "recent").map(m => m.id).join() === "4,1,2,3,5");
+check("'Zuletzt hinzugekommen' ist keine Sortier-Option mehr", !SORT_OPTIONS.some(o => o.value === "recent"));
+check("Standard-Sortierung ist IMDb-Bewertung und steht als erste Option", DEFAULT_SORT === "imdbRating" && SORT_OPTIONS[0].value === "imdbRating");
 check("Leere Liste sortieren wirft nicht", sortMovies([], "title").length === 0);
 check("sortMovies verändert das Original-Array nicht", (() => { const copy = [...movies]; sortMovies(movies, "title"); return movies.every((m, i) => m === copy[i]); })());
 check("Alle SORT_OPTIONS-Werte sind in sortMovies auch tatsächlich behandelt (kein Tippfehler)", SORT_OPTIONS.every(o => JSON.stringify(sortMovies(movies, o.value)) !== undefined));
@@ -110,7 +113,7 @@ console.log("toggleFilterValue");
   const f3 = toggleFilterValue(f2, "media", "DVD");
   check("Erneutes Klicken entfernt genau diesen Wert wieder", JSON.stringify(f3.media) === '["Blu-ray"]');
   const f4 = toggleFilterValue(f3, "seen", "seen");
-  check("Andere Kategorie bleibt unabhängig", JSON.stringify(f4) === JSON.stringify({ kind: [], genres: [], media: ["Blu-ray"], seen: ["seen"], lists: [] }));
+  check("Andere Kategorie bleibt unabhängig", JSON.stringify(f4) === JSON.stringify({ kind: [], genres: [], media: ["Blu-ray"], seen: ["seen"], lists: [], import: [] }));
   check("Original-Objekt wird nie mutiert", JSON.stringify(f0) === JSON.stringify(emptyFilters()) && JSON.stringify(f2.media) === '["DVD","Blu-ray"]');
 }
 

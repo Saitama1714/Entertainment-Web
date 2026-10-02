@@ -1,5 +1,21 @@
 # Änderungen
 
+## 1.5.0 – Aufgeräumte Filterleiste (Dashboard 2.18.0)
+- Filter als Zeile mit einem Knopf je Gruppe, Auswahl zum Aufklappen (auf
+  dem Handy als Blatt von unten). Kommt über `Gemeinsames-holen.bat`;
+  `js/pages/sammlung.js` ruft dafür `initFilterBar()` auf. Keine neue
+  Datendatei nötig.
+
+## 1.4.0 – Filter „Import" (Dashboard 2.17.0)
+- Neue Filtergruppe „Import" (Neu/Geändert in den letzten 4 Wochen) wie im
+  Dashboard. Das Werkzeug veröffentlicht dafür `importAddedAt` und
+  `importChangedAt` immer mit (Grundangaben). Neue Datendatei nötig: im
+  Dashboard „Sicherung speichern", dann im Werkzeug umwandeln.
+- „Zuletzt hinzugekommen" entfällt; Standard-Sortierung ist die
+  IMDb-Bewertung (auch für das Blättern auf der Detailseite). Ein gemerkter
+  alter Zustand („recent") fällt automatisch darauf zurück.
+- `tests/import-filter.test.mjs` ist neu in `gemeinsam.txt`.
+
 ## 1.3.0 – Gemeinsamer Code mit dem Dashboard
 - Karten, Filter, Statistik, Vorhang, Medaillon, Design und Hilfsfunktionen
   sind jetzt dieselben Dateien wie im Dashboard (2.16.0). Liste in

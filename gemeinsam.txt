@@ -23,5 +23,6 @@ assets\logo.svg
 tests\movies-and-stats.test.mjs
 tests\title-kind.test.mjs
 tests\genre-filter.test.mjs
+tests\import-filter.test.mjs
 tests\curtain-motion.test.mjs
 tests\brand.test.mjs

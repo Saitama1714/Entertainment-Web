@@ -1,5 +1,5 @@
 import { loadCollection } from "../data-source.js";
-import { searchMovies, filterMovies, sortMovies, emptyFilters } from "../logic/movies-logic.js";
+import { searchMovies, filterMovies, sortMovies, emptyFilters, DEFAULT_SORT } from "../logic/movies-logic.js";
 import { settleCachedCovers } from "../ui/movie-card.js";
 import { initSiteShell } from "../ui/site-shell.js";
 import { initShortcuts } from "../ui/shortcuts.js";
@@ -33,7 +33,7 @@ function displayOrder() {
     if (order.some(item => item.id === movie.id)) return order;
     return sortMovies(all, view.sortKey);
   }
-  return sortMovies(all, "recent");
+  return sortMovies(all, DEFAULT_SORT);
 }
 
 function render() {

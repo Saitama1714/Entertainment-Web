@@ -1,5 +1,14 @@
 # Änderungen
 
+## 1.3.0 – Gemeinsamer Code mit dem Dashboard
+- Karten, Filter, Statistik, Vorhang, Medaillon, Design und Hilfsfunktionen
+  sind jetzt dieselben Dateien wie im Dashboard (2.16.0). Liste in
+  `gemeinsam.txt`; `Gemeinsames-holen.bat` holt sie per Doppelklick aus dem
+  Dashboard-Ordner nebenan; `tests/gemeinsam.test.mjs` prüft, dass nichts
+  auseinanderläuft.
+- Kinovorhang wie im Dashboard nur noch „Lebendiger Stoff" (Auswahl
+  „Vorhang-Animation" entfällt, „Vorschau abspielen" bleibt).
+
 ## 1.2.1
 - Filtergruppe „Art" erkennt die deutschen IMDb-Bezeichnungen („Film",
   „Fernsehserie", „Miniserie" …) wie das Dashboard 2.14.1. Gilt sofort für

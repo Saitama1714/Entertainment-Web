@@ -5,15 +5,13 @@
    Danach erscheint unten links die gewählte Dekoration. Beides ist reine
    Dekoration: nicht klickbar, für Screenreader unsichtbar.
 
-   Stile (Einstellungen -> Darstellung -> "Vorhang-Animation", gesetzt von
-   js/boot.js als <html data-curtain="...">):
-   - "classic": reine CSS-Animation (dieses Stylesheet), funktioniert auch
-     ohne JavaScript.
-   - "fabric", "theater", "atmosphere": gezeichnet mit WebGL
-     (js/ui/curtain.js, js/ui/curtain-gl.js). Bis zum ersten WebGL-Bild steht
-     hier der CSS-Vorhang geschlossen da und wird dann weich übergeblendet.
-     Sicherheitsnetz: Übernimmt das Skript nicht, öffnet sich der Vorhang
-     nach 1,5 s auf die klassische Art.
+   „Lebendiger Stoff" wird mit WebGL gezeichnet (js/ui/curtain.js,
+   js/ui/curtain-gl.js; js/boot.js setzt dafür <html data-curtain="fabric">).
+   Bis zum ersten WebGL-Bild steht hier der CSS-Vorhang geschlossen da und
+   wird dann weich übergeblendet. Rückfallebene ist der einfache CSS-Vorhang
+   in diesem Stylesheet (data-curtain="classic" bzw. ohne data-curtain):
+   ohne WebGL, und wenn das Skript nicht übernimmt, öffnet er sich nach 1,5 s
+   von selbst.
    ========================================================================= */
 
 :root {
@@ -46,12 +44,10 @@
   transition: opacity .35s ease;
 }
 
-/* Der Stoff in CSS (klassischer Stil und erstes Bild vor WebGL). Die
-   Helligkeit folgt beim Stil "Kino-Atmosphäre" dem Saallicht. */
+/* Der Stoff in CSS (Rückfallebene und erstes Bild vor WebGL) */
 .curtain-fabric {
   position: absolute;
   inset: 0;
-  filter: brightness(var(--curtain-lum, 1));
 }
 
 .curtain--left { left: 0; }
@@ -82,7 +78,6 @@
   content: "";
   position: absolute;
   z-index: 1;
-  filter: brightness(var(--curtain-lum, 1));
   inset: 0 0 auto 0;
   height: 16px;
   background: linear-gradient(180deg, #e6c458 0%, var(--curtain-gold) 45%, #94720f 100%);
@@ -94,7 +89,6 @@
   content: "";
   position: absolute;
   z-index: 1;
-  filter: brightness(var(--curtain-lum, 1));
   top: 16px;
   left: 0;
   right: 0;
@@ -124,28 +118,12 @@
 }
 
 /* =========================================================================
-   WebGL-Stile ("fabric", "theater", "atmosphere")
+   WebGL („Lebendiger Stoff")
    ========================================================================= */
 
 /* Sicherheitsnetz: bis das Skript übernimmt, steht der Vorhang geschlossen;
-   übernimmt es nie, öffnet er sich später auf die klassische Art. */
-:root[data-curtain]:not([data-curtain="classic"]) .curtain { animation-delay: 1.5s; }
-
-/* "Kino-Atmosphäre" beginnt im dunklen Saal. Übernimmt das Skript (setzt
-   data-curtain-phase), steuert es die Helligkeit selbst; sonst geht das
-   Saallicht zusammen mit dem Sicherheitsnetz wieder an. */
-@property --curtain-lum {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 1;
-}
-:root[data-curtain="atmosphere"]:not([data-curtain-phase]) {
-  animation: curtain-house-lights 1.7s ease 1.5s both;
-}
-@keyframes curtain-house-lights {
-  from { --curtain-lum: .3; }
-  to   { --curtain-lum: 1; }
-}
+   übernimmt es nie, öffnet er sich später auf die einfache CSS-Art. */
+:root[data-curtain="fabric"] .curtain { animation-delay: 1.5s; }
 
 /* Die WebGL-Fläche: ganzes Fenster, nur während der Animation sichtbar */
 .curtain-stage {
@@ -177,18 +155,34 @@
 
 /* Ohne Animation (übersprungen oder "Bewegung reduzieren"): nichts zeigen,
    bis das Endbild gezeichnet ist, dann weich einblenden. */
-:root[data-intro="skip"][data-curtain]:not([data-curtain="classic"]) .curtain:not(.curtain--baked):not(.curtain--gl) {
+:root[data-intro="skip"][data-curtain="fabric"] .curtain:not(.curtain--baked):not(.curtain--gl) {
   opacity: 0;
 }
 @media (prefers-reduced-motion: reduce) {
-  :root[data-curtain]:not([data-curtain="classic"]) .curtain:not(.curtain--baked):not(.curtain--gl) {
+  :root[data-curtain="fabric"] .curtain:not(.curtain--baked):not(.curtain--gl) {
     opacity: 0;
   }
 }
 
+/* Entertainment: Endbild aus dem Zwischenspeicher (gesetzt von js/boot.js),
+   bis WebGL selbst gezeichnet hat - so bleibt der Vorhang beim Seitenwechsel
+   durchgehend stehen, statt kurz zu verschwinden und wieder einzublenden. */
+:root[data-curtain-cache][data-intro="skip"][data-curtain="fabric"] .curtain:not(.curtain--baked):not(.curtain--gl) {
+  opacity: 1;
+  animation: none;
+  width: var(--curtain-rest);
+  background: var(--curtain-cache-left) left top / 100% 100% no-repeat;
+}
+:root[data-curtain-cache][data-intro="skip"][data-curtain="fabric"] .curtain--right:not(.curtain--baked):not(.curtain--gl) {
+  background-image: var(--curtain-cache-right);
+}
+:root[data-curtain-cache][data-intro="skip"][data-curtain="fabric"] .curtain:not(.curtain--baked):not(.curtain--gl) .curtain-fabric {
+  display: none;
+}
+
 /* =========================================================================
    Ecken-Dekoration (Popcornbox, Filmklappe, Kinoticket, Wassermelone, ...)
-   Auswahl über Einstellungen -> Darstellung. Wird von js/ui/curtain.js
+   Auswahl über Einstellungen -> Erscheinungsbild. Wird von js/ui/curtain.js
    befüllt (render(CornerDecoration), Icon-Markup in curtain-icons.js).
    ========================================================================= */
 
@@ -264,9 +258,9 @@
    Bewegung reduzieren: sofort der Endzustand, keine Animation
    ========================================================================= */
 
-/* Vorhang übersprungen (Einstellung "Einmal am Tag"/"Nie", gesetzt von
-   js/boot.js vor dem ersten Zeichnen): derselbe Endzustand wie bei
-   reduzierter Bewegung. */
+/* Vorhang übersprungen (Einstellung "Einmal am Tag"/"Nie", und immer auf
+   Entertainment; gesetzt von js/boot.js vor dem ersten Zeichnen): derselbe
+   Endzustand wie bei reduzierter Bewegung. */
 :root[data-intro="skip"] .curtain,
 :root[data-intro="skip"] .corner-decor,
 :root[data-intro="skip"] .corner-decor .pop-parts > * {

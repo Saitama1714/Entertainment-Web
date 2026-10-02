@@ -1,6 +1,6 @@
 import { escapeHtml } from "../utils/dom.js";
 import { icon } from "../utils/icons.js";
-import { MEDIA_BADGES } from "../utils/constants.js";
+import { MEDIA_BADGES } from "../utils/media.js";
 
 /*
  * Lade-Skelett für Cover: Solange ein Coverbild lädt, schimmert an seiner

@@ -14,10 +14,21 @@ import { openModal } from "../utils/modal.js";
 
 const SHORTCUTS = [
   { keys: ["?"], label: "Diese Übersicht anzeigen", where: "Überall" },
-  { keys: ["/"], label: "Suche öffnen", where: "Sammlung" },
-  { keys: ["Esc"], label: "Suche leeren (im Suchfeld)", where: "Sammlung" },
+  { keys: ["/"], label: "Suche öffnen", where: "{list}" },
+  { keys: ["Esc"], label: "Suche leeren (im Suchfeld)", where: "{list}" },
   { keys: ["←", "→"], label: "Vorheriger / nächster Titel", where: "Detailseite" },
 ];
+
+/**
+ * Anpassungen für die Website Entertainment-Web (configureShortcutHelp):
+ * Name der Seite mit der Suche und ob der Hinweis zum neuen Tab erscheint.
+ */
+let help = { list: "Entertainment", newTabNote: true };
+
+/** Passt die Übersicht der Tastenkürzel an (nur die Website ruft das auf). */
+export function configureShortcutHelp(options) {
+  help = { ...help, ...options };
+}
 
 let actions = {};
 let installed = false;
@@ -36,15 +47,18 @@ export function openShortcutHelp() {
       <tr>
         <td class="shortcut-keys">${item.keys.map(key => `<kbd>${key}</kbd>`).join(" ")}</td>
         <td>${item.label}</td>
-        <td class="meta">${item.where}</td>
+        <td class="meta">${item.where.replace("{list}", help.list)}</td>
       </tr>`).join("");
 
   openModal("Tastenkürzel", `
     <table class="shortcut-table">
       <thead class="visually-hidden"><tr><th>Taste</th><th>Aktion</th><th>Wo</th></tr></thead>
       <tbody>${rows}</tbody>
-    </table>
-    `);
+    </table>${help.newTabNote ? `
+    <p class="meta shortcut-note">
+      In einem neuen Tab liegt der Tastaturfokus zuerst in der Adressleiste.
+      Einmal in die Seite klicken, dann funktionieren die Kürzel.
+    </p>` : ""}`);
 }
 
 /** Zentraler Tastatur-Handler; Regeln siehe Kommentar am Dateianfang. */

@@ -20,8 +20,8 @@ Pages – Anleitung in [docs/HOSTING.md](docs/HOSTING.md).
 - **Auf einen Blick**: Gesamt/Gesehen/Offen und „Was schauen wir heute?".
 - **Detailseite** je Titel mit allen veröffentlichten Angaben, Blättern per
   Knopf oder Pfeiltaste (in der Reihenfolge der Sammlung).
-- **Ansicht** (oben rechts): Kinovorhang bei jedem Besuch / einmal am Tag /
-  nie, Vorhang-Animation, Tastenkürzel. Design hell/dunkel/System. Gilt nur im
+- **Ansicht** (oben rechts): Kinovorhang („Lebendiger Stoff") bei jedem
+  Besuch / einmal am Tag / nie, Vorschau, Tastenkürzel. Design hell/dunkel/System. Gilt nur im
   Browser des jeweiligen Besuchers.
 - Fehlt eine wahlweise Angabe in der Datendatei (z. B. Gesehen-Status),
   verschwinden die passenden Filter, Sortierungen und Zahlen automatisch.
@@ -64,19 +64,21 @@ werkzeug.html            Daten vorbereiten: Sicherung → sammlung.json
 data/sammlung.json       Die veröffentlichten Daten (vom Werkzeug erzeugt)
 assets/logo.svg          Logo (Medaillon, Favicon)
 css/
-├── app.css              Design - unverändert aus dem Dashboard
-├── curtain.css          Kinovorhang - unverändert aus dem Dashboard
+├── app.css              Design (gemeinsam mit dem Dashboard)
+├── curtain.css          Kinovorhang (gemeinsam mit dem Dashboard)
 └── site.css             Ergänzungen nur für die Website
 js/
 ├── boot.js              Vor dem ersten Zeichnen: Design, ob/wie der Vorhang spielt
 ├── data-source.js       Lädt data/sammlung.json
-├── collection.js        Datenmodell der Titel (aus dem Dashboard, gekürzt)
+├── collection.js        Datenmodell der Titel (gemeinsam mit dem Dashboard)
 ├── pages/               Einstieg je Seite: sammlung.js, titel.js, werkzeug.js
 ├── tools/publish-logic.js  Umwandlung Sicherung → Website-Datei (Positivliste)
-├── logic/               Reine Funktionen aus dem Dashboard (Filter, Statistik, Vorhang, Medaillon)
-├── ui/                  Karten, Chips, Statistik, Vorhang, Medaillon, Tastenkürzel (aus dem Dashboard),
-│                        site-shell.js: Kopfleiste und Dialog „Ansicht"
-└── utils/               Helfer; constants.js: Name der Seite, Optionen
+├── logic/               Reine Funktionen (Filter, Statistik, Vorhang, Medaillon) - gemeinsam
+├── ui/                  Karten, Chips, Statistik, Vorhang, Medaillon, Tastenkürzel - gemeinsam;
+│                        nur hier: site-shell.js (Kopfleiste und Dialog „Ansicht")
+└── utils/               Helfer und media.js (Medien) - gemeinsam; nur hier: constants.js
+gemeinsam.txt            Liste der Dateien, die aus dem Dashboard kommen
+Gemeinsames-holen.bat    Doppelklick: diese Dateien aus ..\Dashboard herüberkopieren
 tests/                   Logik-Tests (npm test), Browser-Test in tests/browser/
 robots.txt, .nojekyll    Suchmaschinen aussperren; GitHub Pages ohne Jekyll
 ```
@@ -96,11 +98,17 @@ Notizen nur, wenn im Werkzeug angehakt; Cover- und IMDb-Links, die keine
 Web-Adresse sind (z. B. `javascript:`), werden nicht veröffentlicht - das
 Dashboard zeigt dort ohnehin nur den Platzhalter.
 
-Die Website ist eine Kopie der Entertainment-Teile aus Dashboard 2.13.1.
-Verbesserungen im Dashboard wandern nicht automatisch hierher. `css/app.css`,
-`css/curtain.css` und die Dateien in `js/logic/` sind unverändert und lassen
-sich bei Bedarf direkt herüberkopieren. Die Datei `data/sammlung.json` ist der
-einzige Weg, auf dem Daten vom Dashboard hierher kommen.
+**Gemeinsamer Code:** Karten, Filter, Statistik, Vorhang, Medaillon, Design
+und Hilfsfunktionen sind dieselben Dateien wie im Dashboard - die Liste steht
+in `gemeinsam.txt`. Das Dashboard ist die Quelle: Nach einer Änderung dort
+`Gemeinsames-holen.bat` doppelklicken (erwartet den Ordner `Dashboard` direkt
+neben diesem), in GitHub Desktop ansehen, committen, pushen.
+`tests/gemeinsam.test.mjs` meldet, wenn hier etwas vom Dashboard abweicht.
+Diese Dateien hier nie direkt ändern - die nächste Übernahme würde es
+überschreiben.
+
+Die Datei `data/sammlung.json` ist der einzige Weg, auf dem Daten vom
+Dashboard hierher kommen.
 
 ## Tests
 

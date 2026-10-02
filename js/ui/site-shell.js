@@ -2,22 +2,21 @@ import { $ } from "../utils/dom.js";
 import { escapeHtml } from "../utils/dom.js";
 import { openModal, closeModal } from "../utils/modal.js";
 import { showToast } from "../utils/toast.js";
-import { INTRO_OPTIONS, CURTAIN_STYLES } from "../utils/constants.js";
-import { normalizeCurtainStyle } from "../logic/curtain-motion.js";
+import { INTRO_OPTIONS } from "../utils/constants.js";
 import { initBrandMedallion } from "./brand-medallion.js";
-import { openShortcutHelp } from "./shortcuts.js";
+import { openShortcutHelp, configureShortcutHelp } from "./shortcuts.js";
 import { replayCurtain } from "./curtain.js";
 
 /*
  * Kopfleiste aller Seiten: Logo-Medaillon, Design-Auswahl und der Dialog
- * „Ansicht" (Kinovorhang, Vorhang-Animation, Tastenkürzel).
+ * „Ansicht" (wann der Kinovorhang spielt, Vorschau, Tastenkürzel).
  *
  * Alles hier gilt nur im Browser des jeweiligen Besuchers (localStorage) -
  * die Website selbst speichert nichts. js/boot.js liest dieselben Schlüssel
  * vor dem ersten Zeichnen.
  */
 
-const KEYS = { theme: "site:theme", intro: "site:intro-mode", curtain: "site:curtain-style" };
+const KEYS = { theme: "site:theme", intro: "site:intro-mode" };
 const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
 /** Liest eine Einstellung; ohne Speicher (privates Fenster o. Ä.) gilt der Standard. */
@@ -39,7 +38,6 @@ function applyTheme(theme) {
 /** Dialog „Ansicht". Der Vorschau-Knopf erscheint nur auf der Hauptseite (mit Vorhang). */
 function openViewSettings() {
   const intro = read(KEYS.intro, "visit");
-  const curtain = normalizeCurtainStyle(read(KEYS.curtain, "fabric"));
   const hasCurtain = Boolean(document.querySelector(".curtain"));
   const options = (list, current) => list.map(option =>
     `<option value="${option.value}" ${option.value === current ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("");
@@ -47,12 +45,9 @@ function openViewSettings() {
   openModal("Ansicht", `
     <section class="form-section" aria-labelledby="view-curtain">
       <h2 id="view-curtain">Kinovorhang</h2>
-      <label class="field">Wann er spielt
-        <select id="intro-mode-select">${options(INTRO_OPTIONS, intro)}</select>
-      </label>
-      <div class="curtain-style-picker">
-        <label class="field">Vorhang-Animation
-          <select id="curtain-style-select">${options(CURTAIN_STYLES, curtain)}</select>
+      <div class="intro-picker">
+        <label class="field">Wann er spielt
+          <select id="intro-mode-select">${options(INTRO_OPTIONS, intro)}</select>
         </label>
         ${hasCurtain ? `<button class="small-button" type="button" id="curtain-preview-button">Vorschau abspielen</button>` : ""}
       </div>
@@ -67,18 +62,15 @@ function openViewSettings() {
     write(KEYS.intro, event.target.value);
     showToast("Gilt ab dem nächsten Besuch.", "success");
   };
-  $("#curtain-style-select").onchange = event => {
-    write(KEYS.curtain, event.target.value);
-    showToast("Vorhang-Animation gespeichert.", "success");
-  };
   const preview = $("#curtain-preview-button");
-  if (preview) preview.onclick = () => { closeModal(); replayCurtain(read(KEYS.curtain, "fabric")); };
+  if (preview) preview.onclick = () => { closeModal(); replayCurtain(); };
   $("#show-shortcuts").onclick = () => { closeModal(); openShortcutHelp(); };
 }
 
 /** Verdrahtet die Kopfleiste. Einmal pro Seite aufrufen. */
 export function initSiteShell() {
   initBrandMedallion();
+  configureShortcutHelp({ list: "Sammlung", newTabNote: false });
 
   const select = $("#theme-select");
   if (select) {

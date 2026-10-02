@@ -63,7 +63,8 @@ function renderToolbar(searched) {
   const row = $("#toolbar-row");
   row.hidden = collection.movies.length === 0;
   if (row.hidden) return;
-  $("#filter-chips").innerHTML = filterChipsHtml(collection.movies, searched, filters, { include: collection.include });
+  const hide = ["media", "seen", "lists"].filter(category => !collection.include.has({ media: "medium", seen: "seen", lists: "lists" }[category]));
+  $("#filter-chips").innerHTML = filterChipsHtml(collection.movies, searched, filters, { hide });
 }
 
 /** Zeichnet das Raster: Suche → Filter → Sortierung, dazu Zähler und Chips. */
@@ -162,7 +163,7 @@ async function init() {
   bindEvents();
   initTabs(tab);
   renderMovies();
-  renderStats(collection);
+  renderStats(collection, { detailHref: "titel.html", emptyText: "Noch keine Titel veröffentlicht.", withSeen: collection.include.has("seen") });
 }
 
 // Vorhang sofort starten (nicht erst nach dem Laden der Daten)

@@ -1,27 +1,27 @@
 /*
- * WebGL-Zeichnung des Kinovorhangs (Stile "fabric", "theater", "atmosphere").
+ * WebGL-Zeichnung des Kinovorhangs „Lebendiger Stoff".
  *
  * Der Stoff ist ein feines Gitter (u = quer über den Stoff, 0 = äußerer Rand,
  * 1 = innere Kante; v = von oben nach unten). Der Vertex-Shader legt das
- * Gitter je nach Ablauf auf den Bildschirm (seitlich raffen bzw.
- * Theater-Raffvorhang) und berechnet dabei, wie stark der Stoff an jeder
- * Stelle zusammengeschoben ist. Der Fragment-Shader formt daraus die Falten:
- * je enger gerafft, desto steiler die Faltenflanken und desto tiefer die
- * Schatten - wie bei echtem Samt. Dazu kommen Samtglanz an den Flanken,
- * Faltentäler, Saum- und Kantenschatten sowie ein Scheinwerferkegel.
+ * Gitter auf den Bildschirm (seitlich gerafft) und berechnet dabei, wie
+ * stark der Stoff an jeder Stelle zusammengeschoben ist. Der Fragment-Shader
+ * formt daraus die Falten: je enger gerafft, desto steiler die Faltenflanken
+ * und desto tiefer die Schatten - wie bei echtem Samt. Dazu kommen Samtglanz
+ * an den Flanken, Faltentäler sowie Saum- und Kantenschatten.
  *
- * Optional (je nach Ablauf): weicher Schatten des Vorhangs auf den Inhalt
- * (Maske in niedriger Auflösung, weichgezeichnet), abgedunkelter Saal mit
- * Lichtkreis sowie Lichtkegel mit Staub in der Luft.
+ * Während der Bewegung wirft der Vorhang einen weichen Schatten auf den
+ * Inhalt (Maske in niedriger Auflösung, weichgezeichnet).
  *
  * Nur WebGL 1, keine Erweiterungen - läuft damit praktisch überall. Schlägt
  * irgendetwas fehl, liefert createCurtainRenderer null und js/ui/curtain.js
- * fällt auf die klassische CSS-Animation zurück.
+ * fällt auf den einfachen CSS-Vorhang zurück.
  */
 
 const GRID_COLS = 200; // quer: genug Punkte für ~20 Falten mit glatten Kanten
 const GRID_ROWS = 80;
 const MAX_PIXELS = 5.2e6; // Obergrenze der Zeichenfläche (4K/Retina wird leicht herunterskaliert)
+const SHADOW_BLUR = 16;     // Weichheit des Schattens auf den Inhalt (CSS-Pixel)
+const SHADOW_OFFSET_Y = 8;  // Schatten fällt leicht nach unten
 
 // Gleiche Genauigkeit in allen Shadern (gemeinsame Uniforms müssen übereinstimmen)
 const PRECISION = `
@@ -36,11 +36,8 @@ const VERT_FABRIC = `${PRECISION}
 attribute vec2 aUV;
 uniform vec2 uView;
 uniform float uSide;      // 1 = linke Hälfte, -1 = rechte (gespiegelt)
-uniform float uKind;      // 0 = seitlich raffen, 1 = Theater-Raffvorhang
 uniform float uH;
 uniform float uLeadTop, uLeadBottom, uGather, uWaveX, uWavePhase;
-uniform float uTop, uOuterBottom, uSag;
-uniform vec2 uCorner, uCtrl;
 varying vec2 vUV;
 varying vec2 vGradU;
 varying vec2 vGradV;
@@ -55,21 +52,8 @@ vec2 mapSide(vec2 uv) {
   return vec2(x, uv.y * uH);
 }
 
-vec2 bezier(vec2 a, vec2 b, vec2 c, float t) {
-  float s = 1.0 - t;
-  return s * s * a + 2.0 * s * t * b + t * t * c;
-}
-
-vec2 mapTableau(vec2 uv) {
-  vec2 inner = bezier(vec2(uTop, 0.0), uCtrl, uCorner, uv.y);
-  vec2 outer = vec2(0.0, uv.y * uOuterBottom);
-  vec2 p = mix(outer, inner, uv.x);
-  p.y += uSag * sin(3.14159265 * uv.x) * uv.y * uv.y * uv.y;
-  return p;
-}
-
 vec2 place(vec2 uv) {
-  vec2 p = uKind < 0.5 ? mapSide(uv) : mapTableau(uv);
+  vec2 p = mapSide(uv);
   return vec2(uSide > 0.0 ? p.x : uView.x - p.x, p.y);
 }
 
@@ -102,23 +86,14 @@ uniform float uFoldN;      // Anzahl Falten über die volle Stoffbreite
 uniform float uFoldDepth;  // halbe Faltentiefe in px
 uniform float uW;          // halbe Fensterbreite in px (Stoffbreite geschlossen)
 uniform float uWave, uWavePhase;
-uniform float uAmbient, uSpot, uSpotGrow;
 
 const float TAU = 6.28318531;
 const vec3 VELVET = vec3(0.60, 0.012, 0.024);
 const vec3 VELVET_DEEP = vec3(0.13, 0.0, 0.006);
 const vec3 VELVET_LIGHT = vec3(0.86, 0.16, 0.17);
 const vec3 SHEEN = vec3(0.70, 0.19, 0.20);
-const vec3 SPOT_TINT = vec3(1.0, 0.74, 0.46);
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-
-// Lichtkreis des Scheinwerfers: runder Kern mit weicher Kante plus schwacher Hof
-float spotPool(vec2 pos) {
-  float r = uView.y * 0.36 * (1.0 + uSpotGrow * 1.3);
-  float l = length((pos - vec2(uView.x * 0.5, uView.y * 0.5)) / vec2(r * 1.12, r));
-  return (1.0 - smoothstep(0.74, 1.0, l)) + 0.22 * (1.0 - smoothstep(0.9, 1.9, l));
-}
 
 void main() {
   // Faltenprofil: unregelmäßige Abstände und Tiefen, spitze Täler, runde
@@ -173,11 +148,6 @@ void main() {
   col += SHEEN * rim * 0.5;
   col *= mix(mix(0.46, 0.3, squeeze), 1.0, cavity);
 
-  // Scheinwerfer (nur "Kino-Atmosphäre") bzw. Saallicht
-  float spot = uSpot * spotPool(vPos);
-  col *= uAmbient + spot * (0.3 + 0.52 * wrap); // Falten bleiben auch im Licht plastisch
-  col += SPOT_TINT * spot * (0.03 + 0.07 * wrap) * cavity;
-
   // Oben Schatten der Schabracke, unten zum Boden hin dunkler, zu den
   // Seiten hin etwas weniger Bühnenlicht
   col *= mix(0.5, 1.0, smoothstep(18.0, 120.0, vPos.y));
@@ -188,7 +158,7 @@ void main() {
   float dInner = (1.0 - vUV.x) / max(length(vGradU), 1e-4);
   float dHem = (1.0 - vUV.y) / max(length(vGradV), 1e-4);
   col *= mix(0.6, 1.0, smoothstep(0.0, 8.0, dInner));
-  col += VELVET_LIGHT * 0.14 * (1.0 - smoothstep(0.6, 2.2, dInner)) * (uAmbient + spot);
+  col += VELVET_LIGHT * 0.14 * (1.0 - smoothstep(0.6, 2.2, dInner));
   col *= mix(0.55, 1.0, smoothstep(0.0, 9.0, dHem));
 
   // Samtflor: feines Korn und Längsfasern, die mit dem Stoff wandern
@@ -231,94 +201,17 @@ void main() {
   gl_FragColor = vec4(a);
 }`;
 
-const FRAG_BACKDROP = `${PRECISION}
+const FRAG_SHADOW = `${PRECISION}
 varying vec2 vPos;
 uniform vec2 uView;
 uniform sampler2D uMask;
 uniform vec2 uShadowOffset;
-uniform float uShadow, uDim, uSpot, uSpotGrow;
-
-// Lichtkreis des Scheinwerfers: runder Kern mit weicher Kante plus schwacher Hof
-float spotPool(vec2 pos) {
-  float r = uView.y * 0.36 * (1.0 + uSpotGrow * 1.3);
-  float l = length((pos - vec2(uView.x * 0.5, uView.y * 0.5)) / vec2(r * 1.12, r));
-  return (1.0 - smoothstep(0.74, 1.0, l)) + 0.22 * (1.0 - smoothstep(0.9, 1.9, l));
-}
+uniform float uShadow;
 
 void main() {
   vec2 tc = vec2((vPos.x - uShadowOffset.x) / uView.x, 1.0 - (vPos.y - uShadowOffset.y) / uView.y);
-  float shadowA = uShadow * texture2D(uMask, tc).r;
-  float pool = min(spotPool(vPos), 1.0) * uSpot;
-  float dimA = uDim * 0.84 * (1.0 - pool * 0.85);
-  float a = 1.0 - (1.0 - shadowA) * (1.0 - dimA);
-  vec3 dark = vec3(0.03, 0.01, 0.01);
-  // Warmes Bühnenlicht im Lichtkreis, solange der Saal dunkel ist
-  float warmA = pool * uDim * 0.06;
-  vec3 col = dark * a + vec3(1.0, 0.82, 0.58) * warmA * (1.0 - a);
-  gl_FragColor = vec4(col, a + warmA * (1.0 - a));
-}`;
-
-const FRAG_LIGHT = `${PRECISION}
-varying vec2 vPos;
-uniform vec2 uView;
-uniform float uBeam, uDust, uTime, uSpotGrow;
-
-vec2 hash2(vec2 p) {
-  return fract(sin(vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)))) * 43758.5453);
-}
-float noise(vec2 p) {
-  vec2 i = floor(p), f = fract(p);
-  vec2 u = f * f * (3.0 - 2.0 * f);
-  float a = hash2(i).x, b = hash2(i + vec2(1.0, 0.0)).x;
-  float c = hash2(i + vec2(0.0, 1.0)).x, d = hash2(i + vec2(1.0, 1.0)).x;
-  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
-}
-
-void main() {
-  // Lichtkegel: Quelle über dem Bildschirm, trifft den Lichtkreis in der Mitte
-  vec2 src = vec2(uView.x * 0.5, -uView.y * 0.38);
-  vec2 d = vPos - src;
-  float spread = abs(d.x) / max(d.y, 1.0);
-  float edge = 0.62 * (1.0 + uSpotGrow * 0.6) * uView.x / uView.y / 1.78;
-  float cone = 1.0 - smoothstep(edge * 0.55, edge, spread);
-  if (cone < 0.002) { gl_FragColor = vec4(0.0); return; } // außerhalb des Lichts: nichts zu tun
-  float fall = mix(1.0, 0.3, clamp(vPos.y / uView.y, 0.0, 1.0));
-  float haze = 0.7 + 0.3 * noise(vPos * 0.0045 + vec2(uTime * 0.00004, -uTime * 0.00007));
-  float rays = 0.88 + 0.12 * noise(vec2(atan(d.x, d.y) * 40.0, uTime * 0.0003));
-  float beamA = uBeam * 0.15 * cone * fall * haze * rays;
-
-  // Staub im Licht: wenige feine Körnchen, die langsam treiben und aufblitzen,
-  // dazu vereinzelte unscharfe Lichtpunkte (Staub nah vor der "Kamera")
-  float dust = 0.0;
-  if (uDust > 0.001) {
-    for (int layer = 0; layer < 2; layer++) {
-      float size = layer == 0 ? 52.0 : 150.0;
-      float keep = layer == 0 ? 0.22 : 0.06;
-      vec2 p = vPos + vec2(0.0, -uTime * (layer == 0 ? 0.007 : 0.012));
-      vec2 cell = floor(p / size);
-      for (int i = -1; i <= 1; i++) {
-        for (int j = -1; j <= 1; j++) {
-          vec2 c = cell + vec2(float(i), float(j)) + float(layer) * 31.7;
-          vec2 rnd = hash2(c);
-          if (rnd.x > keep) continue;
-          vec2 pos = (c - float(layer) * 31.7 + hash2(c + 7.31)) * size
-            + vec2(sin(uTime * 0.0006 + rnd.y * 6.28) * 10.0, cos(uTime * 0.00045 + rnd.x * 9.0) * 8.0);
-          float twinkle = 0.55 + 0.45 * sin(uTime * 0.0035 * (0.6 + rnd.y) + rnd.x * 40.0);
-          float dist = length(p - pos);
-          if (layer == 0) {
-            float r = mix(0.7, 1.5, rnd.y);
-            dust += (1.0 - smoothstep(r * 0.3, r, dist)) * twinkle * 0.8;
-          } else {
-            float r = mix(3.0, 6.5, rnd.y);
-            dust += (1.0 - smoothstep(r * 0.2, r, dist)) * 0.16 * twinkle;
-          }
-        }
-      }
-    }
-  }
-  float core = cone * cone;
-  float a = clamp(beamA + uDust * dust * core * mix(1.0, 0.5, clamp(vPos.y / uView.y, 0.0, 1.0)), 0.0, 1.0);
-  gl_FragColor = vec4(vec3(1.0, 0.87, 0.66) * a, a);
+  float a = uShadow * texture2D(uMask, tc).r;
+  gl_FragColor = vec4(vec3(0.03, 0.01, 0.01) * a, a);
 }`;
 
 function compile(gl, type, source) {
@@ -380,15 +273,14 @@ export function createCurtainRenderer(canvas) {
   }
   if (!gl) return null;
 
-  let fabric, mask, blur, backdrop, light;
+  let fabric, mask, blur, shadow;
   try {
     fabric = program(gl, VERT_FABRIC, FRAG_FABRIC);
     mask = program(gl, VERT_FABRIC, FRAG_MASK);
     blur = program(gl, VERT_SCREEN, FRAG_BLUR);
-    backdrop = program(gl, VERT_SCREEN, FRAG_BACKDROP);
-    light = program(gl, VERT_SCREEN, FRAG_LIGHT);
+    shadow = program(gl, VERT_SCREEN, FRAG_SHADOW);
   } catch (error) {
-    console.warn("Kinovorhang: WebGL nicht nutzbar, klassische Animation.", error);
+    console.warn("Kinovorhang: WebGL nicht nutzbar, einfacher CSS-Vorhang.", error);
     return null;
   }
 
@@ -449,19 +341,10 @@ export function createCurtainRenderer(canvas) {
     const u = p.uniforms;
     gl.uniform2f(u.uView, geom.viewW, geom.viewH);
     gl.uniform1f(u.uH, geom.H);
-    gl.uniform1f(u.uKind, frame.kind === "tableau" ? 1 : 0);
-    if (frame.kind === "tableau") {
-      gl.uniform1f(u.uTop, frame.top);
-      gl.uniform2f(u.uCorner, frame.corner[0], frame.corner[1]);
-      gl.uniform2f(u.uCtrl, frame.ctrl[0], frame.ctrl[1]);
-      gl.uniform1f(u.uOuterBottom, frame.outerBottom);
-      gl.uniform1f(u.uSag, frame.sag);
-    } else {
-      gl.uniform1f(u.uLeadTop, frame.leadTop);
-      gl.uniform1f(u.uLeadBottom, frame.leadBottom);
-      gl.uniform1f(u.uGather, frame.gather);
-      gl.uniform1f(u.uWaveX, frame.waveX || 0);
-    }
+    gl.uniform1f(u.uLeadTop, frame.leadTop);
+    gl.uniform1f(u.uLeadBottom, frame.leadBottom);
+    gl.uniform1f(u.uGather, frame.gather);
+    gl.uniform1f(u.uWaveX, frame.waveX || 0);
     gl.uniform1f(u.uWavePhase, frame.wavePhase || 0);
   }
 
@@ -498,7 +381,7 @@ export function createCurtainRenderer(canvas) {
     gl.uniform1i(blur.uniforms.uTex, 0);
     gl.activeTexture(gl.TEXTURE0);
     // Radius in Masken-Texeln (Maske = 1/4 der CSS-Pixel)
-    const spread = Math.max(0.5, (frame.shadowBlur || 16) / 4 / 4);
+    const spread = Math.max(0.5, SHADOW_BLUR / 4 / 4);
     const passes = [[m, ping, [spread, 0]], [ping, pong, [0, spread]], [pong, ping, [spread * 1.8, 0]], [ping, pong, [0, spread * 1.8]]];
     for (const [from, to, step] of passes) {
       gl.bindFramebuffer(gl.FRAMEBUFFER, to.fbo);
@@ -513,14 +396,12 @@ export function createCurtainRenderer(canvas) {
    * Zeichnet ein Bild des Vorhangs.
    * @param {object} frame - aus der Timeline (js/logic/curtain-motion.js).
    * @param {{viewW:number, viewH:number, W:number, H:number, R:number}} geom
-   * @param {number} timeMs - für Dunst und Staub.
    */
-  function render(frame, geom, timeMs = 0) {
+  function render(frame, geom) {
     if (lost || gl.isContextLost()) return false;
     ensureSize(geom.viewW, geom.viewH);
 
-    const needsBackdrop = frame.shadow > 0.002 || frame.dim > 0.002;
-    const shadowTex = needsBackdrop && frame.shadow > 0.002 ? renderShadowMask(frame, geom) : null;
+    const shadowTex = frame.shadow > 0.002 ? renderShadowMask(frame, geom) : null;
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -529,19 +410,16 @@ export function createCurtainRenderer(canvas) {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // vormultipliertes Alpha
 
-    if (needsBackdrop) {
-      gl.useProgram(backdrop.prog);
-      const u = backdrop.uniforms;
+    if (shadowTex) {
+      gl.useProgram(shadow.prog);
+      const u = shadow.uniforms;
       gl.uniform2f(u.uView, geom.viewW, geom.viewH);
-      gl.uniform2f(u.uShadowOffset, 0, frame.shadowOffsetY || 0);
-      gl.uniform1f(u.uShadow, shadowTex ? frame.shadow : 0);
-      gl.uniform1f(u.uDim, frame.dim);
-      gl.uniform1f(u.uSpot, frame.spot);
-      gl.uniform1f(u.uSpotGrow, frame.spotGrow);
+      gl.uniform2f(u.uShadowOffset, 0, SHADOW_OFFSET_Y);
+      gl.uniform1f(u.uShadow, frame.shadow);
       gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, shadowTex || targets.mask.tex);
+      gl.bindTexture(gl.TEXTURE_2D, shadowTex);
       gl.uniform1i(u.uMask, 0);
-      drawScreen(backdrop);
+      drawScreen(shadow);
     }
 
     gl.useProgram(fabric.prog);
@@ -553,21 +431,7 @@ export function createCurtainRenderer(canvas) {
     gl.uniform1f(u.uFoldDepth, 0.2 * (geom.W / foldN));
     gl.uniform1f(u.uW, geom.W);
     gl.uniform1f(u.uWave, frame.wave || 0);
-    gl.uniform1f(u.uAmbient, frame.ambient);
-    gl.uniform1f(u.uSpot, frame.spot);
-    gl.uniform1f(u.uSpotGrow, frame.spotGrow);
     drawHalves(fabric);
-
-    if (frame.beam > 0.002 || frame.dust > 0.002) {
-      gl.useProgram(light.prog);
-      const lu = light.uniforms;
-      gl.uniform2f(lu.uView, geom.viewW, geom.viewH);
-      gl.uniform1f(lu.uBeam, frame.beam);
-      gl.uniform1f(lu.uDust, frame.dust);
-      gl.uniform1f(lu.uTime, timeMs);
-      gl.uniform1f(lu.uSpotGrow, frame.spotGrow);
-      drawScreen(light);
-    }
     return true;
   }
 

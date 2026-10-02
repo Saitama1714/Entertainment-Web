@@ -3,10 +3,11 @@
  *
  * Setzt das Design (hell/dunkel) sofort, damit nichts aufblitzt, und
  * entscheidet auf der Hauptseite (Skript-Tag mit data-intro), ob der
- * Kinovorhang spielt und in welchem Stil (<html data-curtain>).
+ * Kinovorhang spielt. <html data-curtain="fabric"> heißt: der WebGL-Vorhang
+ * „Lebendiger Stoff" darf übernehmen (sonst bleibt es beim CSS-Vorhang).
  *
  * Die Einstellungen liegen nur im Browser des Besuchers (localStorage,
- * geschrieben vom Dialog „Ansicht", js/ui/site-settings.js). Bewusst ein
+ * geschrieben vom Dialog „Ansicht", js/ui/site-shell.js). Bewusst ein
  * klassisches Skript ohne Module, damit es sofort und blockierend läuft.
  * Fehler (z. B. gesperrter Speicher) dürfen die Seite nie verhindern - dann
  * gilt einfach der Standard: dunkel, Vorhang spielt.
@@ -19,9 +20,7 @@
     root.dataset.theme = dark ? "dark" : "light";
 
     if (!document.currentScript || !document.currentScript.hasAttribute("data-intro")) return;
-    // Gleiche Liste wie CURTAIN_STYLE_VALUES in js/logic/curtain-motion.js
-    const style = localStorage.getItem("site:curtain-style");
-    root.dataset.curtain = ["fabric", "theater", "atmosphere", "classic"].includes(style) ? style : "fabric";
+    root.dataset.curtain = "fabric";
 
     // Gleiche Werte wie INTRO_OPTIONS in js/utils/constants.js
     const mode = localStorage.getItem("site:intro-mode") || "visit";
@@ -39,6 +38,6 @@
       else sessionStorage.setItem("site:intro-seen", "1");
     }
   } catch {
-    // Standard: dunkel, Vorhang spielt (klassisch, ohne data-curtain)
+    // Standard: dunkel, Vorhang spielt (CSS-Vorhang, ohne data-curtain)
   }
 })();

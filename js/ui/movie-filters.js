@@ -5,8 +5,9 @@ import {
 } from "../logic/movies-logic.js";
 
 /*
- * Markup der Filter-Chips (übernommen aus dem Dashboard). Reines Rendering: welche
- * Titel ein Filter trifft und wie gezählt wird, steht in movies-logic.js.
+ * Markup der Filter-Chips unter Entertainment (auch auf der Website
+ * Entertainment-Web genutzt). Reines Rendering: welche Titel ein Filter
+ * trifft und wie gezählt wird, steht in movies-logic.js.
  */
 
 /** Eine einzelne Chip-Schaltfläche (aria-pressed = aktiv). */
@@ -31,27 +32,29 @@ function groupHtml(label, category, options, filters, counts) {
 
 /**
  * Baut die komplette Chip-Leiste (Art, Genre, Medium, Status, IMDb-Liste).
- * Welche Listen-Chips es gibt, richtet sich nach der ganzen Sammlung (damit
+ * Welche Genre- und Listen-Chips es gibt, richtet sich nach der ganzen Sammlung (damit
  * sie beim Tippen in der Suche nicht auftauchen/verschwinden); die Zahlen
  * nach der bereits durchsuchten Teilmenge.
  * @param {Array} allMovies - komplette Sammlung.
  * @param {Array} searched - Sammlung nach Suchbegriff, vor den Filtern.
- * @param {{media: string[], seen: string[], lists: string[]}} filters
- * @param {{include?: Set<string>}} [options] - welche wahlweisen Angaben die
- *   Datendatei enthält; ohne „medium" bzw. „seen" entfallen diese Gruppen.
+ * @param {{kind: string[], genres: string[], media: string[], seen: string[], lists: string[]}} filters
+ * @param {{hide?: string[]}} [options] - Gruppen, die entfallen (z. B. auf der
+ *   Website, wenn Medium oder Gesehen-Status nicht veröffentlicht sind).
  * @returns {string} Leer, solange es nichts zu filtern gibt.
  */
-export function filterChipsHtml(allMovies, searched, filters, { include = new Set(["medium", "seen", "lists"]) } = {}) {
+export function filterChipsHtml(allMovies, searched, filters, { hide = [] } = {}) {
   const counts = facetCounts(searched, filters);
   const listOptions = listFilterOptions(allMovies).map(name => ({ value: name, label: name }));
   const genreOptions = genreFilterOptions(allMovies).map(name => ({ value: name, label: name }));
   const groups = [
-    groupHtml("Art", "kind", KIND_FILTER_OPTIONS, filters, counts),
-    groupHtml("Genre", "genres", genreOptions, filters, counts),
-    include.has("medium") ? groupHtml("Medium", "media", MEDIA_FILTER_OPTIONS, filters, counts) : "",
-    include.has("seen") ? groupHtml("Status", "seen", SEEN_FILTER_OPTIONS, filters, counts) : "",
-    groupHtml("Liste", "lists", listOptions, filters, counts),
-  ].join("");
+    ["Art", "kind", KIND_FILTER_OPTIONS],
+    ["Genre", "genres", genreOptions],
+    ["Medium", "media", MEDIA_FILTER_OPTIONS],
+    ["Status", "seen", SEEN_FILTER_OPTIONS],
+    ["Liste", "lists", listOptions],
+  ].filter(([, category]) => !hide.includes(category))
+    .map(([label, category, options]) => groupHtml(label, category, options, filters, counts))
+    .join("");
   if (!groups) return "";
   const reset = hasActiveFilters(filters)
     ? `<button type="button" class="filter-reset" id="filter-reset">Filter zurücksetzen</button>`

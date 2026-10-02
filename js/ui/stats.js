@@ -5,11 +5,12 @@ import { titleKind } from "../logic/movies-logic.js";
 import { movieGridHtml, settleCachedCovers } from "./movie-card.js";
 
 /*
- * Statistik-Kachel „Auf einen Blick" (übernommen aus dem Dashboard):
- * Gesamt/Gesehen/Offen und der Zufallspicker „Was schauen wir heute?",
- * wahlweise nur Filme oder Serien. Enthält die Datendatei keinen
- * Gesehen-Status, zeigt die Kachel Gesamt/Filme/Serien und der Picker wählt
- * aus der ganzen Sammlung.
+ * Statistik-Kachel „Auf einen Blick": Gesamt/Gesehen/Offen und der
+ * Zufallspicker „Was schauen wir heute?", wahlweise nur Filme oder Serien
+ * (gilt nur für die laufende Sitzung). Zahlen und Auswahl selbst berechnet
+ * logic/stats-logic.js. Registerkarte unter Entertainment (views/movies.html);
+ * auch auf der Website Entertainment-Web genutzt - dort ggf. ohne
+ * Gesehen-Status (dann Gesamt/Filme/Serien, Vorschläge aus allem).
  */
 
 const PICK_COUNT = 2;
@@ -20,17 +21,24 @@ const EMPTY_LABELS = { "": "Alles gesehen", film: "Alle Filme gesehen", series: 
 /**
  * Rendert die Statistik-Kachel „Auf einen Blick": Gesamt/Gesehen/Offen
  * sowie einen Knopf, der zufällige noch ungesehene Titel vorschlägt.
- * @param {object} state
+ * @param {{movies: Array}} state
+ * @param {object} [options]
+ * @param {string} [options.detailHref] - Detailseite (relativ zur Seite).
+ * @param {string} [options.emptyText] - Text, solange es keine Titel gibt.
+ * @param {boolean} [options.withSeen] - false: Daten ohne Gesehen-Status.
  */
-export function renderStats(state) {
-  const withSeen = state.include?.has("seen") ?? true;
+export function renderStats(state, {
+  detailHref = "movie.html", // die Kachel lebt in views/movies.html, die Detailseite im selben Ordner
+  emptyText = "Zahlen und Vorschläge gibt es, sobald deine IMDb-Listen importiert sind.",
+  withSeen = true,
+} = {}) {
   const numbersEl = $("#stats-numbers");
   const pickerEl = $("#stats-picker");
   if (!numbersEl || !pickerEl) return;
 
   const stats = collectionStats(state.movies);
   if (stats.total === 0) {
-    numbersEl.innerHTML = emptyState("Noch keine Titel veröffentlicht.");
+    numbersEl.innerHTML = emptyState(emptyText);
     pickerEl.hidden = true;
     return;
   }
@@ -63,7 +71,7 @@ export function renderStats(state) {
   button.onclick = () => {
     const picks = pickRandomUnseen(state.movies, PICK_COUNT, { exclude: shownIds, kind: kindSelect.value });
     shownIds = picks.map(movie => movie.id);
-    picksEl.innerHTML = movieGridHtml(picks, "titel.html", "");
+    picksEl.innerHTML = movieGridHtml(picks, detailHref, "");
     settleCachedCovers(picksEl);
     setButtonLabel(button, "Neu mischen");
   };

@@ -13,15 +13,6 @@
  * Inhalt, 0 bei schmalen Fenstern).
  */
 
-/** Wählbare Vorhang-Stile. "classic" ist die bisherige reine CSS-Animation. */
-export const CURTAIN_STYLE_VALUES = ["fabric", "theater", "atmosphere", "classic"];
-export const DEFAULT_CURTAIN_STYLE = "fabric";
-
-/** Unbekannte/alte Werte fallen auf den Standard zurück. */
-export function normalizeCurtainStyle(value) {
-  return CURTAIN_STYLE_VALUES.includes(value) ? value : DEFAULT_CURTAIN_STYLE;
-}
-
 export const clamp01 = x => (x < 0 ? 0 : x > 1 ? 1 : x);
 export const mix = (a, b, t) => a + (b - a) * t;
 
@@ -119,11 +110,8 @@ export function sampleTrack(track, tMs, key = "position") {
   return mix(values[i], values[i + 1], f - i);
 }
 
-/** Zahlenwerte, die bei jedem Ablauf gleich sind (Licht aus = Normalzustand). */
-const QUIET = { ambient: 1, spot: 0, spotGrow: 0, dim: 0, beam: 0, dust: 0, shadow: 0, shadowBlur: 16, shadowOffsetY: 8 };
-
 /* -------------------------------------------------------------------------
- * "Lebendiger Stoff": seitlich öffnend, aber mit Trägheit. Der Stoff zittert
+ * Ablauf „Lebendiger Stoff": seitlich öffnend, aber mit Trägheit. Der Stoff zittert
  * kurz, wenn an der Schnur gezogen wird; oben führt die Kante, der Saum
  * schwingt hinterher und pendelt am Ende sanft aus. Beim Raffen staut sich
  * der Stoff zuerst am äußeren Rand (dichtere Falten), in Ruhe liegen die
@@ -139,7 +127,7 @@ function fabricTimeline() {
   for (let t = HOLD; t <= HOLD + MOVE; t += 5) maxVel = Math.max(maxVel, (top(t + 2) - top(t - 2)) / 4);
 
   return {
-    style: "fabric", duration: DURATION, holdEnd: HOLD, decorCue: 2150,
+    duration: DURATION, holdEnd: HOLD, decorCue: 2150,
     frame(t, { W, R }) {
       const pTop = top(t);
       const pBottom = sampleTrack(bottom, t);
@@ -150,7 +138,6 @@ function fabricTimeline() {
       const settle = window01(t, DURATION - 260, DURATION);           // letzte Millisekunden: exakt in Ruhe
       const travel = W - R;
       return {
-        ...QUIET, kind: "side",
         leadTop: W - travel * pTop,
         leadBottom: Math.max(0, mix(W - travel * pBottom, R, settle)),
         gather: 1 + 1.15 * vel * (1 - settle),
@@ -165,111 +152,12 @@ function fabricTimeline() {
   };
 }
 
-/* -------------------------------------------------------------------------
- * "Theater-Raffvorhang": Der Stoff wird von der inneren unteren Ecke schräg
- * nach oben außen gerafft - die Öffnung wächst als Bogen von unten, oben
- * treffen sich die Hälften zunächst noch. Danach zieht sich der gesamte
- * Stoff an den Rand und bleibt dort als geraffter Behang hängen; der Saum
- * schwingt kurz nach.
- * ---------------------------------------------------------------------- */
-function theaterTimeline() {
-  const HOLD = 260, LIFT = 1500, TOP_START = 900, TOP = 1500, DURATION = 2750;
-  const easeLift = cubicBezier(0.5, 0, 0.3, 1);
-  const easeTop = cubicBezier(0.45, 0, 0.25, 1);
-  const lift = t => easeLift(clamp01((t - HOLD) / LIFT));
-  const retract = t => easeTop(clamp01((t - TOP_START) / TOP));
-  const cornerY = simulateFollower(lift, { omega: 9, zeta: 0.42, delayMs: 40, durationMs: DURATION });
-  const swag = simulateFollower(lift, { omega: 6.2, zeta: 0.34, delayMs: 60, durationMs: DURATION });
-
-  return {
-    style: "theater", duration: DURATION, holdEnd: HOLD, decorCue: 2300,
-    frame(t, { W, H, R }) {
-      const pc = lift(t);
-      const pt = retract(t);
-      const settle = window01(t, DURATION - 300, DURATION);
-      const bounce = (sampleTrack(cornerY, t) - pc) * (1 - settle);   // Nachfedern der Ecke
-      const sway = (sampleTrack(swag, t) - pc) * (1 - settle);        // Nachschwingen des Saums
-      const vel = Math.min(1, Math.abs(sampleTrack(swag, t, "velocity")) * 0.9);
-
-      const rest = { x: Math.max(R * 0.34, 0), y: H * 0.62 };
-      const cornerX = mix(W, rest.x, pc ** 1.35);
-      const cornerYPos = mix(H, rest.y, 1 - (1 - pc) ** 1.6) - bounce * H * 0.3;
-      const topX = mix(W, R, pt);
-      return {
-        ...QUIET, kind: "tableau",
-        top: topX,
-        corner: [cornerX, cornerYPos],
-        ctrl: [topX, mix(0.5, 0.86, pc) * cornerYPos],
-        outerBottom: mix(H, H * 0.97, pc),
-        // hängt beim schnellen Anheben tiefer durch, schwingt danach kurz zurück
-        sag: Math.max(0, H * 0.05 * pc - sway * H * 0.12),
-        wave: (0.18 * Math.sin(Math.PI * clamp01((t - 80) / (HOLD + 200))) ** 2 + 0.45 * vel) * (1 - settle),
-        wavePhase: t * 0.005,
-        rod: topX,
-        shadow: 0.34 * (1 - window01(t, 1800, DURATION - 150)),
-        shadowBlur: 20, shadowOffsetY: 12,
-        done: t >= DURATION,
-      };
-    },
-  };
-}
-
-/* -------------------------------------------------------------------------
- * "Kino-Atmosphäre": Saal dunkel, ein Scheinwerfer blendet auf den Vorhang
- * auf (mit Lichtkegel und Staub in der Luft), dann öffnet der Vorhang ruhig.
- * Die Bühne dahinter liegt erst im Spotlicht, bevor das Saallicht angeht;
- * der Vorhang wirft währenddessen einen weichen Schatten auf den Inhalt.
- * ---------------------------------------------------------------------- */
-function atmosphereTimeline() {
-  const OPEN = 1000, MOVE = 1850, DURATION = 3250;
-  const ease = cubicBezier(0.55, 0, 0.25, 1);
-  const top = t => ease(clamp01((t - OPEN) / MOVE));
-  const bottom = simulateFollower(top, { omega: 6.5, zeta: 0.86, delayMs: 110, durationMs: DURATION });
-  let maxVel = 0;
-  for (let t = OPEN; t <= OPEN + MOVE; t += 5) maxVel = Math.max(maxVel, (top(t + 2) - top(t - 2)) / 4);
-
-  return {
-    style: "atmosphere", duration: DURATION, holdEnd: OPEN, decorCue: 2950,
-    frame(t, { W, R }) {
-      const pTop = top(t);
-      const settle = window01(t, DURATION - 220, DURATION);
-      const pBottom = mix(sampleTrack(bottom, t), 1, settle);
-      const vel = (top(t + 2) - top(t - 2)) / 4 / maxVel;
-      const houseUp = window01(t, 1800, 3150);             // Saallicht geht an
-      const spotUp = window01(t, 320, 1050);               // Scheinwerfer blendet auf
-      const spot = spotUp * (1 - window01(t, 2350, 3150));
-      const travel = W - R;
-      return {
-        ...QUIET, kind: "side",
-        leadTop: W - travel * pTop,
-        leadBottom: Math.max(0, W - travel * pBottom),
-        gather: 1 + 0.6 * vel,
-        waveX: 2.5 * vel,
-        wave: 0.3 * vel,
-        wavePhase: t * 0.0045,
-        rod: W - travel * pTop,
-        ambient: mix(0.3, 1, houseUp),
-        spot,
-        spotGrow: houseUp,
-        dim: 1 - houseUp,
-        beam: spot * (1 - 0.35 * houseUp),
-        dust: spot * window01(t, 420, 1150) * (1 - window01(t, 2500, 3100)),
-        shadow: 0.55 * window01(t, OPEN, OPEN + 250) * (1 - window01(t, 2450, 3150)),
-        shadowBlur: 30, shadowOffsetY: 16,
-        done: t >= DURATION,
-      };
-    },
-  };
-}
-
-/** Ablauf für einen Stil ("classic" hat keinen - der läuft als CSS-Animation). */
-export function createCurtainTimeline(style) {
-  if (style === "theater") return theaterTimeline();
-  if (style === "atmosphere") return atmosphereTimeline();
+/** Der Ablauf des Vorhangs (gezeichnet in js/ui/curtain-gl.js). */
+export function createCurtainTimeline() {
   return fabricTimeline();
 }
 
-/** Zustand in Ruhe (Endbild) für einen Stil - identisch mit dem letzten Frame. */
+/** Zustand in Ruhe (Endbild) - identisch mit dem letzten Frame. */
 export function restFrame(timeline, geom) {
   return timeline.frame(timeline.duration + 1, geom);
 }

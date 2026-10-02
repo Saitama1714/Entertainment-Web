@@ -1,4 +1,4 @@
-import { CONFIG } from "../utils/constants.js";
+import { MEDIA_TYPES } from "../utils/media.js";
 
 /**
  * Filtert Filme anhand eines Suchbegriffs über Titel, Originaltitel, Medium,
@@ -48,7 +48,7 @@ export function previewMovies(movies, count, { rng = Math.random } = {}) {
 
 /** Feste Medium-Optionen für die Filter-Chips, unabhängig vom Datenbestand. */
 export const MEDIA_FILTER_OPTIONS = [
-  ...CONFIG.MEDIA_TYPES.map(value => ({ value, label: value })),
+  ...MEDIA_TYPES.map(value => ({ value, label: value })),
   { value: "", label: "Kein Medium" },
 ];
 

@@ -5,7 +5,7 @@
 
 @font-face {
   font-family: "Dashboard Text";
-  /* Nur installierte Schrift; eigene Datei: siehe fonts/LIESMICH.md */
+  /* Nur installierte Schriften (Inter, Instrument Serif), sonst Systemschrift */
   src: local("Inter"), local("Inter Variable");
   font-weight: 100 900;
   font-display: swap;
@@ -81,7 +81,7 @@
   --container-max: 1440px;
 
   /* Überschriften: klassische Buchschrift (Palatino unter Windows);
-     Text: die Systemschrift. Eigene Schriftdateien: fonts/LIESMICH.md */
+     Text: die Systemschrift - oder Inter/Instrument Serif, wenn installiert */
   --font-text: "Dashboard Text", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   --font-display: "Dashboard Display", "Palatino Linotype", Palatino, "Book Antiqua", "Iowan Old Style", Georgia, serif;
 
@@ -903,11 +903,11 @@ kbd {
 }
 .shortcut-note { margin-top: var(--s-4); }
 
-/* Einstellungen -> Darstellung: Auswahlfeld mit Live-Vorschau daneben */
+/* Einstellungen -> Erscheinungsbild: Auswahlfeld mit Live-Vorschau daneben */
 .decor-picker { display: flex; align-items: flex-end; gap: var(--s-4, 16px); }
-.curtain-style-picker { display: flex; align-items: flex-end; gap: var(--s-2); margin-top: var(--s-3); }
-.curtain-style-picker .field { flex: 1; min-width: 0; margin: 0; }
-.curtain-style-picker .small-button { flex: none; padding-block: 8px; }
+.intro-picker { display: flex; align-items: flex-end; gap: var(--s-2); margin-top: var(--s-3); }
+.intro-picker .field { flex: 1; min-width: 0; margin: 0; }
+.intro-picker .small-button { flex: none; padding-block: 8px; }
 .decor-picker .field { flex: 1; min-width: 0; margin: 0; }
 .decor-preview {
   flex: none;

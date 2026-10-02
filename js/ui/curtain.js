@@ -1,6 +1,6 @@
 import { $ } from "../utils/dom.js";
 import { CURTAIN_ICON_MARKUP } from "./curtain-icons.js";
-import { createCurtainTimeline, normalizeCurtainStyle, restFrame, restWidth } from "../logic/curtain-motion.js";
+import { createCurtainTimeline, restFrame, restWidth } from "../logic/curtain-motion.js";
 import { createCurtainRenderer } from "./curtain-gl.js";
 
 /**
@@ -24,20 +24,17 @@ export function renderCornerDecoration(state, { instant = false } = {}) {
 }
 
 /*
- * Kino-Intro der Startseite (Stile in css/curtain.css).
+ * Kino-Intro „Lebendiger Stoff" (Stile in css/curtain.css).
  *
- * Stil "classic": reine CSS-Animation wie bisher - hier wird nur die
- * Fensterbreite nachgemessen und der Endzustand fixiert.
+ * Gezeichnet mit WebGL (js/ui/curtain-gl.js), Bewegung aus
+ * js/logic/curtain-motion.js. Bis zum ersten WebGL-Bild steht der
+ * CSS-Vorhang geschlossen da (gleiche Farben); dann wird weich übergeblendet.
+ * Im Ruhezustand liegen nur noch zwei schmale Bilder in den Randstreifen -
+ * die WebGL-Fläche wird freigegeben.
  *
- * Stile "fabric", "theater", "atmosphere": gezeichnet mit WebGL
- * (js/ui/curtain-gl.js), Bewegung aus js/logic/curtain-motion.js. Bis zum
- * ersten WebGL-Bild steht der CSS-Vorhang geschlossen da (gleiche Farben);
- * dann wird weich übergeblendet. Im Ruhezustand liegen nur noch zwei schmale
- * Bilder in den Randstreifen - die WebGL-Fläche wird freigegeben.
- *
- * Sicherheitsnetze: Ohne WebGL (oder bei Fehlern) übernimmt die klassische
- * CSS-Animation; startet dieses Skript gar nicht, öffnet CSS den Vorhang nach
- * 1,5 s von selbst.
+ * Sicherheitsnetze: Ohne WebGL (oder bei Fehlern) übernimmt ein einfacher
+ * CSS-Vorhang (<html data-curtain="classic">); startet dieses Skript gar
+ * nicht, öffnet CSS den Vorhang nach 1,5 s von selbst.
  *
  * Zustand für Tests und CSS: <html data-curtain-phase="playing|rest">,
  * während eine WebGL-Animation läuft zusätzlich data-curtain-playing (hält
@@ -47,7 +44,7 @@ export function renderCornerDecoration(state, { instant = false } = {}) {
 const root = document.documentElement;
 const CROSSFADE_MS = 200;       // CSS-Vorhang -> WebGL-Vorhang
 const REPLAY_FADE_MS = 260;     // Vorschau: geschlossener Vorhang blendet ein
-const CLASSIC_DECOR_MS = 1800;  // klassischer Ablauf: Deko nach dem Öffnen
+const CLASSIC_DECOR_MS = 1800;  // CSS-Vorhang: Deko nach dem Öffnen
 
 let gl = null;         // laufende/ruhende WebGL-Vorhänge (siehe startGl)
 let renderer = null;   // einmal angelegt, auch nach einem Wechsel auf "Klassisch" wiederverwendet
@@ -107,7 +104,7 @@ function playClassic({ replay }) {
   decorTimer = setTimeout(cueDecor, CLASSIC_DECOR_MS);
 }
 
-/** Zurück zur reinen CSS-Darstellung (klassisch oder als Rückfallebene). */
+/** Zurück zum einfachen CSS-Vorhang (Rückfallebene ohne WebGL). */
 function dropGl({ atRest }) {
   if (gl) {
     cancelAnimationFrame(gl.raf);
@@ -116,7 +113,6 @@ function dropGl({ atRest }) {
   }
   gl = null;
   root.dataset.curtain = "classic";
-  root.style.removeProperty("--curtain-lum");
   for (const curtain of curtainEls()) {
     curtain.classList.remove("curtain--gl", "curtain--baked");
     curtain.style.removeProperty("width");
@@ -153,6 +149,32 @@ function bakeCanvas(curtain) {
   return canvas;
 }
 
+/*
+ * Zwischenspeicher für das Endbild: Auf Entertainment steht der Vorhang nur im
+ * Ruhezustand. Damit er dort beim Seitenwechsel nicht kurz verschwindet, bis
+ * WebGL gezeichnet hat, legt js/boot.js das zuletzt gezeichnete Endbild schon
+ * vor dem ersten Zeichnen hinein (gleicher Stil und gleiche Fenstergröße
+ * vorausgesetzt). Gespeichert wird kurz nach dem Zeichnen, nicht bei jedem
+ * Bild während man am Fensterrand zieht.
+ */
+const CACHE_KEY = "dashboard:curtain-cache";
+let cacheTimer = 0;
+
+function rememberRestImage(left, right, geom) {
+  clearTimeout(cacheTimer);
+  cacheTimer = setTimeout(() => {
+    try {
+      if (geom.R <= 0 || !left.width || !right.width) { localStorage.removeItem(CACHE_KEY); return; }
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        w: window.innerWidth, h: window.innerHeight, dpr: window.devicePixelRatio,
+        left: left.toDataURL("image/webp", 1), right: right.toDataURL("image/webp", 1), // Qualität 1 = verlustfrei: Wechsel zum WebGL-Bild unsichtbar
+      }));
+    } catch {
+      // Speicher voll oder gesperrt: dann eben ohne Zwischenspeicher
+    }
+  }, 400);
+}
+
 /**
  * Ruhezustand: Endbild in die beiden Randstreifen legen, WebGL-Fläche danach
  * freigeben. Beim Ziehen am Fensterrand wird mehrmals pro Sekunde neu
@@ -163,6 +185,7 @@ function bakeRest({ releaseAfterMs = 0 } = {}) {
   const [left, right] = [$(".curtain--left"), $(".curtain--right")];
   if (!gl.renderer.render(restFrame(gl.timeline, geom), geom)) return false;
   gl.renderer.copyStrips(bakeCanvas(left), bakeCanvas(right), geom);
+  rememberRestImage(bakeCanvas(left), bakeCanvas(right), geom);
   clearTimeout(releaseTimer);
   if (releaseAfterMs) releaseTimer = setTimeout(() => gl?.renderer.release(), releaseAfterMs);
   else gl.renderer.release();
@@ -190,14 +213,13 @@ function tick(now) {
   gl.renderer.render(frame, geom, t);
   // Schabracke oben wandert mit der Oberkante des Stoffs
   for (const curtain of curtainEls()) curtain.style.width = `${Math.max(0, frame.rod)}px`;
-  root.style.setProperty("--curtain-lum", frame.ambient.toFixed(3));
   if (t >= gl.timeline.decorCue) cueDecor();
-  if (frame.done) { root.style.removeProperty("--curtain-lum"); settle(); return; }
+  if (frame.done) { settle(); return; }
   gl.raf = requestAnimationFrame(tick);
 }
 
 /** Startet einen WebGL-Stil. Liefert false, wenn WebGL nicht verfügbar ist. */
-function startGl(style, { replay }) {
+function startGl({ replay }) {
   // Verlorener WebGL-Kontext: frische Fläche statt der alten
   if (renderer?.lost) { document.querySelector(".curtain-stage")?.remove(); renderer = null; }
   const stage = stageCanvas();
@@ -208,7 +230,7 @@ function startGl(style, { replay }) {
     return false;
   }
   if (gl) cancelAnimationFrame(gl.raf);
-  gl = { renderer, stage, timeline: createCurtainTimeline(style), raf: 0, t0: 0 };
+  gl = { renderer, stage, timeline: createCurtainTimeline(), raf: 0, t0: 0 };
 
   const skip = !replay && (root.dataset.intro === "skip" || reducedMotion());
   if (skip) {
@@ -283,27 +305,22 @@ export function initCurtain() {
     });
   });
 
-  // Ohne data-curtain (boot.js konnte nicht lesen) gilt, was CSS zeigt: klassisch
-  const style = root.dataset.curtain ? normalizeCurtainStyle(root.dataset.curtain) : "classic";
-  if (style === "classic" || !startGl(style, { replay: false })) {
-    if (style !== "classic") dropGl({ atRest: false });
+  // Ohne data-curtain (boot.js lief nicht) gilt, was CSS zeigt: der CSS-Vorhang
+  const webgl = root.dataset.curtain === "fabric";
+  if (!webgl || !startGl({ replay: false })) {
+    if (webgl) dropGl({ atRest: false });
     playClassic({ replay: false });
   }
 }
 
 /**
- * Spielt den Vorhang erneut ab (Einstellungen → "Vorschau abspielen"), auf
- * Wunsch in einem anderen Stil. Nur auf der Startseite wirksam.
- * @param {string} style - "fabric" | "theater" | "atmosphere" | "classic".
+ * Spielt den Vorhang erneut ab (Einstellungen → "Vorschau abspielen").
+ * Nur auf Seiten mit Vorhang wirksam (Übersicht, Entertainment).
  * @returns {boolean} false, wenn es auf dieser Seite keinen Vorhang gibt.
  */
-export function replayCurtain(style) {
+export function replayCurtain() {
   if (!curtainEls().length) return false;
-  const next = normalizeCurtainStyle(style);
-  if (next !== "classic") {
-    root.dataset.curtain = next;
-    if (startGl(next, { replay: true })) return true;
-  }
+  if (root.dataset.curtain === "fabric" && startGl({ replay: true })) return true;
   dropGl({ atRest: false });
   playClassic({ replay: true });
   return true;

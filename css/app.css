@@ -609,6 +609,16 @@ select.compact { padding: 6px 8px; font-size: .86rem; border-color: var(--line);
 .import-file-info strong { font-size: .86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .import-file.has-error .import-file-info { grid-column: 1 / 3; }
 .import-file-name { margin: 0; }
+.modal.modal--small { width: min(460px, calc(100vw - 32px)); }
+.seen-ask-list {
+  display: grid; gap: 2px; max-height: 48vh; overflow-y: auto;
+  margin: var(--s-3) 0 var(--s-4); padding: var(--s-2);
+  border: 1px solid var(--line); border-radius: var(--r-control); background: var(--surface-sunken);
+}
+.seen-ask-item { padding: 7px 8px; border-radius: 6px; color: var(--text); font-size: .9rem; }
+.seen-ask-item:hover { background: var(--surface-hover); }
+.seen-ask-item input { accent-color: var(--accent); width: 16px; height: 16px; flex: none; }
+.seen-ask-item .meta { margin-left: 6px; font-size: .8rem; }
 .import-hint { margin-top: var(--s-4); }
 .import-error:empty { display: none; }
 .import-error { color: var(--danger); margin-top: var(--s-2); }
@@ -865,6 +875,7 @@ select.compact { padding: 6px 8px; font-size: .86rem; border-color: var(--line);
 .field.full { grid-column: 1 / -1; }
 .field input, .field select, .field textarea { color: var(--text); }
 .field textarea { resize: vertical; min-height: 72px; }
+.field-note { font-size: .76rem; line-height: 1.35; color: var(--text-faint); }
 .form-actions { display: flex; justify-content: flex-end; gap: var(--s-2); margin-top: var(--s-5); }
 
 .form-section { padding-top: var(--s-5); margin-top: var(--s-5); border-top: 1px solid var(--line); }

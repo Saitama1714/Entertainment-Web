@@ -9,6 +9,7 @@ import { $, escapeHtml } from "./dom.js";
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 let lastFocusedElement = null;
 let keydownHandler = null;
+let closeHandler = null;
 
 /**
  * Alle aktuell per Tab erreichbaren Elemente im Dialog. Wird bei jedem Tab
@@ -23,17 +24,20 @@ const focusableIn = modal => [...modal.querySelectorAll(FOCUSABLE)]
  * Kümmert sich um Fokus-Management, Escape-Taste und Tab-Trapping (WCAG AA).
  * @param {string} title
  * @param {string} contentHtml
+ * @param {{onClose?: Function, small?: boolean}} [options] - onClose läuft einmal beim
+ *   Schließen, egal ob per Knopf, Esc, × oder Klick daneben; small = schmales Fenster.
  */
-export function openModal(title, contentHtml) {
+export function openModal(title, contentHtml, { onClose = null, small = false } = {}) {
   // Schon ein Dialog offen? Dessen Tastatur-Handler zuerst entfernen und den
   // ursprünglichen Fokus behalten (nicht ein Element im alten Dialog).
   if (keydownHandler) document.removeEventListener("keydown", keydownHandler);
   else lastFocusedElement = document.activeElement;
 
+  closeHandler = onClose;
   const root = $("#modal-root");
   root.innerHTML = `
     <div class="modal-backdrop">
-      <section class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-label="${escapeHtml(title)}">
+      <section class="modal${small ? " modal--small" : ""}" role="dialog" aria-modal="true" tabindex="-1" aria-label="${escapeHtml(title)}">
         <header class="modal-header">
           <h2>${escapeHtml(title)}</h2>
           <button class="icon-button" id="close-modal" aria-label="Schließen">×</button>
@@ -81,4 +85,7 @@ export function closeModal() {
   }
   lastFocusedElement?.focus?.();
   lastFocusedElement = null;
+  const handler = closeHandler;
+  closeHandler = null;
+  handler?.();
 }

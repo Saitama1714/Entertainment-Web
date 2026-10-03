@@ -1,5 +1,10 @@
 # Änderungen
 
+## 1.6.0 – Zeitraum des Import-Filters (Dashboard 2.21.0)
+- Das Werkzeug übernimmt den im Dashboard eingestellten Zeitraum des Filters
+  „Import" in `sammlung.json` (`importWindowDays`, Standard 28 Tage); die
+  Website filtert damit. Gemeinsame Dateien per `Gemeinsames-holen.bat`.
+
 ## 1.5.0 – Aufgeräumte Filterleiste (Dashboard 2.18.0)
 - Filter als Zeile mit einem Knopf je Gruppe, Auswahl zum Aufklappen (auf
   dem Handy als Blatt von unten). Kommt über `Gemeinsames-holen.bat`;

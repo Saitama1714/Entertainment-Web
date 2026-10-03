@@ -16,7 +16,7 @@ Pages – Anleitung in [docs/HOSTING.md](docs/HOSTING.md).
 
 - **Titel**: Raster mit Covern, Suche (Titel, Regie, Genre), Filterleiste
   mit aufklappbaren Gruppen (Art, Genre, Medium, Status, Liste, Import) und Sortierung (Standard:
-  IMDb-Bewertung). „Import" zeigt, was im Dashboard in den letzten 4 Wochen
+  IMDb-Bewertung). „Import" zeigt, was im Dashboard im dort eingestellten Zeitraum (Standard 4 Wochen)
   neu importiert oder durch den Import geändert wurde. Suche, Filter und Sortierung
   bleiben während des Besuchs erhalten, auch nach einer Detailseite.
 - **Auf einen Blick**: Gesamt/Gesehen/Offen und „Was schauen wir heute?".

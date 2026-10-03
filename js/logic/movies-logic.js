@@ -96,12 +96,37 @@ export const SEEN_FILTER_OPTIONS = [
 
 /*
  * Filtergruppe "Import": Einträge, die der IMDb-Import in den letzten
- * 4 Wochen angelegt ("Neu") oder spürbar verändert ("Geändert") hat. Die
+ * Wochen angelegt ("Neu") oder spürbar verändert ("Geändert") hat - Standard
+ * 4 Wochen, einstellbar (setImportWindowDays, Einstellungen → Entertainment). Die
  * Zeitstempel setzt mergeImdbLists() (importAddedAt/importChangedAt). Ein
  * Eintrag kann beides sein (neu und danach noch einmal geändert).
  * Gerechnet wird ab jetzt - die Chips leeren sich also von selbst wieder.
  */
 export const IMPORT_WINDOW_DAYS = 28;
+
+/** Wählbare Zeiträume für den Filter "Import" (Einstellungen). */
+export const IMPORT_WINDOW_OPTIONS = [
+  { value: 7, label: "1 Woche" },
+  { value: 14, label: "2 Wochen" },
+  { value: 28, label: "4 Wochen" },
+  { value: 56, label: "8 Wochen" },
+  { value: 90, label: "3 Monate" },
+];
+
+let importWindowDays = IMPORT_WINDOW_DAYS;
+
+/**
+ * Legt den Zeitraum des Filters "Import" fest (in Tagen). Ungültige Werte
+ * (leer, 0, Text) → Standard 4 Wochen.
+ * @param {number|string} days
+ */
+export function setImportWindowDays(days) {
+  const value = Number(days);
+  importWindowDays = Number.isFinite(value) && value > 0 ? value : IMPORT_WINDOW_DAYS;
+}
+
+/** Aktueller Zeitraum des Filters "Import" in Tagen. */
+export const getImportWindowDays = () => importWindowDays;
 
 export const IMPORT_FILTER_OPTIONS = [
   { value: "new", label: "Neu" },
@@ -115,7 +140,7 @@ export const IMPORT_FILTER_OPTIONS = [
  * @returns {string[]} [], ["new"], ["changed"] oder ["new", "changed"].
  */
 export function importStatus(movie, now = Date.now()) {
-  const since = now - IMPORT_WINDOW_DAYS * 86400000;
+  const since = now - importWindowDays * 86400000;
   const recent = value => {
     const time = Date.parse(value || "");
     return Number.isFinite(time) && time >= since;

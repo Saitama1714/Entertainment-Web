@@ -1,5 +1,6 @@
 import { normalizeMovies } from "./collection.js";
 import { DATA_URL } from "./utils/constants.js";
+import { setImportWindowDays } from "./logic/movies-logic.js";
 
 /*
  * Lädt die Datendatei der Website (data/sammlung.json, erzeugt mit
@@ -33,6 +34,7 @@ export function parseCollection(data) {
   return {
     movies,
     include,
+    importWindowDays: Number(data.importWindowDays) > 0 ? Number(data.importWindowDays) : 28,
     exportedAt: String(data.exportedAt || ""),
     generatedAt: String(data.generatedAt || ""),
   };
@@ -48,7 +50,11 @@ export function loadCollection() {
       if (!response.ok) throw new Error(`Die Datendatei fehlt (${DATA_URL}).`);
       return response.json();
     })
-    .then(parseCollection);
+    .then(parseCollection)
+    .then(collection => {
+      setImportWindowDays(collection.importWindowDays); // Filter "Import" wie im Dashboard
+      return collection;
+    });
   return cache;
 }
 

@@ -99,7 +99,7 @@ export function readBackup(backup) {
  * @param {object} backup - Inhalt der Sicherungsdatei.
  * @param {Object<string, boolean>} [options] - Häkchen je OPTIONAL_GROUPS-Schlüssel.
  * @param {{now?: Date}} [context]
- * @returns {{version: 1, generatedAt: string, exportedAt: string, include: string[], movies: object[]}}
+ * @returns {{version: 1, generatedAt: string, exportedAt: string, include: string[], importWindowDays: number, movies: object[]}}
  */
 export function buildPublicData(backup, options = defaultOptions(), { now = new Date() } = {}) {
   const movies = readBackup(backup);
@@ -110,6 +110,8 @@ export function buildPublicData(backup, options = defaultOptions(), { now = new 
     generatedAt: now.toISOString(),
     exportedAt: typeof backup.exportedAt === "string" ? backup.exportedAt : "",
     include,
+    // Zeitraum des Filters "Import" wie im Dashboard eingestellt (Standard 28 Tage)
+    importWindowDays: Number(backup.data.importWindowDays) > 0 ? Number(backup.data.importWindowDays) : 28,
     movies: movies.map(movie => publicMovie(movie, fields)),
   };
 }

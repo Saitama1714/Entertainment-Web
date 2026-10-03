@@ -6,7 +6,8 @@
  */
 import { newMovie } from "../js/collection.js";
 import {
-  importStatus, importFilterOptions, IMPORT_WINDOW_DAYS, IMPORT_FILTER_OPTIONS,
+  importStatus, importFilterOptions, IMPORT_WINDOW_DAYS, IMPORT_FILTER_OPTIONS, IMPORT_WINDOW_OPTIONS,
+  setImportWindowDays, getImportWindowDays,
   filterMovies, facetCounts, emptyFilters, toggleFilterValue, hasActiveFilters,
 } from "../js/logic/movies-logic.js";
 import { filterChipsHtml } from "../js/ui/movie-filters.js";
@@ -38,6 +39,18 @@ check("Grenze: genau 28 Tage → noch drin, 28 Tage + 1 min → raus",
   importStatus({ importAddedAt: ago(28) }, NOW).join() === "new" && importStatus({ importAddedAt: new Date(NOW - 28 * DAY - 60000).toISOString() }, NOW).length === 0);
 check("Kaputter Datumswert → nichts, kein Absturz", importStatus({ importAddedAt: "Quatsch", importChangedAt: null }, NOW).length === 0);
 check("Ohne Zeitangabe wird ab jetzt gerechnet", importStatus(movies[0]).join() === "new");
+
+console.log("Zeitraum einstellbar");
+setImportWindowDays(7);
+check("1 Woche: vor 3 Tagen neu → drin, vor 10 Tagen geändert → raus", importStatus(movies[0], NOW).join() === "new" && importStatus(movies[1], NOW).length === 0);
+setImportWindowDays(56);
+check("8 Wochen: auch vor 40 Tagen angelegt zählt", importStatus(movies[3], NOW).join() === "new,changed");
+setImportWindowDays("");
+check("Ungültiger Wert → Standard 28 Tage", getImportWindowDays() === 28);
+setImportWindowDays(0);
+check("0 → Standard 28 Tage", getImportWindowDays() === 28);
+check("Optionen 1/2/4/8 Wochen, 3 Monate", IMPORT_WINDOW_OPTIONS.map(o => o.value).join() === "7,14,28,56,90");
+setImportWindowDays(28);
 
 console.log("Filtern");
 const pick = (...values) => values.reduce((f, v) => toggleFilterValue(f, "import", v), emptyFilters());

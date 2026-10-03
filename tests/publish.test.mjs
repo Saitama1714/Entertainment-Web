@@ -45,6 +45,7 @@ check("Links bleiben Zeichen für Zeichen gleich", all.movies[0].cover === backu
 console.log("Aufbau der Datei");
 check("Kopf: Version, Zeitpunkte, gewählte Angaben", all.version === 1 && all.generatedAt === "2026-10-01T10:00:00.000Z" && all.exportedAt === backup.exportedAt && all.include.join() === "medium,seen,rating,lists,notes");
 check("Grundangaben immer dabei", ["id", "title", "year", "genre", "directors", "imdbRating", "cover", "imdbUrl"].every(f => f in all.movies[0]));
+check("Zeitraum des Import-Filters kommt mit (Standard 28 Tage)", std.importWindowDays === 28 && buildPublicData({ ...backup, data: { ...backup.data, importWindowDays: 56 } }).importWindowDays === 56);
 check("Import-Zeitstempel (Filter „Import“) sind immer dabei", std.movies[0].importAddedAt === "2026-09-20T08:00:00.000Z" && all.movies[0].importChangedAt === "2026-09-27T08:00:00.000Z");
 check("… und fehlen bei Titeln ohne Import-Änderung", !("importAddedAt" in all.movies[1]) && !("importChangedAt" in all.movies[1]));
 check("Leere Felder werden weggelassen (kleinere Datei)", !("originalTitle" in all.movies[0]) && !("seenAt" in all.movies[1]));

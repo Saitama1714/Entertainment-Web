@@ -29,9 +29,9 @@ function displayOrder() {
   if (view) {
     const filters = { ...emptyFilters() };
     for (const key of Object.keys(filters)) if (Array.isArray(view.filters?.[key])) filters[key] = view.filters[key].map(String);
-    const order = sortMovies(filterMovies(searchMovies(all, String(view.query || "")), filters), view.sortKey);
+    const order = sortMovies(filterMovies(searchMovies(all, String(view.query || "")), filters), view.sortKey, view.sortDirection);
     if (order.some(item => item.id === movie.id)) return order;
-    return sortMovies(all, view.sortKey);
+    return sortMovies(all, view.sortKey, view.sortDirection);
   }
   return sortMovies(all, DEFAULT_SORT);
 }

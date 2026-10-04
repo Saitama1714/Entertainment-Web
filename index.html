@@ -61,10 +61,11 @@
 
         <div class="toolbar-row" id="toolbar-row" hidden>
           <div class="filter-chips" id="filter-chips" role="group" aria-label="Filter" tabindex="-1"></div>
-          <label class="sort-field">
-            <span class="visually-hidden">Sortierung</span>
+          <div class="sort-field">
+            <label class="visually-hidden" for="movie-sort">Sortieren nach</label>
             <select id="movie-sort" class="compact"></select>
-          </label>
+            <button type="button" class="sort-dir" id="movie-sort-dir"></button>
+          </div>
         </div>
 
         <div id="movies-grid" class="movie-grid spaced" aria-live="polite"></div>

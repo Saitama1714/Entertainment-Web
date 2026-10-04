@@ -271,23 +271,43 @@ export function facetCounts(movies, filters) {
 }
 
 /*
- * Sortierung. Standard in Entertainment (und auf der Website) ist die
- * IMDb-Bewertung. "Zuletzt hinzugekommen" gibt es als Auswahl nicht mehr -
- * dafür ist der Filter "Import" da. Die Reihenfolge nach createdAt (neueste
- * zuerst) entscheidet aber weiterhin bei Gleichstand.
- * Fehlende Werte (keine Bewertung, kein Jahr) landen immer am Ende,
- * unabhängig von der gewählten Richtung. Die Vorschau auf der Startseite
- * nutzt dagegen previewMovies() (Zufallsauswahl, siehe oben).
+ * Sortierung: ein Kriterium plus Richtung (absteigend/aufsteigend, Pfeil-Knopf
+ * neben der Auswahl). Jedes Kriterium hat eine sinnvolle Startrichtung
+ * (Bewertungen, Jahr, Laufzeit, Gesehen am: absteigend; Titel: A–Z).
+ * Fehlende Werte (keine Bewertung, kein Jahr, kein Datum) landen immer am
+ * Ende, unabhängig von der Richtung. Bei Gleichstand entscheidet "neueste
+ * zuerst" (createdAt). Standard: Website IMDb-Bewertung (DEFAULT_SORT), das
+ * Dashboard nutzt "Deine Bewertung". Die Vorschau auf der Startseite nutzt
+ * dagegen previewMovies() (Zufallsauswahl, siehe oben).
  */
 export const DEFAULT_SORT = "imdbRating";
 
 export const SORT_OPTIONS = [
-  { value: "imdbRating", label: "IMDb-Bewertung (hoch → niedrig)" },
-  { value: "title", label: "Titel (A–Z)" },
-  { value: "yourRating", label: "Deine Bewertung (hoch → niedrig)" },
-  { value: "yearDesc", label: "Jahr (neu → alt)" },
-  { value: "yearAsc", label: "Jahr (alt → neu)" },
+  { value: "yourRating", label: "Deine Bewertung", direction: "desc" },
+  { value: "imdbRating", label: "IMDb-Bewertung", direction: "desc" },
+  { value: "title", label: "Titel", direction: "asc" },
+  { value: "year", label: "Jahr", direction: "desc" },
+  { value: "runtimeMinutes", label: "Laufzeit", direction: "desc" },
+  { value: "seenAt", label: "Gesehen am", direction: "desc" },
 ];
+
+/** Ältere Sortier-Werte (z. B. in einer gemerkten Ansicht der Website). */
+const LEGACY_SORT = { yearDesc: ["year", "desc"], yearAsc: ["year", "asc"] };
+
+/**
+ * Löst Sortier-Wert und Richtung auf; Unbekanntes fällt auf `fallback` zurück.
+ * @param {string} sortKey
+ * @param {"asc"|"desc"} [direction] - fehlt sie, gilt die Startrichtung des Kriteriums.
+ * @param {string} [fallback]
+ * @returns {{key: string, direction: "asc"|"desc"}}
+ */
+export function resolveSort(sortKey, direction, fallback = DEFAULT_SORT) {
+  const [legacyKey, legacyDirection] = LEGACY_SORT[sortKey] || [];
+  const option = SORT_OPTIONS.find(item => item.value === (legacyKey || sortKey))
+    || SORT_OPTIONS.find(item => item.value === fallback);
+  const chosen = direction === "asc" || direction === "desc" ? direction : legacyDirection || option.direction;
+  return { key: option.value, direction: chosen };
+}
 
 /** Zahl aus einem Textfeld, oder null wenn keine Zahl darin steht. */
 const toNumber = value => {
@@ -295,41 +315,36 @@ const toNumber = value => {
   return Number.isFinite(number) ? number : null;
 };
 
+/** Sortierwert eines Titels, oder null wenn er fehlt. */
+function sortValue(movie, key) {
+  if (key === "title") return String(movie.title || "").trim() || null;
+  if (key === "seenAt") {
+    const time = Date.parse(movie.seenAt || "");
+    return Number.isFinite(time) ? time : null;
+  }
+  return toNumber(movie[key]);
+}
+
 /** "Neueste zuerst" (nur noch als Gleichstands-Regel): nach createdAt, sonst die spätere Position. */
 const byRecent = (a, b) => (b.movie.createdAt || "").localeCompare(a.movie.createdAt || "") || b.index - a.index;
 
 /**
- * Vergleich nach einem Zahlenfeld. Fehlende Werte landen immer am Ende,
- * unabhängig von der Richtung; bei Gleichstand entscheidet "neueste zuerst".
- * @param {string} field
- * @param {1|-1} direction - 1 = aufsteigend, -1 = absteigend.
- */
-const byNumber = (field, direction) => (a, b) => {
-  const left = toNumber(a.movie[field]);
-  const right = toNumber(b.movie[field]);
-  if (left === null || right === null) return (left === null) - (right === null) || byRecent(a, b);
-  return direction * (left - right) || byRecent(a, b);
-};
-
-/** Vergleichsfunktion je Sortier-Option. */
-const COMPARATORS = {
-  title: (a, b) => a.movie.title.localeCompare(b.movie.title, "de") || byRecent(a, b),
-  yourRating: byNumber("yourRating", -1),
-  imdbRating: byNumber("imdbRating", -1),
-  yearDesc: byNumber("year", -1),
-  yearAsc: byNumber("year", 1),
-};
-
-/**
- * Sortiert eine Titelliste nach einer der SORT_OPTIONS (ohne das Original
- * zu verändern). Unbekannte Werte (auch das frühere "recent") fallen auf
- * DEFAULT_SORT zurück.
+ * Sortiert eine Titelliste (ohne das Original zu verändern).
  * @param {Array} movies
- * @param {string} sortKey
+ * @param {string} sortKey - ein Wert aus SORT_OPTIONS (Unbekanntes → DEFAULT_SORT).
+ * @param {"asc"|"desc"} [direction] - fehlt sie, gilt die Startrichtung des Kriteriums.
  * @returns {Array}
  */
-export function sortMovies(movies, sortKey) {
-  const compare = COMPARATORS[sortKey] || COMPARATORS[DEFAULT_SORT];
+export function sortMovies(movies, sortKey, direction) {
+  const { key, direction: dir } = resolveSort(sortKey, direction);
+  const sign = dir === "asc" ? 1 : -1;
+  const compare = (a, b) => {
+    const left = sortValue(a.movie, key);
+    const right = sortValue(b.movie, key);
+    if (left === null || right === null) return (left === null) - (right === null) || byRecent(a, b);
+    const diff = key === "title" ? left.localeCompare(right, "de") : left - right;
+    return sign * diff || byRecent(a, b);
+  };
   return movies
     .map((movie, index) => ({ movie, index }))
     .sort(compare)

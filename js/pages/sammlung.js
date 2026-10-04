@@ -1,10 +1,11 @@
 import { loadCollection, standLabel } from "../data-source.js";
 import {
   searchMovies, filterMovies, sortMovies, toggleFilterValue,
-  emptyFilters, hasActiveFilters, SORT_OPTIONS, DEFAULT_SORT,
+  emptyFilters, hasActiveFilters, SORT_OPTIONS, DEFAULT_SORT, resolveSort,
 } from "../logic/movies-logic.js";
 import { movieGridHtml, settleCachedCovers } from "../ui/movie-card.js";
 import { filterChipsHtml, initFilterBar } from "../ui/movie-filters.js";
+import { initSortControl } from "../ui/sort-control.js";
 import { renderStats } from "../ui/stats.js";
 import { initSiteShell } from "../ui/site-shell.js";
 import { initShortcuts } from "../ui/shortcuts.js";
@@ -26,12 +27,13 @@ const VIEW_KEY = "site:view";
 let collection = { movies: [], include: new Set() };
 let filters = emptyFilters();
 let sortKey = DEFAULT_SORT;
+let sortDirection = resolveSort(DEFAULT_SORT).direction;
 
 /** Merkt sich Suche, Filter, Sortierung und Registerkarte für diesen Besuch. */
 function saveView() {
   try {
     sessionStorage.setItem(VIEW_KEY, JSON.stringify({
-      query: $("#movie-search").value, filters, sortKey, tab: $(".view-tab[aria-selected='true']")?.id,
+      query: $("#movie-search").value, filters, sortKey, sortDirection, tab: $(".view-tab[aria-selected='true']")?.id,
     }));
   } catch { /* ohne Speicher: beim Zurückkommen eben wieder ungefiltert */ }
 }
@@ -45,7 +47,7 @@ function restoreView() {
     const base = emptyFilters();
     for (const key of Object.keys(base)) if (Array.isArray(view.filters?.[key])) base[key] = view.filters[key].map(String);
     filters = base;
-    if (SORT_OPTIONS.some(option => option.value === view.sortKey)) sortKey = view.sortKey;
+    if (view.sortKey) ({ key: sortKey, direction: sortDirection } = resolveSort(view.sortKey, view.sortDirection));
     return view.tab;
   } catch {
     return null;
@@ -53,10 +55,12 @@ function restoreView() {
 }
 
 /** Sortier-Optionen, die zur Datendatei passen (ohne eigene Bewertung keine Sortierung danach). */
-const sortOptions = () => SORT_OPTIONS
+// Website: Standard bleibt die IMDb-Bewertung - sie steht deshalb vorn
+const sortOptions = () => [...SORT_OPTIONS].sort((a, b) => (b.value === DEFAULT_SORT) - (a.value === DEFAULT_SORT))
   .filter(option => option.value !== "yourRating" || collection.include.has("rating"))
+  .filter(option => option.value !== "seenAt" || collection.include.has("seen"))
   // Auf der Website spricht der Besitzer: „Meine" statt „Deine" Bewertung
-  .map(option => (option.value === "yourRating" ? { ...option, label: "Meine Bewertung (hoch → niedrig)" } : option));
+  .map(option => (option.value === "yourRating" ? { ...option, label: "Meine Bewertung" } : option));
 
 /** Zeigt die Filter-/Sortierzeile (nur wenn es Titel gibt) und baut die Chips neu. */
 function renderToolbar(searched) {
@@ -72,7 +76,7 @@ function renderMovies() {
   const query = $("#movie-search").value;
   const searched = searchMovies(collection.movies, query);
   const filtered = filterMovies(searched, filters);
-  const sorted = sortMovies(filtered, sortKey);
+  const sorted = sortMovies(filtered, sortKey, sortDirection);
 
   const empty = collection.movies.length === 0
     ? emptyState("Hier sind noch keine Titel veröffentlicht.")
@@ -121,9 +125,11 @@ function bindEvents() {
   $("#movie-search").oninput = debounce(renderMovies, CONFIG.SEARCH_DEBOUNCE_MS);
   initShortcuts({ search: $("#movie-search"), onSearchCleared: renderMovies });
 
-  $("#movie-sort").innerHTML = sortOptions().map(option =>
-    `<option value="${option.value}" ${option.value === sortKey ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("");
-  $("#movie-sort").onchange = event => { sortKey = event.target.value; renderMovies(); };
+  initSortControl({
+    select: $("#movie-sort"), button: $("#movie-sort-dir"), options: sortOptions(),
+    key: sortKey, direction: sortDirection,
+    onChange: ({ key, direction }) => { sortKey = key; sortDirection = direction; renderMovies(); },
+  });
 
   initFilterBar($("#filter-chips")); // Gruppen auf-/zuklappen, Tastatur, Suchfeld
   $("#filter-chips").addEventListener("click", event => {
@@ -158,7 +164,7 @@ async function init() {
     initTabs(null);
     return;
   }
-  if (!sortOptions().some(option => option.value === sortKey)) sortKey = DEFAULT_SORT;
+  if (!sortOptions().some(option => option.value === sortKey)) ({ key: sortKey, direction: sortDirection } = resolveSort(DEFAULT_SORT));
   $("#collection-stand").textContent = standLabel(collection);
 
   bindEvents();

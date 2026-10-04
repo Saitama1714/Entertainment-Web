@@ -7,6 +7,7 @@ js\logic\curtain-motion.js
 js\logic\brand-logic.js
 js\ui\movie-card.js
 js\ui\movie-filters.js
+js\ui\sort-control.js
 js\ui\stats.js
 js\ui\curtain.js
 js\ui\curtain-gl.js

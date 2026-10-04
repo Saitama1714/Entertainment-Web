@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.7.0 – Sortierung mit Richtung (Dashboard 2.23.0)
+- Sortierung als Auswahl plus Pfeil-Knopf (auf-/absteigend), neu auch nach
+  Laufzeit und „Gesehen am" (nur wenn der Gesehen-Status veröffentlicht ist).
+  Standard bleibt die IMDb-Bewertung. `js/ui/sort-control.js` ist neu in
+  `gemeinsam.txt`.
+
 ## 1.6.0 – Zeitraum des Import-Filters (Dashboard 2.21.0)
 - Das Werkzeug übernimmt den im Dashboard eingestellten Zeitraum des Filters
   „Import" in `sammlung.json` (`importWindowDays`, Standard 28 Tage); die

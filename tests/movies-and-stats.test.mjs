@@ -57,7 +57,24 @@ check("Jahr alt→neu: 4 (1999) zuerst, 5 ohne Jahr TROTZDEM am Ende (nicht am A
 check("Unbekannter sortKey fällt auf IMDb-Bewertung zurück", sortMovies(movies, "quatsch").map(m => m.id).join() === sortMovies(movies, "imdbRating").map(m => m.id).join());
 check("Auch das frühere 'recent' fällt auf IMDb-Bewertung zurück", sortMovies(movies, "recent").map(m => m.id).join() === "4,1,2,3,5");
 check("'Zuletzt hinzugekommen' ist keine Sortier-Option mehr", !SORT_OPTIONS.some(o => o.value === "recent"));
-check("Standard-Sortierung ist IMDb-Bewertung und steht als erste Option", DEFAULT_SORT === "imdbRating" && SORT_OPTIONS[0].value === "imdbRating");
+check("Standard der Logik (Website) ist IMDb-Bewertung", DEFAULT_SORT === "imdbRating");
+check("Kriterien: Deine Bewertung, IMDb-Bewertung, Titel, Jahr, Laufzeit, Gesehen am", SORT_OPTIONS.map(o => o.label).join() === "Deine Bewertung,IMDb-Bewertung,Titel,Jahr,Laufzeit,Gesehen am");
+check("Startrichtungen: Titel A–Z, alles andere absteigend", SORT_OPTIONS.every(o => o.direction === (o.value === "title" ? "asc" : "desc")));
+check("Richtung umkehrbar: Titel Z–A", sortMovies(movies, "title", "desc").map(m => m.title).join("|") === "Ohne Jahr|Matrix, The|Dune: Part Two|Blade Runner 2049|Arrival");
+check("IMDb-Bewertung aufsteigend: 3 (7.9) zuerst, 5 ohne Wert trotzdem am Ende", sortMovies(movies, "imdbRating", "asc").map(m => m.id).join() === "3,2,1,4,5");
+check("Ältere Werte (yearDesc/yearAsc) funktionieren weiter", sortMovies(movies, "yearAsc").map(m => m.id).join() === sortMovies(movies, "year", "asc").map(m => m.id).join() && sortMovies(movies, "yearDesc").map(m => m.id).join() === sortMovies(movies, "year").map(m => m.id).join());
+{
+  const extra = [
+    M({ id: "r1", runtimeMinutes: "155", seenAt: "2026-03-01" }),
+    M({ id: "r2", runtimeMinutes: "90", seenAt: "2025-12-24" }),
+    M({ id: "r3", runtimeMinutes: "", seenAt: "" }),
+    M({ id: "r4", runtimeMinutes: "201", seenAt: "2026-09-30" }),
+  ];
+  check("Laufzeit: lang → kurz, ohne Angabe am Ende", sortMovies(extra, "runtimeMinutes").map(m => m.id).join() === "r4,r1,r2,r3");
+  check("Laufzeit aufsteigend: kurz → lang, ohne Angabe weiter am Ende", sortMovies(extra, "runtimeMinutes", "asc").map(m => m.id).join() === "r2,r1,r4,r3");
+  check("Gesehen am: zuletzt gesehen zuerst, ohne Datum am Ende", sortMovies(extra, "seenAt").map(m => m.id).join() === "r4,r1,r2,r3");
+  check("Gesehen am aufsteigend: frühestes zuerst", sortMovies(extra, "seenAt", "asc").map(m => m.id).join() === "r2,r1,r4,r3");
+}
 check("Leere Liste sortieren wirft nicht", sortMovies([], "title").length === 0);
 check("sortMovies verändert das Original-Array nicht", (() => { const copy = [...movies]; sortMovies(movies, "title"); return movies.every((m, i) => m === copy[i]); })());
 check("Alle SORT_OPTIONS-Werte sind in sortMovies auch tatsächlich behandelt (kein Tippfehler)", SORT_OPTIONS.every(o => JSON.stringify(sortMovies(movies, o.value)) !== undefined));

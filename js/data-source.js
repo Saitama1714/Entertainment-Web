@@ -1,6 +1,7 @@
 import { normalizeMovies } from "./collection.js";
 import { DATA_URL } from "./utils/constants.js";
 import { setImportWindowDays } from "./logic/movies-logic.js";
+import { readAccess } from "./tools/access-logic.js";
 
 /*
  * Lädt die Datendatei der Website (data/sammlung.json, erzeugt mit
@@ -37,6 +38,8 @@ export function parseCollection(data) {
     importWindowDays: Number(data.importWindowDays) > 0 ? Number(data.importWindowDays) : 28,
     exportedAt: String(data.exportedAt || ""),
     generatedAt: String(data.generatedAt || ""),
+    // Passwort-Prüfwert für den Einlass (js/ui/site-gate.js), null = ohne
+    access: readAccess(data.access),
   };
 }
 

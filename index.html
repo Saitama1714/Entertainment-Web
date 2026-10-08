@@ -7,7 +7,7 @@
     <meta name="description" content="Meine Filmsammlung">
     <title>Filmsammlung</title>
     <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
-    <script src="js/boot.js" data-intro></script>
+    <script src="js/boot.js" data-intro data-gate></script>
     <link rel="stylesheet" href="css/app.css">
     <link rel="stylesheet" href="css/curtain.css">
     <link rel="stylesheet" href="css/site.css">
@@ -49,11 +49,14 @@
       <div class="view-tabs" role="tablist" aria-label="Ansicht der Sammlung">
         <button class="view-tab" type="button" id="tab-titles" role="tab"
                 aria-selected="true" aria-controls="titles-panel">Titel</button>
+        <button class="view-tab" type="button" id="tab-timeline" role="tab"
+                aria-selected="false" tabindex="-1" aria-controls="timeline-panel">Zeitleiste</button>
         <button class="view-tab" type="button" id="tab-stats" role="tab"
                 aria-selected="false" tabindex="-1" aria-controls="stats-panel">Auf einen Blick</button>
       </div>
 
-      <section id="titles-panel" role="tabpanel" aria-labelledby="tab-titles" tabindex="0">
+      <!-- Suche, Filter und Sortierung gelten für „Titel" und „Zeitleiste" (dort ohne Sortierung) -->
+      <div class="entertainment-controls" id="entertainment-controls">
         <div class="search-row">
           <label class="visually-hidden" for="movie-search">Sammlung durchsuchen</label>
           <input class="search" id="movie-search" type="search" placeholder="Nach Titel, Regie oder Genre suchen">
@@ -66,9 +69,30 @@
             <select id="movie-sort" class="compact"></select>
             <button type="button" class="sort-dir" id="movie-sort-dir"></button>
           </div>
+          <!-- Nur in der Zeitleiste sichtbar (anstelle der Sortierung) -->
+          <div class="timeline-mode" role="radiogroup" aria-label="Zeitpunkt auf der Zeitleiste">
+            <button type="button" class="timeline-mode-option" role="radio" data-timeline-mode="release" aria-checked="false" tabindex="-1">Erschienen</button>
+            <button type="button" class="timeline-mode-option" role="radio" data-timeline-mode="rated" aria-checked="true">Bewertet</button>
+          </div>
         </div>
+      </div>
 
+      <section id="titles-panel" role="tabpanel" aria-labelledby="tab-titles" tabindex="0">
         <div id="movies-grid" class="movie-grid spaced" aria-live="polite"></div>
+      </section>
+
+      <section id="timeline-panel" class="timeline-panel" role="tabpanel" aria-labelledby="tab-timeline" hidden tabindex="-1">
+        <div class="coverflow" id="coverflow" tabindex="0" role="group" aria-roledescription="Cover Flow"
+             aria-label="Titel nach Zeit" aria-describedby="timeline-help"></div>
+        <div class="timeline-info" id="timeline-info" aria-live="polite"></div>
+        <div class="timeline-axis" id="timeline-axis">
+          <svg aria-hidden="true" focusable="false"></svg>
+          <div class="timeline-peek" id="timeline-peek" hidden></div>
+        </div>
+        <p class="timeline-foot">
+          <span><span id="timeline-count" aria-live="polite"></span><span id="timeline-missing"></span></span>
+          <span id="timeline-help">← → blättern · Enter zeigt den Abstand · Strich anklicken springt dorthin</span>
+        </p>
       </section>
 
       <section id="stats-panel" role="tabpanel" aria-labelledby="tab-stats" hidden tabindex="0">

@@ -1,5 +1,37 @@
 # Änderungen
 
+## 1.9.2 (Dashboard 2.25.2)
+- Cover Flow: Spiegelungen bleiben beim Blättern sichtbar.
+
+## 1.9.1 (Dashboard 2.25.1)
+- Cover Flow der Zeitleiste zeigt so viele Cover, wie nebeneinander passen.
+
+## 1.9.0 – Passwort und Streaming-Link (Dashboard 2.25.0)
+- Wahlweise Passwort: Im Werkzeug „Passwortschutz einschalten" und ein
+  Passwort eingeben. Besucher sehen dann zuerst einen Einlass mit Logo und
+  Passwortfeld, erst danach die Sammlung (auch Detailseiten, die direkt
+  aufgerufen werden). Der Browser merkt sich die Freischaltung; ein neues
+  Passwort fragt wieder. Ein reiner Sichtschutz: In `sammlung.json` stehen
+  nur Salz und Prüfwert (SHA-256), die Datei selbst bleibt abrufbar.
+  Das Werkzeug merkt sich den Prüfwert, leeres Feld = Passwort behalten.
+- Detailseite: „Streaming → Bei WerStreamt.es ansehen" (aus der
+  IMDb-Kennung gebildet, kommt mit `movies-logic.js` aus dem Dashboard).
+- Neu: `js/tools/access-logic.js`, `js/ui/site-gate.js`,
+  `tests/access.test.mjs` (nur Website).
+
+## 1.8.0 – Zeitleiste mit Cover Flow (Dashboard 2.24.1)
+- Neue Registerkarte „Zeitleiste" wie im Dashboard: Cover Flow, darunter
+  eine Zeitleiste mit einem Strich je Titel, Umschalter „Erschienen /
+  Bewertet", Abstand zwischen Erscheinen und Bewertung per Klick aufs
+  mittlere Cover oder Enter. Suche und Filter stehen dafür über den
+  Registerkarten und gelten auch für die Zeitleiste.
+- „Bewertet" und der Abstand erscheinen nur, wenn die eigene Bewertung
+  veröffentlicht ist (Häkchen im Werkzeug); sonst nur „Erschienen".
+- Registerkarte und Ansicht der Zeitleiste bleiben für den Besuch gemerkt.
+- `js/ui/timeline.js`, `js/logic/timeline-logic.js` und
+  `tests/timeline.test.mjs` sind neu in `gemeinsam.txt`. Keine neue
+  Datendatei nötig.
+
 ## 1.7.0 – Sortierung mit Richtung (Dashboard 2.23.0)
 - Sortierung als Auswahl plus Pfeil-Knopf (auf-/absteigend), neu auch nach
   Laufzeit und „Gesehen am" (nur wenn der Gesehen-Status veröffentlicht ist).

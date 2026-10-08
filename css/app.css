@@ -1028,12 +1028,14 @@ kbd {
   background: none; color: var(--text-muted);
   font-size: .84rem; font-weight: 550;
 }
+.entertainment-controls[data-view="timeline"] .timeline-mode.is-single { display: none; }
+.timeline-mode-option[hidden] { display: none; }
 .timeline-mode-option:hover { color: var(--text); }
 .timeline-mode-option[aria-checked="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-pop); }
 
 /* Cover Flow: Bühne mit Kinoboden. Lage jedes Covers aus --side (-1 links,
    0 Mitte, 1 rechts) und --distance (Stellen von der Mitte), gesetzt von
-   timeline.js; die Spiegelung macht -webkit-box-reflect. */
+   timeline.js; die Spiegelung ist ein eigenes Element (.coverflow-reflection). */
 .coverflow {
   --cf-w: 160px;
   position: relative;
@@ -1052,20 +1054,32 @@ kbd {
   position: absolute; left: 50%; top: 18px;
   width: var(--cf-w); aspect-ratio: 2 / 3;
   margin-left: calc(var(--cf-w) / -2);
-  border-radius: var(--r-poster);
-  background: var(--surface-sunken);
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / .08), 0 12px 26px rgb(0 0 0 / .32);
   cursor: pointer;
   transform:
     translateX(calc(var(--side) * (var(--cf-w) * .95 + (var(--distance) - 1) * var(--cf-w) * .32)))
     translateZ(calc(30px - min(var(--distance), 1) * 190px))
     rotateY(calc(var(--side) * -62deg));
-  filter: brightness(calc(1 - min(var(--distance), 6) * .05));
-  /* Spiegelung: die unteren 30 % des Covers, läuft nach etwa 70 px ganz aus */
-  -webkit-box-reflect: below 6px linear-gradient(transparent 70%, rgb(0 0 0 / .3));
+  filter: brightness(calc(1 - min(var(--distance), 12) * .035));
 }
 .coverflow-item.is-hidden { opacity: 0; pointer-events: none; }
-.coverflow-item.is-selected { box-shadow: 0 0 0 2px var(--accent-ink), 0 12px 26px rgb(0 0 0 / .32); }
+.coverflow-face, .coverflow-reflection {
+  position: absolute; left: 0; width: 100%; height: 100%;
+  border-radius: var(--r-poster);
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+.coverflow-face { top: 0; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .08), 0 12px 26px rgb(0 0 0 / .32); }
+.coverflow-item.is-selected .coverflow-face { box-shadow: 0 0 0 2px var(--accent-ink), 0 12px 26px rgb(0 0 0 / .32); }
+/* Spiegelung: gespiegelte Kopie unter dem Cover - sichtbar sind die unteren
+   30 % des Covers, nach etwa 70 px ganz ausgeblendet. Als Teil des Covers
+   dreht und gleitet sie beim Blättern mit. */
+.coverflow-reflection {
+  top: calc(100% + 6px);
+  transform: scaleY(-1);
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 70%, rgb(0 0 0 / .3));
+  mask-image: linear-gradient(to bottom, transparent 70%, rgb(0 0 0 / .3));
+}
 .coverflow-image { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; pointer-events: none; }
 .coverflow-fallback {
   box-shadow: inset 0 0 0 1px var(--line-strong);

@@ -350,3 +350,21 @@ export function sortMovies(movies, sortKey, direction) {
     .sort(compare)
     .map(entry => entry.movie);
 }
+
+/*
+ * Wo läuft der Titel im Stream? WerStreamt.es sucht direkt nach der
+ * IMDb-Kennung und zeigt genau diesen Titel mit seinen Anbietern. Der Link
+ * wird nicht gespeichert, sondern aus der Kennung gebildet - so hat ihn jeder
+ * Titel sofort, auch nach jedem neuen Import.
+ */
+const STREAMING_SEARCH = "https://www.werstreamt.es/filme-serien/?q=";
+
+/**
+ * Link zur Streaming-Suche bei WerStreamt.es, oder "" ohne gültige IMDb-Kennung.
+ * @param {{imdbId?: string}} movie
+ * @returns {string}
+ */
+export function streamingSearchUrl(movie) {
+  const id = String(movie?.imdbId || "").trim();
+  return /^tt\d{5,}$/.test(id) ? STREAMING_SEARCH + id : "";
+}

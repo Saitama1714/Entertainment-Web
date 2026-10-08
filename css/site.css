@@ -29,6 +29,8 @@
 .tool-options { border: 0; padding: 0; margin: 0; display: grid; gap: var(--s-2); }
 .tool-option { display: flex; align-items: center; gap: var(--s-2); cursor: pointer; }
 .tool-option input { width: 18px; height: 18px; accent-color: var(--brass); }
+.tool-password { max-width: 320px; margin-top: var(--s-3); }
+.tool-password[hidden] { display: none; }
 .tool-warning { margin-top: var(--s-3); font-size: .84rem; color: var(--brass); }
 code { font-size: .92em; padding: 1px 5px; border-radius: 4px; background: color-mix(in srgb, var(--text) 8%, transparent); }
 
@@ -36,4 +38,47 @@ code { font-size: .92em; padding: 1px 5px; border-radius: 4px; background: color
    über den Karten der Sammlung */
 @media (max-width: 1535px) {
   .corner-decor { display: none; }
+}
+
+/* Einlass mit Passwort (js/ui/site-gate.js) - reiner Sichtschutz. Solange
+   die Seite gesperrt ist (oder noch geprüft wird), bleiben Kopfleiste und
+   Inhalt unsichtbar; der Kinovorhang liegt darüber und öffnet sich wie sonst. */
+:root[data-gate] .appbar,
+:root[data-gate] .shell,
+:root[data-gate] .corner-decor,
+:root[data-gate] .skip-link { visibility: hidden; }
+
+.site-gate {
+  position: fixed; inset: 0; z-index: 35;
+  display: grid; place-items: center;
+  padding: var(--s-5);
+  background: var(--spotlight) no-repeat top center / 100% 560px, var(--bg);
+}
+.site-gate-card {
+  display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: var(--s-3);
+  width: min(380px, 100%);
+  padding: var(--s-6) var(--s-5);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--brass-line);
+  border-radius: var(--r-modal);
+  background: var(--surface);
+  box-shadow: var(--shadow-modal);
+  text-align: center;
+}
+.site-gate-logo { width: 96px; height: 96px; }
+.site-gate-card h1 { font-size: 2rem; }
+.site-gate-row { display: flex; gap: var(--s-2); justify-self: stretch; margin-top: var(--s-2); }
+.site-gate-row input { flex: 1; min-width: 0; width: 0; }
+.site-gate-error { min-height: 1.4em; margin: 0; color: var(--danger); font-size: .84rem; }
+.site-gate-error:empty { visibility: hidden; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-gate-card { animation: modal-in .17s ease-out; }
+  .site-gate.is-wrong .site-gate-card { animation: gate-shake .32s cubic-bezier(.3, 1.45, .5, 1); }
+  .site-gate.is-leaving { animation: fade-in .35s ease-out reverse forwards; }
+}
+.site-gate.is-leaving { pointer-events: none; }
+@keyframes gate-shake {
+  20% { transform: translateX(-6px); } 40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); } 80% { transform: translateX(2px); }
 }

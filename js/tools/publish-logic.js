@@ -98,10 +98,11 @@ export function readBackup(backup) {
  * Baut die Datendatei der Website.
  * @param {object} backup - Inhalt der Sicherungsdatei.
  * @param {Object<string, boolean>} [options] - Häkchen je OPTIONAL_GROUPS-Schlüssel.
- * @param {{now?: Date}} [context]
- * @returns {{version: 1, generatedAt: string, exportedAt: string, include: string[], importWindowDays: number, movies: object[]}}
+ * @param {{now?: Date, access?: {salt: string, hash: string}|null}} [context] - access:
+ *   Prüfwert des Passworts (js/tools/access-logic.js), null = ohne Passwort.
+ * @returns {{version: 1, generatedAt: string, exportedAt: string, include: string[], importWindowDays: number, movies: object[], access?: object}}
  */
-export function buildPublicData(backup, options = defaultOptions(), { now = new Date() } = {}) {
+export function buildPublicData(backup, options = defaultOptions(), { now = new Date(), access = null } = {}) {
   const movies = readBackup(backup);
   const include = OPTIONAL_GROUPS.filter(group => options[group.key]).map(group => group.key);
   const fields = [...BASE_FIELDS, ...OPTIONAL_GROUPS.filter(group => options[group.key]).flatMap(group => group.fields)];
@@ -113,6 +114,8 @@ export function buildPublicData(backup, options = defaultOptions(), { now = new 
     // Zeitraum des Filters "Import" wie im Dashboard eingestellt (Standard 28 Tage)
     importWindowDays: Number(backup.data.importWindowDays) > 0 ? Number(backup.data.importWindowDays) : 28,
     movies: movies.map(movie => publicMovie(movie, fields)),
+    // Nur der Prüfwert, nie das Passwort selbst
+    ...(access ? { access: { salt: access.salt, hash: access.hash } } : {}),
   };
 }
 

@@ -14,6 +14,9 @@
  */
 (function boot() {
   const root = document.documentElement;
+  // Seiten mit Daten (Skript-Tag mit data-gate): Inhalt bleibt unsichtbar,
+  // bis js/ui/site-gate.js weiß, ob ein Passwort nötig ist
+  if (document.currentScript && document.currentScript.hasAttribute("data-gate")) root.dataset.gate = "pending";
   try {
     const theme = localStorage.getItem("site:theme") || "dark";
     const dark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);

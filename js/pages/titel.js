@@ -1,5 +1,5 @@
 import { loadCollection } from "../data-source.js";
-import { searchMovies, filterMovies, sortMovies, emptyFilters, DEFAULT_SORT } from "../logic/movies-logic.js";
+import { searchMovies, filterMovies, sortMovies, emptyFilters, DEFAULT_SORT, streamingSearchUrl } from "../logic/movies-logic.js";
 import { settleCachedCovers } from "../ui/movie-card.js";
 import { initSiteShell } from "../ui/site-shell.js";
 import { initShortcuts } from "../ui/shortcuts.js";
@@ -7,6 +7,7 @@ import { $, escapeHtml, safeUrl } from "../utils/dom.js";
 import { icon } from "../utils/icons.js";
 import { showToast } from "../utils/toast.js";
 import { SITE_TITLE } from "../utils/constants.js";
+import { openGate, releaseGate } from "../ui/site-gate.js";
 
 /*
  * Detailseite eines Titels (titel.html?id=…): alle veröffentlichten Angaben
@@ -47,6 +48,11 @@ function render() {
   const imdbLink = movie.imdbUrl
     ? `<div class="detail-field"><dt>IMDb</dt><dd><a class="external-link" href="${escapeHtml(safeUrl(movie.imdbUrl))}" target="_blank" rel="noreferrer">Seite öffnen</a></dd></div>`
     : "";
+  // Wo der Titel im Stream läuft - wie auf der Detailseite des Dashboards
+  const streaming = streamingSearchUrl(movie);
+  const streamingLink = streaming
+    ? `<div class="detail-field"><dt>Streaming</dt><dd><a class="external-link" href="${escapeHtml(streaming)}" target="_blank" rel="noreferrer">Bei WerStreamt.es ansehen</a></dd></div>`
+    : "";
   const summary = [
     has("seen") ? `<span class="status ${movie.seen ? "seen" : ""}">${movie.seen ? "Gesehen" : "Noch offen"}</span>` : "",
     has("medium") && movie.medium ? `<span class="meta">${escapeHtml(movie.medium)}</span>` : "",
@@ -80,6 +86,7 @@ function render() {
           ${has("notes") ? field("Notizen", movie.notes) : ""}
           ${field("Beschreibung", movie.imdbDescription)}
           ${imdbLink}
+          ${streamingLink}
         </dl>
       </div>
     </div>`;
@@ -148,8 +155,10 @@ async function init() {
     collection = await loadCollection();
   } catch (error) {
     showMissing(`Die Sammlung konnte nicht geladen werden. ${error.message || ""}`.trim());
+    releaseGate();
     return;
   }
+  openGate(collection.access); // Einlass mit Passwort, falls eins hinterlegt ist
   const id = new URLSearchParams(location.search).get("id");
   movie = collection.movies.find(item => item.id === id);
   initShortcuts({ previousMovie: () => goToNeighbour(-1), nextMovie: () => goToNeighbour(1) });

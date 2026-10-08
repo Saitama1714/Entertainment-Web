@@ -1,6 +1,6 @@
 {
   "name": "entertainment-web",
-  "version": "1.7.0",
+  "version": "1.9.2",
   "private": true,
   "description": "Filmsammlung als Website - nur lesen, Daten aus einer Dashboard-Sicherung",
   "scripts": {

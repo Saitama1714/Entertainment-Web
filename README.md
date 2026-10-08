@@ -19,9 +19,18 @@ Pages – Anleitung in [docs/HOSTING.md](docs/HOSTING.md).
   IMDb-Bewertung). „Import" zeigt, was im Dashboard im dort eingestellten Zeitraum (Standard 4 Wochen)
   neu importiert oder durch den Import geändert wurde. Suche, Filter und Sortierung
   bleiben während des Besuchs erhalten, auch nach einer Detailseite.
+- **Zeitleiste**: Cover Flow (ein Titel groß in der Mitte, die Nachbarn
+  schräg daneben), darunter eine Zeitleiste mit einem Strich je Titel –
+  nach Erscheinen oder (wenn veröffentlicht) nach dem Tag meiner Bewertung;
+  Klick aufs mittlere Cover zeigt den Abstand dazwischen. Suche und Filter
+  wirken mit.
 - **Auf einen Blick**: Gesamt/Gesehen/Offen und „Was schauen wir heute?".
 - **Detailseite** je Titel mit allen veröffentlichten Angaben, Blättern per
   Knopf oder Pfeiltaste (in der Reihenfolge der Sammlung).
+- **Streaming**: Auf der Detailseite führt „Bei WerStreamt.es ansehen" zu
+  den Anbietern, bei denen der Titel läuft (über die IMDb-Kennung).
+- **Passwort** (wahlweise, im Werkzeug): Besucher sehen die Sammlung erst
+  nach Eingabe; ihr Browser merkt sich das. Nur ein Sichtschutz, siehe unten.
 - **Ansicht** (oben rechts): Kinovorhang („Lebendiger Stoff") bei jedem
   Besuch / einmal am Tag / nie, Vorschau, Tastenkürzel. Design hell/dunkel/System. Gilt nur im
   Browser des jeweiligen Besuchers.
@@ -34,6 +43,8 @@ Pages – Anleitung in [docs/HOSTING.md](docs/HOSTING.md).
 2. Auf deiner Website `…/werkzeug.html` öffnen (die Seite ist nirgends
    verlinkt). Sicherung wählen, Häkchen setzen, **sammlung.json speichern**.
    Alles passiert nur in deinem Browser – die Sicherung wird nicht hochgeladen.
+   Das Passwort (falls eingeschaltet) bleibt wie beim letzten Mal, solange
+   du das Feld leer lässt.
 3. Die neue Datei nach `data/sammlung.json` in diesen Ordner kopieren (alte
    ersetzen), in GitHub Desktop committen und **Push origin**. Nach ein, zwei
    Minuten zeigt die Website den neuen Stand.
@@ -51,6 +62,11 @@ nicht. Sichtbar ist genau das, was in `data/sammlung.json` steht:
 |---|---|---|
 | Titel, Originaltitel, Jahr, Art, Genre, Regie, Laufzeit, Veröffentlichung, IMDb-Bewertung, -Stimmen, -Kennung und -Link, In IMDb aufgenommen/geändert, Position in der Liste, Beschreibung, Cover-Link, Zeitpunkt „vom Import angelegt/geändert" | Medium, Gesehen-Status und -Datum, eigene Bewertung, Namen der IMDb-Listen, Notizen (Standard: aus) | OMDb-Schlüssel, Favoriten, Einstellungen, interne Felder |
 
+**Passwort:** Ist im Werkzeug eins gesetzt, liegt vor der Sammlung ein
+Einlass. Das hält Neugierige ab, mehr nicht: Die Daten liegen weiterhin
+offen in `data/sammlung.json`, und wer sich auskennt, ruft die Datei direkt
+ab. In der Datei steht nur ein Prüfwert (SHA-256 mit Salz), nie das Passwort.
+
 Hinweis: Alte Stände bleiben im Git-Verlauf abrufbar. Was einmal
 veröffentlicht war, lässt sich durch eine neue Datei nicht ganz zurückholen.
 
@@ -60,7 +76,7 @@ der Link).
 ## Aufbau
 
 ```
-index.html               Sammlung (Titel + Auf einen Blick), Kinovorhang
+index.html               Sammlung (Titel, Zeitleiste, Auf einen Blick), Kinovorhang
 titel.html               Detailseite eines Titels (?id=…)
 werkzeug.html            Daten vorbereiten: Sicherung → sammlung.json
 data/sammlung.json       Die veröffentlichten Daten (vom Werkzeug erzeugt)
@@ -75,9 +91,11 @@ js/
 ├── collection.js        Datenmodell der Titel (gemeinsam mit dem Dashboard)
 ├── pages/               Einstieg je Seite: sammlung.js, titel.js, werkzeug.js
 ├── tools/publish-logic.js  Umwandlung Sicherung → Website-Datei (Positivliste)
-├── logic/               Reine Funktionen (Filter, Statistik, Vorhang, Medaillon) - gemeinsam
-├── ui/                  Karten, Chips, Statistik, Vorhang, Medaillon, Tastenkürzel - gemeinsam;
-│                        nur hier: site-shell.js (Kopfleiste und Dialog „Ansicht")
+├── tools/access-logic.js   Passwort: Prüfwert erzeugen und prüfen (nur hier)
+├── logic/               Reine Funktionen (Filter, Statistik, Zeitleiste, Vorhang, Medaillon) - gemeinsam
+├── ui/                  Karten, Chips, Statistik, Zeitleiste, Vorhang, Medaillon, Tastenkürzel - gemeinsam;
+│                        nur hier: site-shell.js (Kopfleiste und Dialog „Ansicht"),
+│                        site-gate.js (Einlass mit Passwort)
 └── utils/               Helfer und media.js (Medien) - gemeinsam; nur hier: constants.js
 gemeinsam.txt            Liste der Dateien, die aus dem Dashboard kommen
 Gemeinsames-holen.bat    Doppelklick: diese Dateien aus ..\Dashboard herüberkopieren
@@ -100,7 +118,7 @@ Notizen nur, wenn im Werkzeug angehakt; Cover- und IMDb-Links, die keine
 Web-Adresse sind (z. B. `javascript:`), werden nicht veröffentlicht - das
 Dashboard zeigt dort ohnehin nur den Platzhalter.
 
-**Gemeinsamer Code:** Karten, Filter, Statistik, Vorhang, Medaillon, Design
+**Gemeinsamer Code:** Karten, Filter, Statistik, Zeitleiste, Vorhang, Medaillon, Design
 und Hilfsfunktionen sind dieselben Dateien wie im Dashboard - die Liste steht
 in `gemeinsam.txt`. Das Dashboard ist die Quelle: Nach einer Änderung dort
 `Gemeinsames-holen.bat` doppelklicken (erwartet den Ordner `Dashboard` direkt

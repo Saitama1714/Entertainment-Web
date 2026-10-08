@@ -59,6 +59,16 @@
             <p class="tool-warning" id="public-warning">Die Website ist für jeden mit dem Link sichtbar.</p>
           </li>
           <li>
+            <h2>Passwort (wahlweise)</h2>
+            <p class="meta">Besucher sehen die Sammlung erst, wenn sie das Passwort eingeben; danach merkt sich ihr Browser die Freischaltung.
+               Das ist nur ein Sichtschutz: Wer die Adresse der Datei <code>sammlung.json</code> kennt, kann sie trotzdem abrufen.</p>
+            <label class="tool-option"><input type="checkbox" id="access-enabled"> <span>Passwortschutz einschalten</span></label>
+            <label class="field tool-password" id="access-field">Passwort
+              <input id="access-password" type="password" autocomplete="new-password" spellcheck="false">
+            </label>
+            <p class="status-line" id="access-status" aria-live="polite"></p>
+          </li>
+          <li>
             <h2>Datei speichern</h2>
             <button class="button" type="button" id="download-button" disabled>sammlung.json speichern</button>
             <p class="status-line" id="result-status" aria-live="polite"></p>

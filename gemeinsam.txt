@@ -5,6 +5,7 @@ js\logic\movies-logic.js
 js\logic\stats-logic.js
 js\logic\curtain-motion.js
 js\logic\brand-logic.js
+js\logic\timeline-logic.js
 js\ui\movie-card.js
 js\ui\movie-filters.js
 js\ui\sort-control.js
@@ -14,6 +15,7 @@ js\ui\curtain-gl.js
 js\ui\curtain-icons.js
 js\ui\brand-medallion.js
 js\ui\shortcuts.js
+js\ui\timeline.js
 js\utils\dom.js
 js\utils\icons.js
 js\utils\modal.js
@@ -27,3 +29,4 @@ tests\genre-filter.test.mjs
 tests\import-filter.test.mjs
 tests\curtain-motion.test.mjs
 tests\brand.test.mjs
+tests\timeline.test.mjs

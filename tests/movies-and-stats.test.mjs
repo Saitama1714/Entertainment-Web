@@ -134,5 +134,13 @@ console.log("toggleFilterValue");
   check("Original-Objekt wird nie mutiert", JSON.stringify(f0) === JSON.stringify(emptyFilters()) && JSON.stringify(f2.media) === '["DVD","Blu-ray"]');
 }
 
+console.log("\nStreaming-Suche (WerStreamt.es)");
+{
+  const { streamingSearchUrl } = await import("../js/logic/movies-logic.js");
+  check("Link aus der IMDb-Kennung", streamingSearchUrl({ imdbId: "tt0816692" }) === "https://www.werstreamt.es/filme-serien/?q=tt0816692");
+  check("Leerzeichen werden ignoriert", streamingSearchUrl({ imdbId: " tt0816692 " }).endsWith("q=tt0816692"));
+  check("Ohne oder mit ungültiger Kennung: kein Link", streamingSearchUrl({ imdbId: "" }) === "" && streamingSearchUrl({}) === "" && streamingSearchUrl({ imdbId: "tt12&x=1" }) === "" && streamingSearchUrl(null) === "");
+}
+
 console.log(`\n${ok} bestanden, ${bad} fehlgeschlagen (kumuliert)`);
 process.exit(bad ? 1 : 0);

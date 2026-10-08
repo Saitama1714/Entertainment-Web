@@ -921,6 +921,14 @@ select.compact { padding: 6px 8px; font-size: .86rem; border-color: var(--line);
 /* Fokus sichtbar am ganzen Feld, nicht nur am kleinen Kreis */
 .choice:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 .choice input:focus-visible { outline: none; }
+/* Einstellungen → Daten → Automatisch sichern */
+.settings-subhead { margin-top: var(--s-5) !important; }
+.website-file { margin-top: var(--s-3); padding-left: var(--s-4); border-left: 2px solid var(--line); }
+.website-file-options { display: grid; gap: var(--s-2); margin: var(--s-3) 0 0; padding: 0; border: 0; min-width: 0; }
+.website-file-options legend { padding: 0; margin-bottom: 4px; font-size: .82rem; color: var(--text-muted); }
+.website-file-options:disabled { opacity: .5; }
+.website-password { max-width: 320px; margin-left: 24px; }
+.website-password[hidden] { display: none; }
 .form-section-actions { display: flex; gap: var(--s-2); margin-top: var(--s-3); flex-wrap: wrap; }
 
 /* =========================================================================

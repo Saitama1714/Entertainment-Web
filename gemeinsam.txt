@@ -30,3 +30,14 @@ tests\import-filter.test.mjs
 tests\curtain-motion.test.mjs
 tests\brand.test.mjs
 tests\timeline.test.mjs
+css\link-transition.css
+js\data\movie-quotes.js
+js\logic\link-transition-logic.js
+js\logic\quote-logic.js
+js\logic\publish-logic.js
+js\logic\access-logic.js
+js\ui\link-transition.js
+js\ui\quote-of-day.js
+tests\link-transition.test.mjs
+tests\quote.test.mjs
+tests\publish.test.mjs

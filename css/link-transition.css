@@ -1,0 +1,57 @@
+/* =========================================================================
+   Klick-Animation „Kachel-Zoom" für Links (js/ui/link-transition.js)
+   Eigene Elemente, unabhängig vom Kinovorhang (css/curtain.css).
+   ========================================================================= */
+
+:root {
+  --link-garnet: #9C0205;
+  --link-gold: #c9a227;
+}
+
+/* Über allem (Kopfleiste 30, Vorhang 41, Dialoge 50, Toasts 60), klickt nie mit */
+.link-zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+}
+
+/* ---- Kachel-Zoom ------------------------------------------------------ */
+
+.link-zoom {
+  display: grid;
+  place-items: center;
+  /* Granat mit leichtem Samtschimmer zur Mitte hin */
+  background:
+    radial-gradient(120% 90% at 50% 42%, rgb(255 255 255 / .06), transparent 60%),
+    var(--link-garnet);
+  clip-path: inset(50% 50% 50% 50%); /* vor dem ersten Bild unsichtbar */
+}
+
+.link-zoom-mark {
+  font-family: var(--font-display);
+  font-size: clamp(72px, 16vmin, 180px);
+  line-height: 1;
+  /* Gold: heller Glanz oben, dunkleres Messing unten */
+  background: linear-gradient(180deg, #f2d77e 0%, var(--link-gold) 52%, #94720f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 8px rgb(0 0 0 / .35));
+  will-change: transform, opacity;
+}
+
+/* Logo statt Monogramm (BRAND_LOGO in js/utils/constants.js), in seinen
+   eigenen Farben und groß genug, dass Details zur Geltung kommen */
+.link-zoom-logo {
+  display: block;
+  width: clamp(200px, 42.5vmin, 400px);
+  aspect-ratio: 1;
+  will-change: transform, opacity;
+}
+.link-zoom-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

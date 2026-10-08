@@ -1,8 +1,8 @@
 /*
- * Tests zum Umwandlungs-Werkzeug (js/tools/publish-logic.js): Was aus einer
+ * Tests zum Umwandlungs-Werkzeug (js/logic/publish-logic.js): Was aus einer
  * Dashboard-Sicherung auf die Website kommt - und vor allem, was nicht.
  */
-import { buildPublicData, readBackup, summarize, defaultOptions, OPTIONAL_GROUPS, BASE_FIELDS } from "../js/tools/publish-logic.js";
+import { buildPublicData, readBackup, summarize, defaultOptions, OPTIONAL_GROUPS, BASE_FIELDS } from "../js/logic/publish-logic.js";
 
 let ok = 0, bad = 0;
 const check = (name, cond, detail = "") => { cond ? ok++ : bad++; console.log((cond ? "  ✅ " : "  ❌ ") + name + (detail !== "" ? "  [" + JSON.stringify(detail) + "]" : "")); };
@@ -62,6 +62,7 @@ check("Notizen angehakt: kommen mit", all.movies[0].notes === "Mit Papa geschaut
 check("Listen angehakt: als Liste von Namen", JSON.stringify(all.movies[0].imdbLists) === '["Watchlist","Sci-Fi"]');
 
 console.log("Zusammenfassung");
+check("Dekoration unten links wie im Dashboard gewählt (nur der Name)", all.decor === "popcorn" && buildPublicData({ version: 1, data: { movies: [] } }).decor === "");
 const info = summarize(std);
 check("Zählt Titel und Cover, nennt die Auswahl", info.total === 3 && info.withCover === 1 && info.labels.length === 4, info);
 

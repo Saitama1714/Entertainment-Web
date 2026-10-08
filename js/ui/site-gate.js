@@ -1,11 +1,11 @@
-import { checkPassword } from "../tools/access-logic.js";
+import { checkPassword } from "../logic/access-logic.js";
 import { escapeHtml } from "../utils/dom.js";
 import { SITE_TITLE } from "../utils/constants.js";
 
 /*
  * „Einlass": Ist in data/sammlung.json ein Passwort hinterlegt, liegt bis
  * zur richtigen Eingabe ein Overlay über der Seite. Danach ist alles wie
- * bisher. Ein reiner Sichtschutz (siehe js/tools/access-logic.js).
+ * bisher. Ein reiner Sichtschutz (siehe js/logic/access-logic.js).
  *
  * Ablauf: js/boot.js setzt auf Seiten mit Daten <html data-gate="pending">;
  * site.css hält Kopfleiste und Inhalt bis dahin unsichtbar. Sobald die Daten

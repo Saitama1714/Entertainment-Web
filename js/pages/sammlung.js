@@ -12,6 +12,7 @@ import { initShortcuts } from "../ui/shortcuts.js";
 import { initCurtain, renderCornerDecoration, replayCurtain } from "../ui/curtain.js";
 import { openGate, releaseGate } from "../ui/site-gate.js";
 import { initTimeline } from "../ui/timeline.js";
+import { renderQuoteOfDay } from "../ui/quote-of-day.js";
 import { $, $$, escapeHtml, debounce, emptyState } from "../utils/dom.js";
 import { CONFIG, SITE_TITLE, CORNER_ICON } from "../utils/constants.js";
 
@@ -186,7 +187,7 @@ function bindEvents() {
 async function init() {
   document.title = SITE_TITLE;
   $("#site-title").textContent = SITE_TITLE;
-  renderCornerDecoration({ curtainIcon: CORNER_ICON });
+  renderQuoteOfDay(); // Filmzitat des Tages wie auf der Startseite des Dashboards
   initSiteShell();
   const tab = restoreView();
 
@@ -197,8 +198,11 @@ async function init() {
     $("#movies-grid").innerHTML = emptyState(`Die Sammlung konnte nicht geladen werden. ${error.message || ""}`.trim());
     initTabs(null);
     releaseGate();
+    renderCornerDecoration({ curtainIcon: CORNER_ICON });
     return;
   }
+  // Dekoration unten links wie im Dashboard gewählt (ältere Datendateien: Popcorn)
+  renderCornerDecoration({ curtainIcon: collection.decor || CORNER_ICON });
   // Einlass: mit Passwort erst nach richtiger Eingabe; danach geht der
   // Vorhang (wenn er bei diesem Besuch spielt) noch einmal für die Sammlung auf
   openGate(collection.access, {

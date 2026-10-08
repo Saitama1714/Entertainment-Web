@@ -26,5 +26,29 @@ export const INTRO_OPTIONS = [
   { value: "off", label: "Nie" },
 ];
 
-/** Dekoration unten links, nachdem sich der Vorhang geöffnet hat (siehe ui/curtain-icons.js). */
+/**
+ * Dekoration unten links, nachdem sich der Vorhang geöffnet hat (siehe
+ * ui/curtain-icons.js). Nur der Rückfall: Die Datendatei bringt die im
+ * Dashboard gewählte Deko mit (`decor`).
+ */
 export const CORNER_ICON = "popcorn";
+
+/**
+ * Klick-Animation für Links (Ansicht → Bewegung), wie im Dashboard. Werte
+ * wie in js/logic/link-transition-logic.js (gemeinsam).
+ */
+export const CLICK_EFFECT_OPTIONS = [
+  { value: "zoom", label: "Kachel-Zoom" },
+  { value: "off", label: "Aus" },
+];
+export const CLICK_DURATION_OPTIONS = [
+  { value: 250, label: "Schnell (250 ms)" },
+  { value: 450, label: "Normal (450 ms)" },
+  { value: 800, label: "Gemächlich (800 ms)" },
+];
+
+/**
+ * Logo für den Kachel-Zoom (js/ui/link-transition.js, gemeinsam). Relativ,
+ * weil die Website auch in einem Unterordner liegen kann (GitHub Pages).
+ */
+export const BRAND_LOGO = { src: "assets/logo.svg" };

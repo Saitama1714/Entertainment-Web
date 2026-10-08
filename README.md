@@ -31,13 +31,24 @@ Pages – Anleitung in [docs/HOSTING.md](docs/HOSTING.md).
   den Anbietern, bei denen der Titel läuft (über die IMDb-Kennung).
 - **Passwort** (wahlweise, im Werkzeug): Besucher sehen die Sammlung erst
   nach Eingabe; ihr Browser merkt sich das. Nur ein Sichtschutz, siehe unten.
+- **Filmzitat des Tages** über der Sammlung, **Ecken-Deko** wie im
+  Dashboard gewählt.
 - **Ansicht** (oben rechts): Kinovorhang („Lebendiger Stoff") bei jedem
-  Besuch / einmal am Tag / nie, Vorschau, Tastenkürzel. Design hell/dunkel/System. Gilt nur im
+  Besuch / einmal am Tag / nie, Vorschau, Kachel-Zoom beim Klick (an/aus,
+  Tempo), Tastenkürzel. Design hell/dunkel/System. Gilt nur im
   Browser des jeweiligen Besuchers.
 - Fehlt eine wahlweise Angabe in der Datendatei (z. B. Gesehen-Status),
   verschwinden die passenden Filter, Sortierungen und Zahlen automatisch.
 
 ## Sammlung aktualisieren
+
+**Mit der automatischen Sicherung (Standard):** Das Dashboard legt nach
+jedem Import und jeder Änderung `sammlung.json` in den Download-Ordner
+(Unterordner „Dashboard-Sicherungen“) – mit den Häkchen und dem Passwort aus
+Einstellungen → Daten. Dann hier `Sammlung-holen.bat` doppelklicken, in
+GitHub Desktop committen und **Push origin**.
+
+**Von Hand über das Werkzeug:**
 
 1. Im Dashboard: Einstellungen → Daten → **Sicherung speichern**.
 2. Auf deiner Website `…/werkzeug.html` öffnen (die Seite ist nirgends
@@ -90,15 +101,15 @@ js/
 ├── data-source.js       Lädt data/sammlung.json
 ├── collection.js        Datenmodell der Titel (gemeinsam mit dem Dashboard)
 ├── pages/               Einstieg je Seite: sammlung.js, titel.js, werkzeug.js
-├── tools/publish-logic.js  Umwandlung Sicherung → Website-Datei (Positivliste)
-├── tools/access-logic.js   Passwort: Prüfwert erzeugen und prüfen (nur hier)
-├── logic/               Reine Funktionen (Filter, Statistik, Zeitleiste, Vorhang, Medaillon) - gemeinsam
+├── logic/               Reine Funktionen (Filter, Statistik, Zeitleiste, Vorhang, Medaillon,
+│                        Umwandlung Sicherung → sammlung.json, Passwort-Prüfwert) - gemeinsam
 ├── ui/                  Karten, Chips, Statistik, Zeitleiste, Vorhang, Medaillon, Tastenkürzel - gemeinsam;
 │                        nur hier: site-shell.js (Kopfleiste und Dialog „Ansicht"),
 │                        site-gate.js (Einlass mit Passwort)
 └── utils/               Helfer und media.js (Medien) - gemeinsam; nur hier: constants.js
 gemeinsam.txt            Liste der Dateien, die aus dem Dashboard kommen
 Gemeinsames-holen.bat    Doppelklick: diese Dateien aus ..\Dashboard herüberkopieren
+Sammlung-holen.bat       Doppelklick: sammlung.json aus Downloads\Dashboard-Sicherungen nach data\
 tests/                   Logik-Tests (npm test), Browser-Test in tests/browser/
 robots.txt, .nojekyll    Suchmaschinen aussperren; GitHub Pages ohne Jekyll
 ```

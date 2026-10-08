@@ -1,5 +1,5 @@
-import { buildPublicData, summarize, defaultOptions, OPTIONAL_GROUPS } from "../tools/publish-logic.js";
-import { createAccess, readAccess } from "../tools/access-logic.js";
+import { buildPublicData, summarize, defaultOptions, OPTIONAL_GROUPS } from "../logic/publish-logic.js";
+import { createAccess, readAccess } from "../logic/access-logic.js";
 import { initSiteShell } from "../ui/site-shell.js";
 import { $, escapeHtml } from "../utils/dom.js";
 import { formatDay } from "../utils/format.js";
@@ -8,7 +8,7 @@ import { showToast } from "../utils/toast.js";
 /*
  * Werkzeug (werkzeug.html): Dashboard-Sicherung → data/sammlung.json.
  * Die eigentliche Umwandlung (Positivliste der Felder) steht in
- * js/tools/publish-logic.js. Die Seite wird mit veröffentlicht, ist aber
+ * js/logic/publish-logic.js. Die Seite wird mit veröffentlicht, ist aber
  * nirgends verlinkt und tut nichts ohne eine Sicherung, die man selbst wählt.
  */
 

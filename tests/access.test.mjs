@@ -1,9 +1,9 @@
 /*
- * Tests zum Passwort-Einlass der Website (js/tools/access-logic.js) und
+ * Tests zum Passwort-Einlass der Website (js/logic/access-logic.js) und
  * dazu, dass das Werkzeug nur den Prüfwert veröffentlicht.
  */
-import { hashPassword, createAccess, readAccess, checkPassword } from "../js/tools/access-logic.js";
-import { buildPublicData } from "../js/tools/publish-logic.js";
+import { hashPassword, createAccess, readAccess, checkPassword } from "../js/logic/access-logic.js";
+import { buildPublicData } from "../js/logic/publish-logic.js";
 import { parseCollection } from "../js/data-source.js";
 
 let ok = 0, bad = 0;

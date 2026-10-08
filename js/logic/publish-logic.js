@@ -12,6 +12,11 @@
  * rohe Sicherung. tests/parity.test.mjs prüft das Feld für Feld.
  *
  * Reine Funktionen, keine DOM-Abhängigkeit (getestet in tests/publish.test.mjs).
+ *
+ * Gemeinsam mit der Website (gemeinsam.txt), Quelle ist das Dashboard: Die
+ * Website nutzt sie im Werkzeug (werkzeug.html), das Dashboard bei der
+ * automatischen Sicherung (js/ui/auto-backup.js), die sammlung.json gleich
+ * mit erzeugt.
  */
 import { newMovie } from "../collection.js";
 
@@ -99,8 +104,8 @@ export function readBackup(backup) {
  * @param {object} backup - Inhalt der Sicherungsdatei.
  * @param {Object<string, boolean>} [options] - Häkchen je OPTIONAL_GROUPS-Schlüssel.
  * @param {{now?: Date, access?: {salt: string, hash: string}|null}} [context] - access:
- *   Prüfwert des Passworts (js/tools/access-logic.js), null = ohne Passwort.
- * @returns {{version: 1, generatedAt: string, exportedAt: string, include: string[], importWindowDays: number, movies: object[], access?: object}}
+ *   Prüfwert des Passworts (js/logic/access-logic.js), null = ohne Passwort.
+ * @returns {{version: 1, generatedAt: string, exportedAt: string, include: string[], importWindowDays: number, decor: string, movies: object[], access?: object}}
  */
 export function buildPublicData(backup, options = defaultOptions(), { now = new Date(), access = null } = {}) {
   const movies = readBackup(backup);
@@ -113,6 +118,8 @@ export function buildPublicData(backup, options = defaultOptions(), { now = new 
     include,
     // Zeitraum des Filters "Import" wie im Dashboard eingestellt (Standard 28 Tage)
     importWindowDays: Number(backup.data.importWindowDays) > 0 ? Number(backup.data.importWindowDays) : 28,
+    // Dekoration unten links wie im Dashboard gewählt (Name aus CURTAIN_ICONS, "none" = keine)
+    decor: typeof backup.data.curtainIcon === "string" ? backup.data.curtainIcon : "",
     movies: movies.map(movie => publicMovie(movie, fields)),
     // Nur der Prüfwert, nie das Passwort selbst
     ...(access ? { access: { salt: access.salt, hash: access.hash } } : {}),

@@ -10,6 +10,7 @@
     <script src="js/boot.js" data-intro data-gate></script>
     <link rel="stylesheet" href="css/app.css">
     <link rel="stylesheet" href="css/curtain.css">
+    <link rel="stylesheet" href="css/link-transition.css">
     <link rel="stylesheet" href="css/site.css">
   </head>
   <body>
@@ -45,6 +46,11 @@
           <p class="meta" aria-live="polite"><span id="collection-count">Wird geladen …</span><span id="collection-stand" class="stand"></span></p>
         </div>
       </div>
+
+      <figure class="quote-of-day" id="quote-of-day" hidden>
+        <blockquote class="quote-text"></blockquote>
+        <figcaption class="quote-source"></figcaption>
+      </figure>
 
       <div class="view-tabs" role="tablist" aria-label="Ansicht der Sammlung">
         <button class="view-tab" type="button" id="tab-titles" role="tab"

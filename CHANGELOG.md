@@ -1,5 +1,18 @@
 # Änderungen
 
+## 1.10.0 – Wie im Dashboard (Dashboard 2.26.0)
+- Kachel-Zoom beim Klick auf Titel und Links, einstellbar unter „Ansicht“
+  → Bewegung (Kachel-Zoom / Aus, Tempo) – gilt pro Browser.
+- Filmzitat des Tages über der Sammlung.
+- Die Ecken-Deko unten links ist die im Dashboard gewählte (`decor` in
+  `sammlung.json`; ältere Dateien: Popcorn).
+- `Sammlung-holen.bat`: holt die vom Dashboard automatisch gespeicherte
+  `sammlung.json` aus dem Download-Ordner nach `data/`. Das Werkzeug bleibt
+  für den Weg von Hand.
+- `publish-logic.js` und `access-logic.js` liegen jetzt unter `js/logic/`
+  und kommen aus dem Dashboard (`gemeinsam.txt`), dazu Kachel-Zoom und
+  Filmzitat.
+
 ## 1.9.2 (Dashboard 2.25.2)
 - Cover Flow: Spiegelungen bleiben beim Blättern sichtbar.
 

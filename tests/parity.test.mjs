@@ -10,7 +10,7 @@
  * Listennamen, kaputte Cover-Links.
  */
 import { normalizeMovies } from "../js/collection.js";
-import { buildPublicData, OPTIONAL_GROUPS } from "../js/tools/publish-logic.js";
+import { buildPublicData, OPTIONAL_GROUPS } from "../js/logic/publish-logic.js";
 import { parseCollection } from "../js/data-source.js";
 import { searchMovies, sortMovies, facetCounts, emptyFilters, SORT_OPTIONS, listFilterOptions } from "../js/logic/movies-logic.js";
 import { collectionStats } from "../js/logic/stats-logic.js";

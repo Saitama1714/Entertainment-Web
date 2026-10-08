@@ -1005,6 +1005,133 @@ kbd {
 .decor-preview.is-empty span { font-size: 12px; color: var(--text-faint); }
 
 /* =========================================================================
+   Zeitleiste mit Cover Flow (Entertainment → Zeitleiste, js/ui/timeline.js)
+   Oben blättert man durch die Cover, unten zeigt die Zeitleiste, wo man ist.
+   ========================================================================= */
+
+/* Suche und Filter stehen über den Panels; in der Zeitleiste ohne Sortierung */
+.entertainment-controls[hidden] { display: none; }
+.entertainment-controls[data-view="timeline"] .sort-field { display: none; }
+
+.timeline-panel { margin-top: var(--s-2); }
+
+/* Umschalter „Erschienen / Bewertet": kleine Ausgabe der Registerkarten;
+   steht in der Zeitleiste an der Stelle der Sortierung */
+.timeline-mode { display: none; }
+.entertainment-controls[data-view="timeline"] .timeline-mode {
+  display: inline-flex; justify-self: end; gap: 2px; padding: 3px;
+  border-radius: var(--r-chip); background: var(--surface-sunken);
+}
+.timeline-mode-option {
+  padding: 5px 14px;
+  border: 0; border-radius: var(--r-chip);
+  background: none; color: var(--text-muted);
+  font-size: .84rem; font-weight: 550;
+}
+.timeline-mode-option:hover { color: var(--text); }
+.timeline-mode-option[aria-checked="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-pop); }
+
+/* Cover Flow: Bühne mit Kinoboden. Lage jedes Covers aus --side (-1 links,
+   0 Mitte, 1 rechts) und --distance (Stellen von der Mitte), gesetzt von
+   timeline.js; die Spiegelung macht -webkit-box-reflect. */
+.coverflow {
+  --cf-w: 160px;
+  position: relative;
+  height: calc(var(--cf-w) * 1.5 + 100px);
+  perspective: 800px;
+  overflow: hidden;
+  touch-action: pan-y;
+  user-select: none;
+}
+.coverflow.is-empty { height: auto; perspective: none; }
+.coverflow-empty { padding: var(--s-6) 0; text-align: center; }
+
+.coverflow-item {
+  --side: 0;
+  --distance: 0;
+  position: absolute; left: 50%; top: 18px;
+  width: var(--cf-w); aspect-ratio: 2 / 3;
+  margin-left: calc(var(--cf-w) / -2);
+  border-radius: var(--r-poster);
+  background: var(--surface-sunken);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / .08), 0 12px 26px rgb(0 0 0 / .32);
+  cursor: pointer;
+  transform:
+    translateX(calc(var(--side) * (var(--cf-w) * .95 + (var(--distance) - 1) * var(--cf-w) * .32)))
+    translateZ(calc(30px - min(var(--distance), 1) * 190px))
+    rotateY(calc(var(--side) * -62deg));
+  filter: brightness(calc(1 - min(var(--distance), 6) * .05));
+  /* Spiegelung: die unteren 30 % des Covers, läuft nach etwa 70 px ganz aus */
+  -webkit-box-reflect: below 6px linear-gradient(transparent 70%, rgb(0 0 0 / .3));
+}
+.coverflow-item.is-hidden { opacity: 0; pointer-events: none; }
+.coverflow-item.is-selected { box-shadow: 0 0 0 2px var(--accent-ink), 0 12px 26px rgb(0 0 0 / .32); }
+.coverflow-image { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; pointer-events: none; }
+.coverflow-fallback {
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  border-radius: inherit;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-3);
+  height: 100%; padding: var(--s-4) var(--s-3);
+  text-align: center;
+}
+.coverflow-fallback-title { font-family: var(--font-display); font-size: 1.05rem; line-height: 1.2; color: var(--text-muted); }
+
+/* Angaben zum mittleren Titel */
+.timeline-info { min-height: 96px; margin-top: var(--s-1); text-align: center; }
+.timeline-title { font-family: var(--font-display); font-size: 1.5rem; line-height: 1.2; letter-spacing: -.008em; }
+.timeline-title a { text-decoration: none; }
+.timeline-title a:hover { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.timeline-facts { margin-top: 4px; color: var(--text-muted); font-size: .84rem; font-variant-numeric: lining-nums tabular-nums; }
+.timeline-gap { margin-top: var(--s-2); color: var(--text-muted); font-size: .9rem; }
+.timeline-gap.is-open { color: var(--text-faint); }
+.timeline-gap-value { font-family: var(--font-display); font-size: 1.35rem; color: var(--brass); font-variant-numeric: lining-nums tabular-nums; }
+.timeline-gap-hint { margin-top: var(--s-2); color: var(--text-faint); font-size: .78rem; }
+
+/* Zeitleiste: ein Strich je Titel, gestapelt über und unter der Achse */
+.timeline-axis { position: relative; margin-top: var(--s-3); }
+.timeline-axis[hidden] { display: none; }
+.timeline-axis svg { display: block; width: 100%; overflow: visible; }
+.tl-grid { stroke: var(--line); stroke-width: 1; }
+.tl-grid.is-minor { stroke-dasharray: 2 4; }
+.tl-label { fill: var(--text-faint); font-family: var(--font-text); font-size: 11px; text-anchor: middle; font-variant-numeric: lining-nums tabular-nums; }
+.tl-baseline { stroke: var(--line-strong); stroke-width: 1; }
+.tl-mark { stroke: var(--brass); stroke-width: 1.6; stroke-linecap: round; }
+.tl-mark.is-current, .tl-mark.is-hover { stroke: var(--text); stroke-width: 2.6; }
+.tl-mark.is-selected { stroke: var(--accent-ink); stroke-width: 2.6; }
+.has-selection .tl-mark:not(.is-selected, .is-current, .is-hover) { opacity: .3; }
+.tl-cursor { stroke: var(--brass); stroke-width: 1; stroke-dasharray: 2 3; }
+.tl-gap { fill: var(--accent); opacity: .85; }
+.tl-gap-release { fill: var(--text); }
+.tl-gap-rated { fill: var(--accent-ink); }
+
+/* Vorschau beim Überfahren eines Strichs */
+.timeline-peek {
+  position: absolute; bottom: calc(100% - 10px); z-index: 2;
+  display: grid; justify-items: center; gap: 6px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.timeline-peek[hidden] { display: none; }
+.timeline-peek img, .timeline-peek-fallback {
+  width: 56px; aspect-ratio: 2 / 3; object-fit: cover;
+  border-radius: var(--r-poster);
+  background: var(--surface-sunken);
+  box-shadow: var(--shadow-hover);
+}
+.timeline-peek-fallback { display: grid; place-items: center; padding: 4px; font-family: var(--font-display); font-size: .7rem; line-height: 1.15; text-align: center; color: var(--text-muted); overflow: hidden; }
+.timeline-peek-title {
+  max-width: 180px; padding: 2px 8px;
+  border-radius: var(--r-chip);
+  background: var(--surface); box-shadow: var(--shadow-pop);
+  font-size: .76rem; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.timeline-foot { display: flex; justify-content: space-between; gap: var(--s-2) var(--s-4); flex-wrap: wrap; margin-top: var(--s-3); font-size: .78rem; color: var(--text-faint); }
+#timeline-count { color: var(--text-muted); font-variant-numeric: lining-nums tabular-nums; }
+#timeline-missing:not(:empty)::before { content: " · "; }
+
+/* =========================================================================
    Bewegung: nur als Antwort auf eine Handlung
    ========================================================================= */
 
@@ -1057,6 +1184,9 @@ kbd {
   .decor-preview.is-popping .pop-parts > :nth-child(2n) { animation-delay: .12s; }
   .decor-preview.is-popping .pop-parts > :nth-child(3n) { animation-delay: .2s; }
 
+  /* Cover Flow: Cover gleiten und drehen sich an ihren Platz */
+  .coverflow-item { transition: transform .45s cubic-bezier(.2, .7, .3, 1), opacity .35s ease, filter .35s ease; }
+
   .modal { animation: modal-in .17s ease-out; }
   .modal-backdrop { animation: fade-in .15s ease-out; }
   .tools-menu[open] .tools-menu-panel { animation: menu-in .12s ease-out; }
@@ -1099,6 +1229,8 @@ kbd {
   .import-file-name { grid-column: 1 / -1; grid-row: 2; }
   .import-file.has-error .import-file-info { grid-column: 1; }
   .toolbar-row { grid-template-columns: 1fr; }
+  .coverflow { --cf-w: 118px; }
+  .timeline-title { font-size: 1.25rem; }
   /* Lesezeichen: Knopf unter den Titel, damit der Titel die volle Breite behält */
   .bookmark-item { grid-template-columns: 20px minmax(0, 1fr); row-gap: var(--s-2); }
   .bookmark-item .small-button { grid-column: 2; justify-self: start; }

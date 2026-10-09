@@ -1,5 +1,17 @@
 # Änderungen
 
+## 1.11.1
+- Einlass: Der geschlossen wartende Vorhang ist jetzt der hochwertige
+  „Lebendige Stoff“ (WebGL) statt des einfachen Ersatzvorhangs.
+
+## 1.11.0 – Einlass auf dem Vorhang
+- Mit Passwort bleibt der Kinovorhang beim Laden geschlossen, die Eingabe
+  liegt darauf. Erst nach dem richtigen Passwort öffnet er sich und gibt
+  die Sammlung frei. Ohne Passwort (oder schon freigeschaltet) öffnet er
+  sich wie bisher, sobald die Daten geladen sind. Spielt der Vorhang bei
+  diesem Besuch nicht (Ansicht → „Nie“ o. Ä.), erscheint der Einlass wie
+  bisher auf eigenem Hintergrund.
+
 ## 1.10.0 – Wie im Dashboard (Dashboard 2.26.0)
 - Kachel-Zoom beim Klick auf Titel und Links, einstellbar unter „Ansicht“
   → Bewegung (Kachel-Zoom / Aus, Tempo) – gilt pro Browser.

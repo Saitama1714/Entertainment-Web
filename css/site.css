@@ -54,6 +54,9 @@ code { font-size: .92em; padding: 1px 5px; border-radius: 4px; background: color
   padding: var(--s-5);
   background: var(--spotlight) no-repeat top center / 100% 560px, var(--bg);
 }
+/* Auf dem geschlossenen Vorhang (js/boot.js: data-curtain-hold): nur die
+   Karte, über dem Stoff (Vorhang 40/41) und unter Dialogen (50) */
+.site-gate.on-curtain { z-index: 45; background: none; }
 .site-gate-card {
   display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: var(--s-3);
   width: min(380px, 100%);

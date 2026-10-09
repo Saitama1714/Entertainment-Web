@@ -36,6 +36,10 @@ export function renderCornerDecoration(state, { instant = false } = {}) {
  * CSS-Vorhang (<html data-curtain="classic">); startet dieses Skript gar
  * nicht, öffnet CSS den Vorhang nach 1,5 s von selbst.
  *
+ * Warten (nur Website, Einlass mit Passwort): Steht <html data-curtain-hold>
+ * (gesetzt von js/boot.js der Website), bleibt der Vorhang geschlossen, bis
+ * releaseCurtain() aufgerufen wird - erst dann öffnet er sich.
+ *
  * Zustand für Tests und CSS: <html data-curtain-phase="playing|rest">,
  * während eine WebGL-Animation läuft zusätzlich data-curtain-playing (hält
  * die Ecken-Deko zurück, bis der Vorhang offen ist).
@@ -218,8 +222,19 @@ function tick(now) {
   gl.raf = requestAnimationFrame(tick);
 }
 
+/**
+ * Wartender Vorhang: das geschlossene erste Bild zeichnen und stehen lassen
+ * (keine laufende Animation). Auch nach einer Größenänderung neu.
+ */
+function drawHeld() {
+  const geom = geometry();
+  const frame = gl.timeline.frame(0, geom);
+  gl.renderer.render(frame, geom, 0);
+  for (const curtain of curtainEls()) curtain.style.width = `${Math.max(0, frame.rod)}px`;
+}
+
 /** Startet einen WebGL-Stil. Liefert false, wenn WebGL nicht verfügbar ist. */
-function startGl({ replay }) {
+function startGl({ replay, hold = false }) {
   // Verlorener WebGL-Kontext: frische Fläche statt der alten
   if (renderer?.lost) { document.querySelector(".curtain-stage")?.remove(); renderer = null; }
   const stage = stageCanvas();
@@ -232,14 +247,14 @@ function startGl({ replay }) {
   if (gl) cancelAnimationFrame(gl.raf);
   gl = { renderer, stage, timeline: createCurtainTimeline(), raf: 0, t0: 0 };
 
-  const skip = !replay && (root.dataset.intro === "skip" || reducedMotion());
+  const skip = !replay && !hold && (root.dataset.intro === "skip" || reducedMotion());
   if (skip) {
     settle();
     return true;
   }
 
   holdDecor();
-  root.dataset.curtainPhase = "playing";
+  root.dataset.curtainPhase = hold ? "holding" : "playing";
   const now = performance.now();
   const curtains = curtainEls();
   if (replay) {
@@ -270,6 +285,12 @@ function startGl({ replay }) {
       if (fade) fade.finished.then(done, done); else done();
     }
   }
+  // Wartet der Vorhang: geschlossenes Bild zeichnen, Bewegung erst nach releaseCurtain()
+  if (hold) {
+    gl.held = true;
+    drawHeld();
+    return true;
+  }
   // Erstes Bild sofort, damit die Fläche beim nächsten Zeichnen schon gefüllt ist
   tick(now);
   return true;
@@ -277,6 +298,7 @@ function startGl({ replay }) {
 
 function onResize() {
   root.style.setProperty("--viewport-w", `${root.clientWidth}px`);
+  if (gl?.held) { drawHeld(); return; }
   // In Ruhe: Randstreifen passend zur neuen Größe neu zeichnen (einmal pro Frame)
   if (!gl || root.dataset.curtainPhase !== "rest" || resizeQueued) return;
   resizeQueued = true;
@@ -305,12 +327,47 @@ export function initCurtain() {
     });
   });
 
+  // Geschlossen warten, bis releaseCurtain() kommt (Website: Einlass mit Passwort).
+  // Mit WebGL steht schon der „Lebendige Stoff" da, nur noch nicht in Bewegung.
+  if (root.dataset.curtainHold !== undefined) {
+    root.dataset.curtainPhase = "holding";
+    if (root.dataset.curtain === "fabric" && !startGl({ replay: false, hold: true })) dropGl({ atRest: false });
+    return;
+  }
+  startIntro();
+}
+
+/** Startet das Intro (sofort oder nach dem Warten). */
+function startIntro() {
   // Ohne data-curtain (boot.js lief nicht) gilt, was CSS zeigt: der CSS-Vorhang
   const webgl = root.dataset.curtain === "fabric";
   if (!webgl || !startGl({ replay: false })) {
     if (webgl) dropGl({ atRest: false });
     playClassic({ replay: false });
   }
+}
+
+/**
+ * Gibt einen wartenden Vorhang frei: Er öffnet sich jetzt (Website, nach dem
+ * Einlass). Ohne Warten oder ohne Vorhang passiert nichts.
+ * @returns {boolean} true, wenn der Vorhang gewartet hat.
+ */
+export function releaseCurtain() {
+  if (root.dataset.curtainHold === undefined) return false;
+  delete root.dataset.curtainHold;
+  if (!curtainEls().length || root.dataset.curtainPhase !== "holding") return true;
+  if (gl?.held) {
+    // WebGL wartet schon: Bewegung beginnt jetzt am Ende der Haltezeit
+    gl.held = false;
+    if (reducedMotion()) { settle(); return true; }
+    root.dataset.curtainPhase = "playing";
+    const now = performance.now();
+    gl.t0 = now - Math.max(0, gl.timeline.holdEnd - CROSSFADE_MS - 20);
+    tick(now);
+  } else {
+    startIntro();
+  }
+  return true;
 }
 
 /**

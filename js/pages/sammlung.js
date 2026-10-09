@@ -9,7 +9,7 @@ import { initSortControl } from "../ui/sort-control.js";
 import { renderStats } from "../ui/stats.js";
 import { initSiteShell } from "../ui/site-shell.js";
 import { initShortcuts } from "../ui/shortcuts.js";
-import { initCurtain, renderCornerDecoration, replayCurtain } from "../ui/curtain.js";
+import { initCurtain, renderCornerDecoration, releaseCurtain } from "../ui/curtain.js";
 import { openGate, releaseGate } from "../ui/site-gate.js";
 import { initTimeline } from "../ui/timeline.js";
 import { renderQuoteOfDay } from "../ui/quote-of-day.js";
@@ -198,16 +198,16 @@ async function init() {
     $("#movies-grid").innerHTML = emptyState(`Die Sammlung konnte nicht geladen werden. ${error.message || ""}`.trim());
     initTabs(null);
     releaseGate();
+    releaseCurtain();
     renderCornerDecoration({ curtainIcon: CORNER_ICON });
     return;
   }
   // Dekoration unten links wie im Dashboard gewählt (ältere Datendateien: Popcorn)
   renderCornerDecoration({ curtainIcon: collection.decor || CORNER_ICON });
-  // Einlass: mit Passwort erst nach richtiger Eingabe; danach geht der
-  // Vorhang (wenn er bei diesem Besuch spielt) noch einmal für die Sammlung auf
-  openGate(collection.access, {
-    onUnlock: () => { if (document.documentElement.dataset.intro !== "skip") replayCurtain(); },
-  });
+  // Einlass: Der Vorhang (wenn er bei diesem Besuch spielt) wartet
+  // geschlossen und öffnet sich erst, wenn die Sammlung frei ist - ohne
+  // Passwort gleich, mit Passwort nach der richtigen Eingabe
+  if (openGate(collection.access, { onUnlock: releaseCurtain })) releaseCurtain();
   if (!sortOptions().some(option => option.value === sortKey)) ({ key: sortKey, direction: sortDirection } = resolveSort(DEFAULT_SORT));
   $("#collection-stand").textContent = standLabel(collection);
 

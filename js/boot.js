@@ -40,6 +40,12 @@
       if (sessionStorage.getItem("site:intro-seen")) root.dataset.intro = "skip";
       else sessionStorage.setItem("site:intro-seen", "1");
     }
+
+    // Einlass: Spielt der Vorhang, bleibt er zunächst geschlossen stehen
+    // (js/ui/curtain.js, data-curtain-hold). Ist ein Passwort nötig, liegt
+    // die Eingabe auf dem geschlossenen Vorhang, und er öffnet sich erst
+    // danach; sonst öffnet er sich, sobald die Daten geladen sind.
+    if (document.currentScript.hasAttribute("data-gate") && root.dataset.intro !== "skip") root.dataset.curtainHold = "";
   } catch {
     // Standard: dunkel, Vorhang spielt (CSS-Vorhang, ohne data-curtain)
   }

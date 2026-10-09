@@ -13,6 +13,10 @@ import { SITE_TITLE } from "../utils/constants.js";
  *   - kein Passwort, oder in diesem Browser schon freigeschaltet → frei
  *   - sonst → Overlay; nach richtiger Eingabe frei und gemerkt (localStorage)
  * Ein neues Passwort (neuer Prüfwert) fragt automatisch wieder.
+ *
+ * Wartet der Kinovorhang geschlossen (data-curtain-hold, js/boot.js), liegt
+ * die Eingabe auf dem Vorhang statt auf eigenem Hintergrund; die Seite gibt
+ * ihn nach dem Einlass mit releaseCurtain() frei - er öffnet sich dann.
  */
 
 const KEY = "site:access";
@@ -51,6 +55,8 @@ export function openGate(access, { onUnlock = () => {} } = {}) {
 
   const gate = document.createElement("div");
   gate.className = "site-gate";
+  // Auf dem geschlossenen Vorhang: ohne eigenen Hintergrund, über dem Stoff
+  if (root.dataset.curtainHold !== undefined && document.querySelector(".curtain")) gate.classList.add("on-curtain");
   gate.innerHTML = `
     <form class="site-gate-card" role="dialog" aria-modal="true" aria-labelledby="gate-title" novalidate>
       <img class="site-gate-logo" src="assets/logo.svg" alt="" width="96" height="96" decoding="async">

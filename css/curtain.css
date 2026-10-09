@@ -110,6 +110,10 @@
   to   { width: var(--curtain-rest); }
 }
 
+/* Warten (Website, Einlass mit Passwort): geschlossen stehen bleiben, bis
+   js/ui/curtain.js mit releaseCurtain() die Animation freigibt. */
+:root[data-curtain-hold] .curtain { animation-play-state: paused; }
+
 /* Vorschau aus den Einstellungen (klassischer Stil): Animation neu starten,
    auch wenn der Vorhang beim Seitenaufruf übersprungen wurde. */
 :root .curtain.curtain--replay,

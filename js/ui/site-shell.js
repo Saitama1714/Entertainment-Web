@@ -11,7 +11,8 @@ import { replayCurtain } from "./curtain.js";
 
 /*
  * Kopfleiste aller Seiten: Logo-Medaillon, Design-Auswahl und der Dialog
- * „Ansicht" (wann der Kinovorhang spielt, Vorschau, Klick-Effekt, Tastenkürzel).
+ * „Ansicht" (wann der Kinovorhang spielt, Vorschau, Klick-Effekt, Lichtkegel,
+ * Tastenkürzel).
  * Schaltet außerdem den Kachel-Zoom beim Klick auf Links ein
  * (js/ui/link-transition.js, gemeinsam mit dem Dashboard).
  *
@@ -20,7 +21,7 @@ import { replayCurtain } from "./curtain.js";
  * vor dem ersten Zeichnen.
  */
 
-const KEYS = { theme: "site:theme", intro: "site:intro-mode", clickEffect: "site:click-effect", clickDuration: "site:click-duration" };
+const KEYS = { theme: "site:theme", intro: "site:intro-mode", clickEffect: "site:click-effect", clickDuration: "site:click-duration", dust: "site:projector-dust" };
 const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
 /** Liest eine Einstellung; ohne Speicher (privates Fenster o. Ä.) gilt der Standard. */
@@ -47,6 +48,13 @@ const motion = {};
 function loadMotion() {
   motion.clickEffect = normalizeClickEffect(read(KEYS.clickEffect, "zoom"));
   motion.clickDuration = normalizeClickDuration(Number(read(KEYS.clickDuration, "450")));
+  motion.projectorDust = read(KEYS.dust, "on") !== "off";
+}
+
+/** Lichtkegel mit Staub im Kopf der Sammlung an? (Ansicht → Bewegung) */
+export function projectorDustEnabled() {
+  if (motion.projectorDust === undefined) loadMotion();
+  return motion.projectorDust;
 }
 
 /** Dialog „Ansicht". Der Vorschau-Knopf erscheint nur auf der Hauptseite (mit Vorhang). */
@@ -85,7 +93,11 @@ function openViewSettings() {
             ${escapeHtml(option.label)}
           </label>`).join("")}
       </fieldset>
-      <p class="meta">Beim Öffnen eines Titels und beim Wechsel zurück zur Sammlung. Gilt nur in diesem Browser.</p>
+      <p class="meta">Beim Wechsel zwischen den Seiten. Cover fliegen beim Öffnen eines Titels direkt zur Detailseite. Gilt nur in diesem Browser.</p>
+      <label class="check-row">
+        <input type="checkbox" id="projector-dust-check" ${motion.projectorDust ? "checked" : ""}>
+        Lichtkegel mit Staub im Kopf der Sammlung
+      </label>
     </section>
     <section class="form-section" aria-labelledby="view-keys">
       <h2 id="view-keys">Bedienung</h2>
@@ -107,6 +119,12 @@ function openViewSettings() {
       showToast(radio.value === "off" ? "Klick-Effekt ausgeschaltet." : "Klick-Effekt gespeichert.", "success");
     };
   }
+  $("#projector-dust-check").onchange = event => {
+    motion.projectorDust = event.target.checked;
+    write(KEYS.dust, motion.projectorDust ? "on" : "off");
+    window.dispatchEvent(new CustomEvent("site:projector-dust"));
+    showToast(motion.projectorDust ? "Lichtkegel eingeschaltet." : "Lichtkegel ausgeschaltet.", "success");
+  };
   for (const radio of document.querySelectorAll('.modal input[name="click-duration"]')) {
     radio.onchange = () => {
       motion.clickDuration = Number(radio.value);

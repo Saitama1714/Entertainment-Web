@@ -3,9 +3,11 @@ import { icon } from "../utils/icons.js";
 import { collectionStats, pickRandomUnseen } from "../logic/stats-logic.js";
 import { titleKind } from "../logic/movies-logic.js";
 import { movieGridHtml, settleCachedCovers } from "./movie-card.js";
+import { flapNumberHtml, playFlapsWhenVisible } from "./split-flap.js";
 
 /*
- * Statistik-Kachel „Auf einen Blick": Gesamt/Gesehen/Offen und der
+ * Statistik-Kachel „Auf einen Blick": Gesamt/Gesehen/Offen (als Klapptafel,
+ * js/ui/split-flap.js) und der
  * Zufallspicker „Was schauen wir heute?", wahlweise nur Filme oder Serien
  * (gilt nur für die laufende Sitzung). Zahlen und Auswahl selbst berechnet
  * logic/stats-logic.js. Registerkarte unter Entertainment (views/movies.html);
@@ -48,9 +50,10 @@ export function renderStats(state, {
     ? [["Gesamt", stats.total], ["Gesehen", stats.seen], ["Offen", stats.unseen]]
     : [["Gesamt", stats.total], ["Filme", kinds("film")], ["Serien", kinds("series")]]).map(([label, value]) => `
       <div class="stat-item">
-        <span class="stat-value">${value}</span>
+        <span class="stat-value">${flapNumberHtml(label, value)}</span>
         <span class="stat-label">${label}</span>
       </div>`).join("");
+  playFlapsWhenVisible(numbersEl); // Klapptafel blättert, sobald die Zahlen zu sehen sind
 
   pickerEl.hidden = false;
   const button = $("#stats-shuffle");

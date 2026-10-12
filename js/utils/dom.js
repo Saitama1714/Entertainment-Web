@@ -51,3 +51,6 @@ export function debounce(fn, ms) {
     timer = setTimeout(() => fn(...args), ms);
   };
 }
+
+/** Hat der Besucher im System „Bewegung reduzieren" eingestellt? (live abgefragt) */
+export const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;

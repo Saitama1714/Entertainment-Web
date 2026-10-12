@@ -305,6 +305,20 @@ body:has(.brand--medallion.is-broken) .page-head { padding-left: 0; }
   margin-bottom: var(--s-7);
 }
 .page-head-text { max-width: 62ch; }
+
+/* Lichtkegel mit Staub hinter dem Kopfbereich (js/ui/projector-dust.js) */
+.page-head.has-projector-dust { position: relative; isolation: isolate; }
+.projector-dust {
+  position: absolute; z-index: -1;
+  --dust-bleed: var(--s-5); /* so weit wie der Seitenrand (.shell) */
+  top: -44px; left: calc(-1 * var(--dust-bleed));
+  width: calc(100% + 2 * var(--dust-bleed)); height: calc(100% + 80px);
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 25%, transparent 92%), linear-gradient(to right, transparent, #000 6%, #000 90%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to bottom, #000 25%, transparent 92%), linear-gradient(to right, transparent, #000 6%, #000 90%, transparent);
+  mask-composite: intersect;
+}
 .page-head p { color: var(--text-muted); margin-top: var(--s-3); max-width: 62ch; font-size: 1rem; }
 
 /* Uhrzeit/Datum oben rechts, auf Höhe der Hauptüberschrift (nur Startseite) */
@@ -338,6 +352,54 @@ body:has(.brand--medallion.is-broken) .page-head { padding-left: 0; }
 .quote-of-day .quote-text::before { content: "\201E"; }
 .quote-of-day .quote-text::after { content: "\201C"; }
 .quote-of-day .quote-source { margin-top: var(--s-2); font-size: .85rem; color: var(--text-muted); }
+
+/* Leuchtreklame (js/ui/quote-of-day.js): Lauflicht aus Glühbirnen am Rand,
+   der Text schreibt sich nach dem Vorhang Buchstabe für Buchstabe auf */
+.quote-of-day.is-marquee {
+  --bulb-off: color-mix(in srgb, var(--brass) 40%, var(--surface));
+  position: relative;
+  width: fit-content; max-width: min(100%, 76ch);
+  padding: var(--s-5) var(--s-6);
+  border: 1px solid var(--brass-line);
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--brass) 5%, var(--surface));
+}
+.quote-bulbs { position: absolute; inset: 0; pointer-events: none; }
+.quote-bulb {
+  position: absolute; width: 7px; height: 7px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: var(--bulb-off);
+}
+.quote-bulb::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background: #ffe6ae;
+  box-shadow: 0 0 6px 2px rgb(255 212 130 / .7), 0 0 14px 3px rgb(255 190 90 / .25);
+  opacity: 0;
+}
+.quote-word { display: inline-block; white-space: nowrap; }
+.quote-letter { display: inline-block; white-space: pre; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Drei Gruppen leuchten nacheinander: das Licht läuft ums Schild */
+  .quote-bulb::after { animation: quote-chase 1.8s linear infinite; animation-delay: calc(var(--bulb) * -.6s); }
+  .quote-of-day.is-waiting .quote-letter,
+  .quote-of-day.is-waiting .quote-source,
+  .quote-of-day.is-waiting .quote-text::before,
+  .quote-of-day.is-waiting .quote-text::after { opacity: 0; }
+  .quote-of-day.is-writing .quote-letter {
+    animation: quote-letter .5s cubic-bezier(.2, .8, .2, 1) both;
+    animation-delay: calc(var(--i) * var(--letter-step, 30ms));
+  }
+  .quote-of-day.is-writing .quote-text::after,
+  .quote-of-day.is-writing .quote-source { animation: fade-in .6s ease both; animation-delay: var(--write-ms, 0ms); }
+}
+/* Ruhig: jede dritte Birne brennt, nichts läuft */
+@media (prefers-reduced-motion: reduce) {
+  .quote-bulb:nth-child(3n + 1)::after { opacity: .85; }
+}
+@keyframes quote-chase { 0%, 34%, 100% { opacity: 0; } 8%, 26% { opacity: 1; } }
+@keyframes quote-letter { from { opacity: 0; transform: translateY(.32em); filter: blur(3px); } }
 
 .section { margin-bottom: var(--s-8); }
 .section:last-child { margin-bottom: 0; }
@@ -568,6 +630,34 @@ select.compact { padding: 6px 8px; font-size: .86rem; border-color: var(--line);
 .stat-value { font-family: var(--font-display); font-size: 2.5rem; line-height: 1; color: var(--brass); font-variant-numeric: lining-nums tabular-nums; }
 .stat-label { font-size: .82rem; color: var(--text-muted); margin-top: 6px; }
 
+/* Klapptafel-Zahlen (js/ui/split-flap.js): jede Ziffer eine Klappe */
+.flap-number { display: inline-block; }
+.flap-row { display: inline-flex; gap: .06em; }
+.flap {
+  position: relative; display: block;
+  width: .74em; height: 1.16em;
+  perspective: 3em;
+}
+.flap-half {
+  position: absolute; left: 0; right: 0; height: 50%;
+  overflow: hidden;
+  background: var(--surface-sunken);
+  backface-visibility: hidden;
+}
+.flap-half::before { content: attr(data-c); display: block; height: 1.16em; line-height: 1.16em; text-align: center; white-space: pre; }
+.flap-top { top: 0; border-radius: .09em .09em 0 0; }
+.flap-bottom { bottom: 0; border-radius: 0 0 .09em .09em; }
+.flap-bottom::before { transform: translateY(-50%); }
+/* Licht von oben: obere Hälfte einen Hauch heller */
+.flap-top { background: color-mix(in srgb, var(--text) 4%, var(--surface-sunken)); }
+.flap-fold { transform-origin: 50% 100%; z-index: 2; }
+.flap-unfold { transform-origin: 50% 0; transform: rotateX(90deg); z-index: 2; }
+/* Scharnier in der Mitte */
+.flap::after {
+  content: ""; position: absolute; left: 0; right: 0; top: calc(50% - .5px); height: 1px;
+  background: var(--surface); z-index: 3;
+}
+
 .stats-picker { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-5); flex: 1 1 260px; }
 .stats-picker[hidden] { display: none; }
 .stats-controls { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-2); }
@@ -719,6 +809,14 @@ select.compact { padding: 6px 8px; font-size: .86rem; border-color: var(--line);
 }
 
 .movie-card { display: block; text-decoration: none; min-width: 0; position: relative; z-index: 0; }
+/* Wegsinkendes Abbild eines Covers (js/ui/grid-motion.js), liegt neben dem Raster */
+.grid-ghost {
+  position: absolute; margin: 0; pointer-events: none; z-index: 0;
+  border-radius: var(--r-poster); overflow: hidden;
+  background: var(--surface-sunken);
+  box-shadow: 0 6px 16px rgb(0 0 0 / .18);
+}
+.grid-ghost img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .movie-card:hover, .movie-card:focus-within { z-index: 3; }
 
 .movie-card-cover {
@@ -793,6 +891,8 @@ select.compact { padding: 6px 8px; font-size: .86rem; border-color: var(--line);
 .detail-layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: var(--s-7); align-items: start; }
 
 .detail-main { min-width: 0; }
+.detail-layout.is-missing { display: block; }
+.detail-layout.is-missing .detail-cover { display: none; }
 .detail-cover .movie-card-cover { box-shadow: inset 0 0 0 1px rgb(0 0 0 / .07), var(--shadow-pop); }
 .detail-cover-actions { display: grid; gap: var(--s-2); margin-top: var(--s-3); }
 
@@ -811,6 +911,55 @@ select.compact { padding: 6px 8px; font-size: .86rem; border-color: var(--line);
   font-size: .78rem; font-weight: 550;
 }
 .status.seen { background: color-mix(in srgb, var(--brass) 16%, transparent); color: var(--brass); }
+
+/* Eintrittskarte „Gesehen" (js/ui/seen-ticket.js): ein Gegenstand mit eigenen
+   Papierfarben, in beiden Designs gleich. Kerben per Verlauf ausgespart. */
+.seen-ticket {
+  --ticket-paper: #ead9b4;
+  --ticket-ink: #3b2517;
+  --ticket-notch: 6px;
+  display: inline-flex; height: 52px;
+  color: var(--ticket-ink);
+  filter: drop-shadow(0 5px 10px rgb(0 0 0 / .28));
+  user-select: none;
+}
+.seen-ticket-main {
+  position: relative;
+  display: grid; align-content: center; gap: 1px;
+  min-width: 158px;
+  padding: 0 16px 0 13px;
+  border-radius: 6px 0 0 6px;
+  background:
+    radial-gradient(circle at 100% 0, transparent var(--ticket-notch), var(--ticket-paper) calc(var(--ticket-notch) + .5px)) top / 100% 51% no-repeat,
+    radial-gradient(circle at 100% 100%, transparent var(--ticket-notch), var(--ticket-paper) calc(var(--ticket-notch) + .5px)) bottom / 100% 51% no-repeat;
+}
+.seen-ticket-kicker { font-size: .58rem; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; opacity: .62; }
+.seen-ticket-state { font-family: var(--font-display); font-size: 1.12rem; line-height: 1.1; font-variant-numeric: lining-nums tabular-nums; }
+.seen-ticket-stub {
+  display: grid; place-items: center;
+  width: 42px; overflow: hidden;
+  border-left: 2px dashed rgb(59 37 23 / .32);
+  border-radius: 0 6px 6px 0;
+  transform-origin: 0 100%;
+  background:
+    radial-gradient(circle at 0 0, transparent var(--ticket-notch), var(--ticket-paper) calc(var(--ticket-notch) + .5px)) top / 100% 51% no-repeat,
+    radial-gradient(circle at 0 100%, transparent var(--ticket-notch), var(--ticket-paper) calc(var(--ticket-notch) + .5px)) bottom / 100% 51% no-repeat;
+}
+.seen-ticket-stub span { writing-mode: vertical-rl; rotate: 180deg; font-size: .55rem; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; opacity: .6; }
+.seen-ticket-stamp {
+  position: absolute; right: 10px; top: 50%;
+  translate: 0 -50%; rotate: -11deg;
+  padding: 2px 6px;
+  border: 2px solid #9C0205; border-radius: 3px;
+  color: #9C0205;
+  font-size: .6rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+  opacity: 0;
+}
+/* Gesehen: Abschnitt abgerissen (Reißkante bleibt als Perforation), Stempel drauf */
+.seen-ticket.is-seen .seen-ticket-stub { display: none; }
+.seen-ticket.is-seen .seen-ticket-main { border-radius: 6px 2px 2px 6px; }
+.seen-ticket.is-seen .seen-ticket-stamp { opacity: .9; }
+.seen-ticket.is-seen .seen-ticket-state { padding-right: 86px; }
 
 .details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s-7); margin: 0; }
 
@@ -1241,6 +1390,7 @@ kbd {
   .nav { order: 3; width: 100%; margin: 0; overflow-x: auto; }
   .appbar-actions { margin-left: auto; }
   .shell { padding: var(--s-5) var(--s-4) var(--s-7); }
+  .projector-dust { --dust-bleed: var(--s-4); }
   .movie-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--s-4) var(--s-3); }
   .bookmark-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
   .form-grid { grid-template-columns: 1fr; }
@@ -1281,3 +1431,15 @@ kbd {
   html.filter-sheet-open { overflow: hidden; }
 }
 @keyframes filter-sheet-in { from { transform: translateY(24px); opacity: 0; } }
+
+/* =========================================================================
+   Cover-Flug: auf der Detailseite gelandet (js/cover-flight.js)
+   Cover und Titel stehen schon, der Rest blendet weich ein.
+   ========================================================================= */
+
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-cover-landed] #movie-details,
+  :root[data-cover-landed] #detail-cover-actions,
+  :root[data-cover-landed] .detail-pager { animation: cover-landed-in .4s ease-out both; }
+}
+@keyframes cover-landed-in { from { opacity: 0; transform: translateY(6px); } }

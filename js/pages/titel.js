@@ -1,6 +1,7 @@
 import { loadCollection } from "../data-source.js";
 import { searchMovies, filterMovies, sortMovies, emptyFilters, DEFAULT_SORT, streamingSearchUrl } from "../logic/movies-logic.js";
 import { settleCachedCovers } from "../ui/movie-card.js";
+import { seenTicketHtml } from "../ui/seen-ticket.js";
 import { initSiteShell } from "../ui/site-shell.js";
 import { initShortcuts } from "../ui/shortcuts.js";
 import { $, escapeHtml, safeUrl } from "../utils/dom.js";
@@ -42,9 +43,6 @@ function render() {
   document.title = `${movie.title} · ${SITE_TITLE}`;
   $("#movie-title").textContent = movie.title;
 
-  const cover = movie.cover
-    ? `<img class="cover-image" src="${escapeHtml(movie.cover)}" alt="">`
-    : `<span class="cover-placeholder">${icon("image")}</span>`;
   const imdbLink = movie.imdbUrl
     ? `<div class="detail-field"><dt>IMDb</dt><dd><a class="external-link" href="${escapeHtml(safeUrl(movie.imdbUrl))}" target="_blank" rel="noreferrer">Seite öffnen</a></dd></div>`
     : "";
@@ -54,16 +52,12 @@ function render() {
     ? `<div class="detail-field"><dt>Streaming</dt><dd><a class="external-link" href="${escapeHtml(streaming)}" target="_blank" rel="noreferrer">Bei WerStreamt.es ansehen</a></dd></div>`
     : "";
   const summary = [
-    has("seen") ? `<span class="status ${movie.seen ? "seen" : ""}">${movie.seen ? "Gesehen" : "Noch offen"}</span>` : "",
+    has("seen") ? seenTicketHtml(movie) : "",
     has("medium") && movie.medium ? `<span class="meta">${escapeHtml(movie.medium)}</span>` : "",
   ].join("");
 
+  renderCover();
   $("#movie-details").innerHTML = `
-    <div class="detail-layout">
-      <div class="detail-cover">
-        <div class="movie-card-cover${movie.cover ? " is-loading" : ""}">${cover}</div>
-      </div>
-      <div class="detail-main">
         ${summary ? `<div class="detail-summary">${summary}</div>` : ""}
         <dl class="details-grid">
           ${has("lists") ? field("IMDb-Listen", movie.imdbLists.join(", ")) : ""}
@@ -87,11 +81,23 @@ function render() {
           ${field("Beschreibung", movie.imdbDescription)}
           ${imdbLink}
           ${streamingLink}
-        </dl>
-      </div>
-    </div>`;
-  settleCachedCovers($("#movie-details"));
+        </dl>`;
   renderPager();
+}
+
+/**
+ * Cover im festen Rahmen (titel.html). Liegt dort schon dasselbe Bild - etwa
+ * vom Cover-Flug (js/cover-flight.js) -, bleibt es stehen.
+ */
+function renderCover() {
+  const frame = $("#detail-cover");
+  const current = frame.querySelector("img.cover-image");
+  if (movie.cover && current?.getAttribute("src") === movie.cover) return;
+  frame.classList.toggle("is-loading", Boolean(movie.cover));
+  frame.innerHTML = movie.cover
+    ? `<img class="cover-image" src="${escapeHtml(movie.cover)}" alt="">`
+    : `<span class="cover-placeholder">${icon("image")}</span>`;
+  settleCachedCovers(frame.parentElement);
 }
 
 /** Knöpfe „Vorheriger/Nächster Titel" - am Anfang bzw. Ende deaktiviert. */
@@ -131,6 +137,7 @@ function goToNeighbour(step) {
 
 function showMissing(text) {
   $("#movie-title").textContent = "Titel nicht gefunden";
+  $("#detail-layout").classList.add("is-missing");
   $("#movie-details").innerHTML = `
     <div class="empty-state">
       <p>${escapeHtml(text)}</p>

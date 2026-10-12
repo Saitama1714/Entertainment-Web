@@ -98,6 +98,7 @@ css/
 └── site.css             Ergänzungen nur für die Website
 js/
 ├── boot.js              Vor dem ersten Zeichnen: Design, ob/wie der Vorhang spielt
+├── cover-flight.js      Cover-Flug: setzt das Cover vor dem ersten Zeichnen (gemeinsam)
 ├── data-source.js       Lädt data/sammlung.json
 ├── collection.js        Datenmodell der Titel (gemeinsam mit dem Dashboard)
 ├── pages/               Einstieg je Seite: sammlung.js, titel.js, werkzeug.js

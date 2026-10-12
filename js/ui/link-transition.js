@@ -7,8 +7,10 @@ import { BRAND_LOGO } from "../utils/constants.js";
  * Klick-Animation für Links (Einstellungen → Bewegung): "zoom" (die
  * angeklickte Kachel wächst in Granatrot auf Vollbild, in der Mitte das Logo
  * aus BRAND_LOGO bzw. ersatzweise ein Monogramm) oder "off" (keine
- * Animation). Navigiert wird erst, wenn die Animation vollständig abgelaufen
- * ist. Eigene Elemente und Stile (css/link-transition.css).
+ * Animation). Cover-Karten (a.movie-card) zoomen nicht, ihr Cover fliegt an
+ * seinen Platz auf der Detailseite (playCoverFlight, Gegenstück auf der
+ * Detailseite: js/cover-flight.js). Navigiert wird erst, wenn die Animation
+ * vollständig abgelaufen ist. Eigene Elemente und Stile (css/link-transition.css).
  *
  * Ein einziger Klick-Listener am Dokument (in der Bubble-Phase): Seiten, die
  * einen Klick selbst behandeln (z. B. Favoriten im Sortiermodus), rufen
@@ -19,6 +21,7 @@ import { BRAND_LOGO } from "../utils/constants.js";
  */
 
 const EASING = "cubic-bezier(.7, 0, .2, 1)";
+const FLIGHT_EASING = "cubic-bezier(.3, .7, .2, 1)";
 const SAFETY_MS = 10000; // bleibt die Seite stehen (Download, Fehler): Effekt wieder entfernen
 
 let settings = null;   // Dashboard-Zustand (clickEffect, clickDuration) - wird live gelesen
@@ -33,8 +36,87 @@ const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)"
 function reset() {
   timers.forEach(clearTimeout);
   timers = [];
-  document.querySelectorAll(".link-zoom").forEach(element => element.remove());
+  document.querySelectorAll(".link-zoom, .cover-flight-veil, .cover-flight-card").forEach(element => element.remove());
+  document.querySelectorAll(".movie-card-cover").forEach(cover => { cover.style.visibility = ""; });
   busy = false;
+}
+
+/** Merkzettel für die Detailseite (js/cover-flight.js): welches Bild, welcher Titel. */
+const HANDOFF_KEY = "cover-flight";
+
+/**
+ * Wo das Cover auf der Detailseite stehen wird (Fensterkoordinaten, ganz oben
+ * gescrollt): ein unsichtbarer Nachbau aus denselben Klassen wie
+ * views/movie.html bzw. titel.html - Kopfleiste, Überschrift (mit dem echten
+ * Titel, falls er umbricht) und Cover-Spalte. So stimmt das Ziel bei jeder
+ * Fensterbreite, ohne die Detailseite zu kennen.
+ */
+function detailCoverRect(title) {
+  const appbar = document.querySelector(".appbar");
+  const mock = document.createElement("div");
+  mock.className = "cover-flight-measure";
+  mock.setAttribute("aria-hidden", "true");
+  mock.innerHTML = `<main class="shell"><div class="page-head"><h1></h1></div>
+    <div class="detail-layout"><div class="detail-cover"><div class="movie-card-cover"></div></div><div class="detail-main"></div></div></main>`;
+  mock.querySelector("h1").textContent = title || "Titel";
+  document.body.append(mock);
+  const frame = mock.querySelector(".movie-card-cover").getBoundingClientRect();
+  const origin = mock.getBoundingClientRect();
+  mock.remove();
+  const top = (appbar?.offsetHeight || 0) + frame.top - origin.top;
+  return frame.width > 0 ? { left: frame.left, top, width: frame.width, height: frame.height } : null;
+}
+
+/**
+ * Cover-Flug: Das angeklickte Cover löst sich aus dem Raster und fliegt an
+ * seinen Platz auf der Detailseite, während die Seite dahinter zum leeren
+ * Hintergrund verblasst. Navigiert wird erst danach; der Browser hält das
+ * letzte Bild, bis die Detailseite steht - und dort sitzt das Cover genau an
+ * derselben Stelle (js/cover-flight.js setzt es vor dem ersten Zeichnen ein).
+ * @returns {Animation[]|null} null, wenn sich das Ziel nicht bestimmen lässt.
+ */
+function playCoverFlight(card, duration) {
+  const cover = card.querySelector(".movie-card-cover");
+  const title = card.querySelector(".movie-card-title")?.textContent || "";
+  const target = cover && detailCoverRect(title);
+  if (!target) return null;
+  const from = cover.getBoundingClientRect();
+  const img = cover.querySelector("img.cover-image");
+  const src = img?.complete && img.naturalWidth ? img.currentSrc || img.src : "";
+  try {
+    sessionStorage.setItem(HANDOFF_KEY, JSON.stringify({ id: card.dataset.movieId, src, title, at: Date.now() }));
+  } catch { /* ohne Speicher landet das Cover eben erst mit den Daten */ }
+
+  const veil = document.createElement("div");
+  veil.className = "cover-flight-veil";
+  veil.setAttribute("aria-hidden", "true");
+  const flyer = document.createElement("div");
+  flyer.className = "cover-flight-card";
+  flyer.setAttribute("aria-hidden", "true");
+  if (src) {
+    const copy = new Image();
+    copy.alt = "";
+    copy.src = src;
+    flyer.append(copy);
+  }
+  Object.assign(flyer.style, {
+    left: `${target.left}px`, top: `${target.top}px`,
+    width: `${target.width}px`, height: `${target.height}px`,
+  });
+  document.body.append(veil, flyer);
+  cover.style.visibility = "hidden"; // das Original bleibt als Lücke im Raster zurück
+
+  const dx = from.left - target.left;
+  const dy = from.top - target.top;
+  const sx = from.width / target.width;
+  const sy = from.height / target.height;
+  const fly = flyer.animate([
+    { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
+    { transform: "none" },
+  ], { duration, easing: FLIGHT_EASING, fill: "forwards" });
+  const fade = veil.animate([{ opacity: 0 }, { opacity: 1 }],
+    { duration: duration * 0.75, easing: "ease-out", fill: "forwards" });
+  return [fly, fade];
 }
 
 /** Kachel-Zoom: Overlay startet auf dem Element und öffnet sich auf Vollbild. Liefert die Animationen. */
@@ -120,7 +202,8 @@ function onClick(event) {
   event.preventDefault();
   busy = true;
   const duration = normalizeClickDuration(settings?.clickDuration);
-  const animations = playZoom(link, duration);
+  // Cover-Karten fliegen zur Detailseite, alles andere zoomt
+  const animations = (link.matches("a.movie-card[data-movie-id]") && playCoverFlight(link, duration)) || playZoom(link, duration);
 
   // Erst navigieren, wenn der Browser die Animation als fertig meldet und ihr
   // letztes Bild gezeichnet hat - nicht nach der Uhr: Die Animation beginnt

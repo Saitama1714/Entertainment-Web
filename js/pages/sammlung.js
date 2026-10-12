@@ -4,10 +4,12 @@ import {
   emptyFilters, hasActiveFilters, SORT_OPTIONS, DEFAULT_SORT, resolveSort,
 } from "../logic/movies-logic.js";
 import { movieGridHtml, settleCachedCovers } from "../ui/movie-card.js";
+import { captureGrid, animateGrid } from "../ui/grid-motion.js";
 import { filterChipsHtml, initFilterBar } from "../ui/movie-filters.js";
 import { initSortControl } from "../ui/sort-control.js";
 import { renderStats } from "../ui/stats.js";
-import { initSiteShell } from "../ui/site-shell.js";
+import { initSiteShell, projectorDustEnabled } from "../ui/site-shell.js";
+import { initProjectorDust, setProjectorDust } from "../ui/projector-dust.js";
 import { initShortcuts } from "../ui/shortcuts.js";
 import { initCurtain, renderCornerDecoration, releaseCurtain } from "../ui/curtain.js";
 import { openGate, releaseGate } from "../ui/site-gate.js";
@@ -92,8 +94,11 @@ function renderToolbar(searched) {
   $("#filter-chips").innerHTML = filterChipsHtml(collection.movies, searched, filters, { hide });
 }
 
-/** Zeichnet das Raster: Suche → Filter → Sortierung, dazu Zähler und Chips. */
-function renderMovies() {
+/**
+ * Zeichnet das Raster: Suche → Filter → Sortierung, dazu Zähler und Chips.
+ * animate: die Cover gleiten an ihren neuen Platz (js/ui/grid-motion.js).
+ */
+function renderMovies({ animate = false } = {}) {
   const query = $("#movie-search").value;
   const searched = searchMovies(collection.movies, query);
   const filtered = filterMovies(searched, filters);
@@ -104,8 +109,11 @@ function renderMovies() {
   const empty = collection.movies.length === 0
     ? emptyState("Hier sind noch keine Titel veröffentlicht.")
     : emptyState(query.trim() || !hasActiveFilters(filters) ? "Keine Treffer. Andere Suche versuchen?" : "Keine Treffer für diese Filter.");
-  $("#movies-grid").innerHTML = movieGridHtml(sorted, "titel.html", empty);
-  settleCachedCovers($("#movies-grid"));
+  const grid = $("#movies-grid");
+  const before = animate && !grid.closest("[hidden]") ? captureGrid(grid) : null;
+  grid.innerHTML = movieGridHtml(sorted, "titel.html", empty);
+  settleCachedCovers(grid);
+  animateGrid(grid, before);
   renderToolbar(searched);
 
   const total = collection.movies.length;
@@ -157,13 +165,13 @@ function initTabs(initial) {
 
 /** Verdrahtet Suche, Sortierung und Chips (Chips per Event-Delegation). */
 function bindEvents() {
-  $("#movie-search").oninput = debounce(renderMovies, CONFIG.SEARCH_DEBOUNCE_MS);
-  initShortcuts({ search: $("#movie-search"), onSearchCleared: renderMovies });
+  $("#movie-search").oninput = debounce(() => renderMovies({ animate: true }), CONFIG.SEARCH_DEBOUNCE_MS);
+  initShortcuts({ search: $("#movie-search"), onSearchCleared: () => renderMovies({ animate: true }) });
 
   initSortControl({
     select: $("#movie-sort"), button: $("#movie-sort-dir"), options: sortOptions(),
     key: sortKey, direction: sortDirection,
-    onChange: ({ key, direction }) => { sortKey = key; sortDirection = direction; renderMovies(); },
+    onChange: ({ key, direction }) => { sortKey = key; sortDirection = direction; renderMovies({ animate: true }); },
   });
 
   initFilterBar($("#filter-chips")); // Gruppen auf-/zuklappen, Tastatur, Suchfeld
@@ -172,13 +180,13 @@ function bindEvents() {
     if (chip) {
       const { category, value } = chip.dataset;
       filters = toggleFilterValue(filters, category, value);
-      renderMovies();
+      renderMovies({ animate: true });
       $$(".filter-chip", $("#filter-chips")).find(item => item.dataset.category === category && item.dataset.value === value)?.focus();
       return;
     }
     if (event.target.closest("#filter-reset")) {
       filters = emptyFilters();
-      renderMovies();
+      renderMovies({ animate: true });
       $("#filter-chips").focus();
     }
   });
@@ -189,6 +197,8 @@ async function init() {
   $("#site-title").textContent = SITE_TITLE;
   renderQuoteOfDay(); // Filmzitat des Tages wie auf der Startseite des Dashboards
   initSiteShell();
+  initProjectorDust($(".page-head"), { enabled: projectorDustEnabled() });
+  window.addEventListener("site:projector-dust", () => setProjectorDust(projectorDustEnabled()));
   const tab = restoreView();
 
   try {

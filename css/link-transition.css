@@ -55,3 +55,35 @@
   height: 100%;
   object-fit: contain;
 }
+
+/* ---- Cover-Flug (Cover-Karte → Detailseite) ----------------------------
+   Schleier unter der Kopfleiste (30), Cover darüber; die Detailseite zeigt
+   das Cover danach an genau derselben Stelle (js/cover-flight.js). */
+
+.cover-flight-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 28;
+  pointer-events: none;
+  /* wie der Seitenhintergrund (body in css/app.css) */
+  background: var(--spotlight) no-repeat top center / 100% 560px, var(--bg);
+  opacity: 0;
+}
+.cover-flight-card {
+  position: fixed;
+  z-index: 29;
+  pointer-events: none;
+  transform-origin: 0 0;
+  border-radius: var(--r-poster);
+  overflow: hidden;
+  background: var(--surface-sunken);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / .07), var(--shadow-pop);
+  will-change: transform;
+}
+.cover-flight-card img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* Unsichtbarer Nachbau der Detailseite, nur zum Messen des Ziels */
+.cover-flight-measure {
+  position: absolute; left: 0; top: 0; width: 100%;
+  visibility: hidden; pointer-events: none;
+}

@@ -7,6 +7,9 @@
     <title>Titel · Filmsammlung</title>
     <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
     <script src="js/boot.js" data-gate></script>
+    <!-- Cover-Flug: Bild vor dem ersten Zeichnen in den Rahmen setzen (js/cover-flight.js) -->
+    <link rel="expect" href="#detail-cover" blocking="render">
+    <script src="js/cover-flight.js"></script>
     <link rel="stylesheet" href="css/app.css">
     <link rel="stylesheet" href="css/link-transition.css">
     <link rel="stylesheet" href="css/site.css">
@@ -35,9 +38,15 @@
 
     <main class="shell" id="main">
       <div class="page-head">
-        <h1 id="movie-title">Wird geladen …</h1>
+        <h1 id="movie-title" data-cover-title>Wird geladen …</h1>
       </div>
-      <div id="movie-details" aria-live="polite"></div>
+      <!-- Cover-Rahmen steht schon im HTML: Landeplatz für den Cover-Flug (js/cover-flight.js) -->
+      <div class="detail-layout" id="detail-layout">
+        <div class="detail-cover" id="detail-cover-column">
+          <div class="movie-card-cover" id="detail-cover" data-cover-landing></div>
+        </div>
+        <div class="detail-main" id="movie-details" aria-live="polite"></div>
+      </div>
       <nav class="detail-pager" id="detail-pager" aria-label="Blättern" hidden>
         <a class="small-button" id="prev-title" rel="prev">← Vorheriger Titel</a>
         <a class="small-button" id="next-title" rel="next">Nächster Titel →</a>

@@ -47,6 +47,10 @@ code { font-size: .92em; padding: 1px 5px; border-radius: 4px; background: color
 :root[data-gate] .shell,
 :root[data-gate] .corner-decor,
 :root[data-gate] .skip-link { visibility: hidden; }
+/* Cover-Flug (js/cover-flight.js): Wer aus der Sammlung kommt, ist schon
+   eingelassen - Cover und Titel stehen sofort da, der Rest folgt nach der Prüfung */
+:root[data-gate="pending"][data-cover-landed] [data-cover-landing],
+:root[data-gate="pending"][data-cover-landed] [data-cover-title] { visibility: visible; }
 
 .site-gate {
   position: fixed; inset: 0; z-index: 35;

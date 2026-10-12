@@ -1,5 +1,21 @@
 # Änderungen
 
+## 1.12.1
+- Cover-Flug zuverlässig (wie Dashboard 2.27.1): Das Cover fliegt selbst an
+  seinen Platz auf der Detailseite und steht dort beim ersten Zeichnen; folgt
+  Ansicht → Bewegung (Tempo, „Aus"). Kein Rückflug mehr beim Zurückgehen.
+
+## 1.12.0 – Motion-Design (wie im Dashboard 2.27)
+- Klapptafel-Zahlen unter „Auf einen Blick".
+- Umsortieren mit Gedächtnis: Cover gleiten bei Suche, Filter und Sortierung
+  an ihren neuen Platz.
+- Cover fliegt zur Detailseite (und, wenn der Browser die Sammlung im
+  Zwischenspeicher hat, beim Zurückgehen wieder ins Raster).
+- Eintrittskarte statt „Gesehen"-Plakette auf der Detailseite.
+- Filmzitat als Leuchtreklame mit Lauflicht.
+- Lichtkegel mit Staub im Kopf der Sammlung, abschaltbar unter Ansicht → Bewegung.
+- Alles bleibt bei „Bewegung reduzieren" im System still.
+
 ## 1.11.1
 - Einlass: Der geschlossen wartende Vorhang ist jetzt der hochwertige
   „Lebendige Stoff“ (WebGL) statt des einfachen Ersatzvorhangs.

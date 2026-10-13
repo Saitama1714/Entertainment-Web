@@ -16,6 +16,7 @@
   margin-top: var(--s-7); padding-top: var(--s-5);
   border-top: 1px solid var(--line);
 }
+.detail-pager[hidden] { display: none; }
 .detail-pager a[aria-disabled="true"] { opacity: .4; pointer-events: none; }
 .detail-pager a { text-decoration: none; }
 

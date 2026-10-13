@@ -64,7 +64,10 @@ export function newMovie(values = {}) {
 
 /** Wendet newMovie() auf eine ganze Liste an (z. B. nach dem Laden aus Storage). */
 export function normalizeMovies(movies) {
-  return movies.map(newMovie);
+  // Unbrauchbare Einträge überspringen statt die ganze Seite scheitern zu lassen
+  return (Array.isArray(movies) ? movies : [])
+    .filter(movie => movie && typeof movie === "object" && !Array.isArray(movie))
+    .map(movie => newMovie(movie));
 }
 
 /** Fügt einen Film hinzu oder ersetzt ihn, falls die ID bereits existiert. */

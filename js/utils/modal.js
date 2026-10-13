@@ -65,10 +65,12 @@ export function openModal(title, contentHtml, { onClose = null, small = false } 
     if (focusable.length === 0) return;
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
+    // Fokus auf dem Dialog selbst (Klick auf Text) zählt wie „außerhalb der Liste"
+    const inside = focusable.includes(document.activeElement);
+    if (event.shiftKey && (document.activeElement === first || !inside)) {
       event.preventDefault();
       last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
+    } else if (!event.shiftKey && (document.activeElement === last || !inside)) {
       event.preventDefault();
       first.focus();
     }

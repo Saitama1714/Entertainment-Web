@@ -281,7 +281,7 @@ export function initTimeline(panel, {
       if (index === current) classes.push("is-current");
       if (entry.movie.id === selectedId) classes.push("is-selected");
       if (index === hoverIndex) classes.push("is-hover");
-      parts.push(`<line class="${classes.join(" ")}" x1="${xs[index].toFixed(1)}" x2="${xs[index].toFixed(1)}" y1="${inner}" y2="${outer}"/>`);
+      parts.push(`<line class="${classes.join(" ")}" data-i="${index}" x1="${xs[index].toFixed(1)}" x2="${xs[index].toFixed(1)}" y1="${inner}" y2="${outer}"/>`);
       marks.push({ x: xs[index], y: (inner + outer) / 2, index });
     });
     const now = currentEntry();
@@ -422,6 +422,8 @@ export function initTimeline(panel, {
   });
   flow.addEventListener("pointermove", event => {
     if (!drag || event.pointerId !== drag.id) return;
+    // Losgelassen, ohne dass pointerup hier ankam (außerhalb losgelassen): Ziehen beenden
+    if (!(event.buttons & 1)) { drag = null; return; }
     const steps = Math.round((drag.x - event.clientX) / 60);
     if (steps) {
       if (!drag.moved) flow.setPointerCapture?.(event.pointerId);
@@ -459,27 +461,32 @@ export function initTimeline(panel, {
     return best;
   }
 
+  /** Hervorhebung nur an den zwei betroffenen Strichen umschalten - nicht die ganze Achse neu bauen. */
+  function setHover(index) {
+    svg.querySelector(`.tl-mark[data-i="${hoverIndex}"]`)?.classList.remove("is-hover");
+    hoverIndex = index;
+    if (index >= 0) svg.querySelector(`.tl-mark[data-i="${index}"]`)?.classList.add("is-hover");
+  }
+
   svg.addEventListener("pointermove", event => {
     const mark = markAt(event);
     const index = mark ? mark.index : -1;
     if (index === hoverIndex) return;
-    hoverIndex = index;
+    setHover(index);
     svg.style.cursor = mark ? "pointer" : "";
-    if (!mark) { peek.hidden = true; renderAxis(); return; }
+    if (!mark) { peek.hidden = true; return; }
     const { movie } = entries[index];
     peek.innerHTML = `${movie.cover ? `<img src="${escapeHtml(movie.cover)}" alt="">` : `<span class="timeline-peek-fallback">${escapeHtml(movie.title)}</span>`}
       <span class="timeline-peek-title">${escapeHtml(movie.title)}</span>`;
     const left = Math.max(40, Math.min(axis.clientWidth - 40, mark.x));
     peek.style.left = `${left}px`;
     peek.hidden = false;
-    renderAxis();
   });
   svg.addEventListener("pointerleave", () => {
     if (hoverIndex === -1) return;
-    hoverIndex = -1;
+    setHover(-1);
     peek.hidden = true;
     svg.style.cursor = "";
-    renderAxis();
   });
   svg.addEventListener("click", event => {
     const mark = markAt(event);

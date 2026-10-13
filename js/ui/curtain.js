@@ -162,17 +162,30 @@ function bakeCanvas(curtain) {
  * Bild während man am Fensterrand zieht.
  */
 const CACHE_KEY = "dashboard:curtain-cache";
+// Kleiner Begleiteintrag: für welche Fenstergröße das Endbild schon gespeichert ist.
+// Das Endbild ist bei gleicher Größe immer gleich - dann nicht jedes Mal neu
+// kodieren (zwei verlustfreie Bilder, mehrere MB). Nach Änderungen am Vorhang
+// CACHE_VERSION erhöhen.
+const CACHE_STAMP_KEY = "dashboard:curtain-cache-stamp";
+const CACHE_VERSION = 1;
 let cacheTimer = 0;
 
 function rememberRestImage(left, right, geom) {
   clearTimeout(cacheTimer);
   cacheTimer = setTimeout(() => {
     try {
-      if (geom.R <= 0 || !left.width || !right.width) { localStorage.removeItem(CACHE_KEY); return; }
+      if (geom.R <= 0 || !left.width || !right.width) {
+        localStorage.removeItem(CACHE_KEY);
+        localStorage.removeItem(CACHE_STAMP_KEY);
+        return;
+      }
+      const stamp = `${CACHE_VERSION}:${window.innerWidth}x${window.innerHeight}@${window.devicePixelRatio}`;
+      if (localStorage.getItem(CACHE_STAMP_KEY) === stamp && localStorage.getItem(CACHE_KEY)) return;
       localStorage.setItem(CACHE_KEY, JSON.stringify({
         w: window.innerWidth, h: window.innerHeight, dpr: window.devicePixelRatio,
         left: left.toDataURL("image/webp", 1), right: right.toDataURL("image/webp", 1), // Qualität 1 = verlustfrei: Wechsel zum WebGL-Bild unsichtbar
       }));
+      localStorage.setItem(CACHE_STAMP_KEY, stamp);
     } catch {
       // Speicher voll oder gesperrt: dann eben ohne Zwischenspeicher
     }

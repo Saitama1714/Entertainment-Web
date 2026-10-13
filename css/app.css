@@ -850,12 +850,15 @@ select.compact { padding: 6px 8px; font-size: .86rem; border-color: var(--line);
    Fläche einen wandernden Glanz; das Bild blendet danach weich ein. */
 .movie-card-cover .cover-image { transition: opacity .35s ease; }
 .movie-card-cover.is-loading .cover-image { opacity: 0; }
+/* Der Glanz wandert per transform (vom Compositor erledigt) - so kosten auch
+   hunderte noch nicht geladene Cover außerhalb des Fensters nichts */
 .movie-card-cover.is-loading::before {
   content: "";
   position: absolute;
-  inset: 0;
-  background: linear-gradient(100deg, transparent 30%, var(--skeleton-shine) 50%, transparent 70%) 0 0 / 250% 100%;
-  background-position: 100% 0;
+  top: 0; left: 0; bottom: 0;
+  width: 250%;
+  background: linear-gradient(100deg, transparent 30%, var(--skeleton-shine) 50%, transparent 70%);
+  transform: translateX(-60%);
 }
 
 .cover-placeholder { color: var(--text-faint); }
@@ -910,14 +913,6 @@ select.compact { padding: 6px 8px; font-size: .86rem; border-color: var(--line);
 }
 .detail-actions { display: flex; gap: var(--s-2); margin-left: auto; }
 
-.status {
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: var(--surface-sunken);
-  color: var(--text-muted);
-  font-size: .78rem; font-weight: 550;
-}
-.status.seen { background: color-mix(in srgb, var(--brass) 16%, transparent); color: var(--brass); }
 
 /* Kinoticket „Goldprägung, Chamois" (js/ui/seen-ticket.js): Chamois-Karton mit
    gestanzten Ecken und feiner Prägelinie, gesetzt in Cinzel. Gesehen = Datum in
@@ -1394,7 +1389,7 @@ kbd {
 @keyframes menu-in { from { opacity: 0; transform: translateY(-4px) } to { opacity: 1; transform: none } }
 @keyframes decor-pop { from { opacity: 0; transform: translateY(10px) scale(.7) } to { opacity: 1; transform: none } }
 @keyframes decor-part-pop { from { transform: scale(0) } to { transform: scale(1) } }
-@keyframes skeleton-shine { from { background-position: 100% 0 } to { background-position: -150% 0 } }
+@keyframes skeleton-shine { from { transform: translateX(-60%) } to { transform: translateX(90%) } }
 
 /* =========================================================================
    Schmale Fenster

@@ -165,12 +165,15 @@ async function init() {
     releaseGate();
     return;
   }
-  openGate(collection.access); // Einlass mit Passwort, falls eins hinterlegt ist
   const id = new URLSearchParams(location.search).get("id");
   movie = collection.movies.find(item => item.id === id);
-  initShortcuts({ previousMovie: () => goToNeighbour(-1), nextMovie: () => goToNeighbour(1) });
-  if (!movie) { showMissing("Diesen Titel gibt es in der Sammlung nicht (mehr)."); return; }
-  render();
+  // Erst nach dem Einlass zeigen (auch nicht im Fenstertitel) und blättern lassen
+  const show = () => {
+    initShortcuts({ previousMovie: () => goToNeighbour(-1), nextMovie: () => goToNeighbour(1) });
+    if (!movie) { showMissing("Diesen Titel gibt es in der Sammlung nicht (mehr)."); return; }
+    render();
+  };
+  if (openGate(collection.access, { onUnlock: show })) show(); // Einlass mit Passwort, falls eins hinterlegt ist
 }
 
 init();

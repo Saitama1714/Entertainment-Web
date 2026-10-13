@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.12.3
+- Detailseite: Titel erscheint (auch im Fenstertitel) erst nach dem Einlass;
+  die Blättern-Leiste verschwindet, wenn es nichts zu blättern gibt.
+- Aus der Durchsicht des Dashboards (gemeinsame Dateien): schnellerer
+  Lade-Schimmer, Zeitleiste ohne Neuaufbau beim Überfahren, Ziehen endet sauber,
+  Raster ohne Screenreader-Dauermeldungen, Fokus bleibt im Dialog.
+
 ## 1.12.2
 - Kinoticket auf der Detailseite im neuen Design „Goldprägung, Chamois" (wie
   Dashboard 2.27.3), Schrift Cinzel liegt unter assets/fonts.

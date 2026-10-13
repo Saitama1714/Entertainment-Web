@@ -375,6 +375,7 @@ def main():
         pg.add_init_script("localStorage.setItem('site:intro-mode', 'off')")
         pg.goto(base + "/titel.html?id=gibt-es-nicht"); pg.wait_for_timeout(500)
         check("Unbekannter Titel → Hinweis mit Weg zurück", pg.text_content("#movie-title") == "Titel nicht gefunden" and pg.is_visible(".empty-state a"))
+        check("… ohne Blättern-Leiste", not pg.is_visible("#detail-pager"))
         (site / "data" / "sammlung.json").rename(site / "data" / "weg.json")
         pg.goto(base + "/index.html"); pg.wait_for_timeout(500)
         check("Datendatei fehlt → verständliche Meldung", "konnte nicht geladen werden" in pg.text_content("#movies-grid"), pg.text_content("#movies-grid"))

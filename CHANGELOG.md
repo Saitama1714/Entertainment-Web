@@ -1,5 +1,9 @@
 # Änderungen
 
+## 1.12.2
+- Kinoticket auf der Detailseite im neuen Design „Goldprägung, Chamois" (wie
+  Dashboard 2.27.3), Schrift Cinzel liegt unter assets/fonts.
+
 ## 1.12.1
 - Cover-Flug zuverlässig (wie Dashboard 2.27.1): Das Cover fliegt selbst an
   seinen Platz auf der Detailseite und steht dort beim ersten Zeichnen; folgt

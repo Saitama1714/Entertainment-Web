@@ -10,6 +10,13 @@
   font-weight: 100 900;
   font-display: swap;
 }
+/* Cinzel für das Kinoticket - liegt im Projekt (assets/fonts, OFL), damit es überall gleich aussieht */
+@font-face {
+  font-family: "Cinzel";
+  src: local("Cinzel"), url("../assets/fonts/cinzel-latin.woff2") format("woff2");
+  font-weight: 400 900;
+  font-display: swap;
+}
 @font-face {
   font-family: "Dashboard Display";
   src: local("Instrument Serif"), local("InstrumentSerif-Regular");
@@ -912,54 +919,73 @@ select.compact { padding: 6px 8px; font-size: .86rem; border-color: var(--line);
 }
 .status.seen { background: color-mix(in srgb, var(--brass) 16%, transparent); color: var(--brass); }
 
-/* Eintrittskarte „Gesehen" (js/ui/seen-ticket.js): ein Gegenstand mit eigenen
-   Papierfarben, in beiden Designs gleich. Kerben per Verlauf ausgespart. */
+/* Kinoticket „Goldprägung, Chamois" (js/ui/seen-ticket.js): Chamois-Karton mit
+   gestanzten Ecken und feiner Prägelinie, gesetzt in Cinzel. Gesehen = Datum in
+   Gold, der Abschnitt „Einlass" liegt abgerissen daneben; noch offen = Abschnitt
+   hängt an der Perforation. Ein Gegenstand: in beiden Designs gleich, nur der
+   Schatten passt sich an. */
 .seen-ticket {
-  --ticket-paper: #ead9b4;
-  --ticket-ink: #3b2517;
-  --ticket-notch: 6px;
-  display: inline-flex; height: 52px;
-  color: var(--ticket-ink);
-  filter: drop-shadow(0 5px 10px rgb(0 0 0 / .28));
-  user-select: none;
-}
-.seen-ticket-main {
+  --ticket-paper: linear-gradient(165deg, #f0e8da, #e0d5c2);
+  --ticket-ink: #201f1d;
+  --ticket-brown: #7d5411;
+  --ticket-line: rgb(160 111 36 / .5);
+  --ticket-notch:
+    radial-gradient(circle at 0 0, #0000 6px, #000 6.5px) left top / 51% 51% no-repeat,
+    radial-gradient(circle at 100% 0, #0000 6px, #000 6.5px) right top / 51% 51% no-repeat,
+    radial-gradient(circle at 0 100%, #0000 6px, #000 6.5px) left bottom / 51% 51% no-repeat,
+    radial-gradient(circle at 100% 100%, #0000 6px, #000 6.5px) right bottom / 51% 51% no-repeat;
   position: relative;
-  display: grid; align-content: center; gap: 1px;
-  min-width: 158px;
-  padding: 0 16px 0 13px;
-  border-radius: 6px 0 0 6px;
-  background:
-    radial-gradient(circle at 100% 0, transparent var(--ticket-notch), var(--ticket-paper) calc(var(--ticket-notch) + .5px)) top / 100% 51% no-repeat,
-    radial-gradient(circle at 100% 100%, transparent var(--ticket-notch), var(--ticket-paper) calc(var(--ticket-notch) + .5px)) bottom / 100% 51% no-repeat;
+  display: inline-flex; align-items: center;
+  font-family: "Cinzel", var(--font-display);
+  font-weight: 600;
+  user-select: none;
+  filter: drop-shadow(0 0 1px rgb(225 173 102 / .35)) drop-shadow(0 8px 14px rgb(0 0 0 / .6));
 }
-.seen-ticket-kicker { font-size: .58rem; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; opacity: .62; }
-.seen-ticket-state { font-family: var(--font-display); font-size: 1.12rem; line-height: 1.1; font-variant-numeric: lining-nums tabular-nums; }
+:root[data-theme="light"] .seen-ticket {
+  filter: drop-shadow(0 1px 1px rgb(32 31 29 / .3)) drop-shadow(0 6px 12px rgb(32 31 29 / .18));
+}
+.seen-ticket-card {
+  position: relative;
+  width: 232px; height: 62px; box-sizing: border-box;
+  padding: 0 18px;
+  display: flex; flex-direction: column; justify-content: center; gap: 3px;
+  background: var(--ticket-paper);
+  -webkit-mask: var(--ticket-notch); mask: var(--ticket-notch);
+}
+/* Prägelinie */
+.seen-ticket-card::before {
+  content: ""; position: absolute; inset: 5px;
+  border: 1px solid var(--ticket-line); border-radius: 2px;
+}
+.seen-ticket-kicker { font-size: 8.5px; letter-spacing: .26em; text-transform: uppercase; color: var(--ticket-brown); }
+.seen-ticket-value {
+  font-size: 18px; letter-spacing: .06em; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--ticket-ink);
+}
+/* Goldprägung für das Datum (bzw. „Gesehen" ohne Datum) */
+.seen-ticket.is-seen .seen-ticket-value {
+  background: linear-gradient(#e1ad66, #a06f24 55%, #5a3b0a);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
 .seen-ticket-stub {
-  display: grid; place-items: center;
-  width: 42px; overflow: hidden;
-  border-left: 2px dashed rgb(59 37 23 / .32);
-  border-radius: 0 6px 6px 0;
+  position: relative;
+  width: 44px; height: 62px; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ticket-brown);
+  background: var(--ticket-paper);
+  border-left: 1.5px dashed var(--ticket-line);
+  -webkit-mask: var(--ticket-notch); mask: var(--ticket-notch);
+}
+.seen-ticket-stub span { writing-mode: vertical-rl; rotate: 180deg; font-size: 8.5px; letter-spacing: .26em; text-transform: uppercase; opacity: .65; }
+/* Gesehen: Abschnitt abgerissen, liegt leicht schräg daneben */
+.seen-ticket.is-seen { margin-right: 8px; } /* Platz für den schrägen Abschnitt */
+.seen-ticket.is-seen .seen-ticket-stub {
+  margin-left: 7px;
+  transform: translateY(5px) rotate(7deg);
   transform-origin: 0 100%;
-  background:
-    radial-gradient(circle at 0 0, transparent var(--ticket-notch), var(--ticket-paper) calc(var(--ticket-notch) + .5px)) top / 100% 51% no-repeat,
-    radial-gradient(circle at 0 100%, transparent var(--ticket-notch), var(--ticket-paper) calc(var(--ticket-notch) + .5px)) bottom / 100% 51% no-repeat;
 }
-.seen-ticket-stub span { writing-mode: vertical-rl; rotate: 180deg; font-size: .55rem; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; opacity: .6; }
-.seen-ticket-stamp {
-  position: absolute; right: 10px; top: 50%;
-  translate: 0 -50%; rotate: -11deg;
-  padding: 2px 6px;
-  border: 2px solid #9C0205; border-radius: 3px;
-  color: #9C0205;
-  font-size: .6rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
-  opacity: 0;
-}
-/* Gesehen: Abschnitt abgerissen (Reißkante bleibt als Perforation), Stempel drauf */
-.seen-ticket.is-seen .seen-ticket-stub { display: none; }
-.seen-ticket.is-seen .seen-ticket-main { border-radius: 6px 2px 2px 6px; }
-.seen-ticket.is-seen .seen-ticket-stamp { opacity: .9; }
-.seen-ticket.is-seen .seen-ticket-state { padding-right: 86px; }
 
 .details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s-7); margin: 0; }
 

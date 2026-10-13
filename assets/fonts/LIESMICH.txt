@@ -1,0 +1,7 @@
+Cinzel (cinzel-latin.woff2)
+Schrift von Natanael Gama, lateinischer Zeichensatz, variable Strichstärke 400-900.
+Lizenz: SIL Open Font License 1.1 - frei nutzbar und weitergebbar,
+Volltext: https://openfontlicense.org/open-font-license-official-text/
+Quelle: Google Fonts (https://fonts.google.com/specimen/Cinzel)
+
+Verwendet für das Kinoticket auf der Detailseite (css/app.css, .seen-ticket).

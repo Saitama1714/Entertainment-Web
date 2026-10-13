@@ -46,3 +46,5 @@ js\ui\split-flap.js
 js\ui\grid-motion.js
 js\ui\seen-ticket.js
 js\ui\projector-dust.js
+assets\fonts\cinzel-latin.woff2
+assets\fonts\LIESMICH.txt

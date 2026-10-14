@@ -43,7 +43,7 @@ const raw = [
 const backup = JSON.parse(JSON.stringify({ version: 1, exportedAt: "2026-10-01T08:00:00.000Z", data: { movies: raw, omdbApiKey: "x" } }));
 
 const FIELDS = ["title", "originalTitle", "year", "titleType", "genre", "directors", "runtimeMinutes", "releaseDate", "imdbRating", "numVotes",
-  "imdbId", "imdbDescription", "imdbCreated", "imdbModified", "position", "medium", "seen", "seenAt", "yourRating", "dateRated", "imdbLists", "notes", "createdAt", "id", "importAddedAt", "importChangedAt"];
+  "imdbId", "imdbDescription", "imdbCreated", "imdbModified", "position", "medium", "seen", "yourRating", "dateRated", "imdbLists", "notes", "createdAt", "id", "importAddedAt", "importChangedAt"];
 const UNSAFE = new Set(["a6"]); // Links absichtlich entfernt - dort nur Platzhalter-Gleichheit prüfen
 
 function compare(label, options, skip = []) {

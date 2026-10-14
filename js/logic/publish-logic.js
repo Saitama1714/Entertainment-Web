@@ -36,7 +36,7 @@ export const BASE_FIELDS = [
  */
 export const OPTIONAL_GROUPS = [
   { key: "medium", label: "Medium (DVD, Blu-ray, 4K …)", fields: ["medium"], standard: true },
-  { key: "seen", label: "Gesehen-Status und „Gesehen am“", fields: ["seen", "seenAt"], standard: true },
+  { key: "seen", label: "Gesehen-Status", fields: ["seen"], standard: true },
   { key: "rating", label: "Meine eigene Bewertung", fields: ["yourRating", "dateRated"], standard: true },
   { key: "lists", label: "Namen meiner IMDb-Listen (z. B. „Watchlist“)", fields: ["imdbLists"], standard: true },
   { key: "notes", label: "Meine Notizen", fields: ["notes"], standard: false },

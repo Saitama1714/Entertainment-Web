@@ -81,7 +81,7 @@ function restoreView() {
 // Website: Standard bleibt die IMDb-Bewertung - sie steht deshalb vorn
 const sortOptions = () => [...SORT_OPTIONS].sort((a, b) => (b.value === DEFAULT_SORT) - (a.value === DEFAULT_SORT))
   .filter(option => option.value !== "yourRating" || collection.include.has("rating"))
-  .filter(option => option.value !== "seenAt" || collection.include.has("seen"))
+  .filter(option => option.value !== "dateRated" || collection.include.has("rating"))
   // Auf der Website spricht der Besitzer: „Meine" statt „Deine" Bewertung
   .map(option => (option.value === "yourRating" ? { ...option, label: "Meine Bewertung" } : option));
 

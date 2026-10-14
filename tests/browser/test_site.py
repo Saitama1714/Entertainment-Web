@@ -146,7 +146,7 @@ def main():
         pg.click(".movie-card >> nth=0"); pg.wait_for_url("**/titel.html?id=m1")
         pg.wait_for_selector(".details-grid")
         dl = pg.eval_on_selector_all(".detail-field dt", "els => els.map(e => e.textContent)")
-        expected = ["IMDb-Listen", "Jahr", "Genre", "Laufzeit", "Regie", "Veröffentlichung", "Gesehen am", "Meine Bewertung", "IMDb-Bewertung", "IMDb-Stimmen",
+        expected = ["IMDb-Listen", "Jahr", "Genre", "Laufzeit", "Regie", "Veröffentlichung", "Meine Bewertung", "IMDb-Bewertung", "IMDb-Stimmen",
                     "IMDb-Kennung", "Art", "In IMDb aufgenommen", "In IMDb geändert", "Bewertet am", "Position in der Liste", "IMDb", "Streaming"]
         check("Alle Angaben in der Reihenfolge des Dashboards", dl == expected, dl)
         check("Keine Notizen, keine Knöpfe zum Bearbeiten", "Notizen" not in dl and pg.locator("#edit-movie, #delete-movie, #change-cover").count() == 0)

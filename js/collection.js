@@ -37,7 +37,7 @@ export const IMDB_FIELDS = Object.keys(IMDB_COLUMNS);
  * angelegt bzw. zuletzt spürbar verändert hat (Filter "Import" unter
  * Entertainment). Leer = (noch) nie.
  */
-const LOCAL_TEXT_FIELDS = ["seenAt", "cover", "notes", "imdbId", "importAddedAt", "importChangedAt"];
+const LOCAL_TEXT_FIELDS = ["cover", "notes", "imdbId", "importAddedAt", "importChangedAt"];
 
 /**
  * Erstellt ein vollständiges Eintrags-Objekt mit Standardwerten für alle

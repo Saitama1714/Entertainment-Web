@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.13.0 – „Bewertet am“ statt „Gesehen am“
+- „Gesehen am“ entfällt (war nur eine Kopie des IMDb-Bewertungsdatums). Das
+  Kinoticket zeigt „Bewertet am“ mit dem Bewertungsdatum, sofern die eigene
+  Bewertung veröffentlicht ist; sonst nur „Gesehen“.
+- Sortierung „Bewertet am“ (nur wenn die Bewertung veröffentlicht ist).
+- Werkzeug: Häkchen heißt „Gesehen-Status“.
+
 ## 1.12.3
 - Detailseite: Titel erscheint (auch im Fenstertitel) erst nach dem Einlass;
   die Blättern-Leiste verschwindet, wenn es nichts zu blättern gibt.

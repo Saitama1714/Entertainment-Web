@@ -67,7 +67,6 @@ function render() {
           ${field("Laufzeit", movie.runtimeMinutes ? `${movie.runtimeMinutes} Minuten` : "")}
           ${field("Regie", movie.directors)}
           ${field("Veröffentlichung", movie.releaseDate)}
-          ${has("seen") ? field("Gesehen am", movie.seenAt) : ""}
           ${has("rating") ? field("Meine Bewertung", movie.yourRating) : ""}
           ${field("IMDb-Bewertung", movie.imdbRating)}
           ${field("IMDb-Stimmen", movie.numVotes)}

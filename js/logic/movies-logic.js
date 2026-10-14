@@ -273,7 +273,7 @@ export function facetCounts(movies, filters) {
 /*
  * Sortierung: ein Kriterium plus Richtung (absteigend/aufsteigend, Pfeil-Knopf
  * neben der Auswahl). Jedes Kriterium hat eine sinnvolle Startrichtung
- * (Bewertungen, Jahr, Laufzeit, Gesehen am: absteigend; Titel: A–Z).
+ * (Bewertungen, Jahr, Laufzeit, Bewertet am: absteigend; Titel: A–Z).
  * Fehlende Werte (keine Bewertung, kein Jahr, kein Datum) landen immer am
  * Ende, unabhängig von der Richtung. Bei Gleichstand entscheidet "neueste
  * zuerst" (createdAt). Standard: Website IMDb-Bewertung (DEFAULT_SORT), das
@@ -288,11 +288,11 @@ export const SORT_OPTIONS = [
   { value: "title", label: "Titel", direction: "asc" },
   { value: "year", label: "Jahr", direction: "desc" },
   { value: "runtimeMinutes", label: "Laufzeit", direction: "desc" },
-  { value: "seenAt", label: "Gesehen am", direction: "desc" },
+  { value: "dateRated", label: "Bewertet am", direction: "desc" },
 ];
 
 /** Ältere Sortier-Werte (z. B. in einer gemerkten Ansicht der Website). */
-const LEGACY_SORT = { yearDesc: ["year", "desc"], yearAsc: ["year", "asc"] };
+const LEGACY_SORT = { yearDesc: ["year", "desc"], yearAsc: ["year", "asc"], seenAt: ["dateRated"] };
 
 /**
  * Löst Sortier-Wert und Richtung auf; Unbekanntes fällt auf `fallback` zurück.
@@ -318,8 +318,8 @@ const toNumber = value => {
 /** Sortierwert eines Titels, oder null wenn er fehlt. */
 function sortValue(movie, key) {
   if (key === "title") return String(movie.title || "").trim() || null;
-  if (key === "seenAt") {
-    const time = Date.parse(movie.seenAt || "");
+  if (key === "dateRated") {
+    const time = Date.parse(movie.dateRated || "");
     return Number.isFinite(time) ? time : null;
   }
   return toNumber(movie[key]);

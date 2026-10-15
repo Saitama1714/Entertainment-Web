@@ -54,3 +54,9 @@ export function debounce(fn, ms) {
 
 /** Hat der Besucher im System „Bewegung reduzieren" eingestellt? (live abgefragt) */
 export const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/**
+ * Seite fertig aufgebaut (Daten geladen, erstes Zeichnen erledigt):
+ * <html data-ready>. Hilft den Browser-Tests, gezielt zu warten statt nach Uhr.
+ */
+export const markReady = () => { document.documentElement.dataset.ready = ""; };

@@ -4,7 +4,7 @@ import { settleCachedCovers } from "../ui/movie-card.js";
 import { seenTicketHtml } from "../ui/seen-ticket.js";
 import { initSiteShell } from "../ui/site-shell.js";
 import { initShortcuts } from "../ui/shortcuts.js";
-import { $, escapeHtml, safeUrl } from "../utils/dom.js";
+import { $, escapeHtml, safeUrl, markReady } from "../utils/dom.js";
 import { icon } from "../utils/icons.js";
 import { showToast } from "../utils/toast.js";
 import { SITE_TITLE } from "../utils/constants.js";
@@ -175,4 +175,4 @@ async function init() {
   if (openGate(collection.access, { onUnlock: show })) show(); // Einlass mit Passwort, falls eins hinterlegt ist
 }
 
-init();
+init().finally(markReady); // <html data-ready> für die Browser-Tests

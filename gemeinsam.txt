@@ -23,13 +23,6 @@ js\utils\toast.js
 js\utils\format.js
 js\utils\media.js
 assets\logo.svg
-tests\movies-and-stats.test.mjs
-tests\title-kind.test.mjs
-tests\genre-filter.test.mjs
-tests\import-filter.test.mjs
-tests\curtain-motion.test.mjs
-tests\brand.test.mjs
-tests\timeline.test.mjs
 css\link-transition.css
 js\data\movie-quotes.js
 js\logic\link-transition-logic.js
@@ -38,9 +31,6 @@ js\logic\publish-logic.js
 js\logic\access-logic.js
 js\ui\link-transition.js
 js\ui\quote-of-day.js
-tests\link-transition.test.mjs
-tests\quote.test.mjs
-tests\publish.test.mjs
 js\cover-flight.js
 js\ui\split-flap.js
 js\ui\grid-motion.js

@@ -1,7 +1,9 @@
 /*
  * Prüft, ob die gemeinsamen Dateien (gemeinsam.txt) noch genau so sind wie im
- * Dashboard. Läuft nur, wenn der Dashboard-Ordner erreichbar ist: direkt
- * neben diesem Projekt (..\Dashboard) oder über DASHBOARD_DIR.
+ * Dashboard. Der Dashboard-Ordner muss erreichbar sein: direkt neben diesem
+ * Projekt (..\Dashboard) oder über DASHBOARD_DIR - sonst schlägt der Test fehl.
+ * Die Logik-Tests für diese Dateien laufen nur im Dashboard; dieser Abgleich
+ * stellt sicher, dass hier genau derselbe (dort geprüfte) Code liegt.
  * Abweichung? → Gemeinsames-holen.bat doppelklicken.
  */
 import { existsSync, readFileSync } from "node:fs";
@@ -18,9 +20,9 @@ const check = (name, cond, detail = "") => { cond ? ok++ : bad++; console.log((c
 console.log("Gemeinsame Dateien mit dem Dashboard");
 check("Liste gemeinsam.txt vorhanden und nicht leer", files.length > 10, files.length);
 check("Alle gelisteten Dateien gibt es hier", files.every(file => existsSync(join(root, file))), files.filter(file => !existsSync(join(root, file))));
-if (!existsSync(join(dashboard, "manifest.json"))) {
-  console.log(`  ⏭  Dashboard-Ordner nicht gefunden (${dashboard}) - Vergleich übersprungen`);
-} else {
+const dashboardFound = existsSync(join(dashboard, "manifest.json"));
+check("Dashboard-Ordner gefunden (neben diesem Ordner oder über DASHBOARD_DIR)", dashboardFound, dashboardFound ? "" : `nicht gefunden: ${dashboard} - ohne ihn lässt sich der gemeinsame Code nicht abgleichen`);
+if (dashboardFound) {
   const differ = files.filter(file => !existsSync(join(dashboard, file)) || !readFileSync(join(dashboard, file)).equals(readFileSync(join(root, file))));
   check("Alle gemeinsamen Dateien sind identisch mit dem Dashboard", differ.length === 0, differ);
 }

@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.13.1 – Schlankere, schnellere Tests
+- Logik-Tests der gemeinsamen Dateien laufen nur noch im Dashboard; hier
+  bleiben Parität, Website-Logik und der Gleichstand-Test (der jetzt
+  fehlschlägt, wenn der Dashboard-Ordner fehlt).
+- Browser-Test wartet auf Zustände statt fester Pausen, ohne Doppelprüfungen
+  (89 → 72 Prüfungen, etwa halbe Laufzeit).
+- Sammlung und Detailseite setzen nach dem Start `<html data-ready>`.
+
 ## 1.13.0 – „Bewertet am“ statt „Gesehen am“
 - „Gesehen am“ entfällt (war nur eine Kopie des IMDb-Bewertungsdatums). Das
   Kinoticket zeigt „Bewertet am“ mit dem Bewertungsdatum, sofern die eigene

@@ -15,7 +15,7 @@ import { initCurtain, renderCornerDecoration, releaseCurtain } from "../ui/curta
 import { openGate, releaseGate } from "../ui/site-gate.js";
 import { initTimeline } from "../ui/timeline.js";
 import { renderQuoteOfDay } from "../ui/quote-of-day.js";
-import { $, $$, escapeHtml, debounce, emptyState } from "../utils/dom.js";
+import { $, $$, escapeHtml, debounce, emptyState, markReady } from "../utils/dom.js";
 import { CONFIG, SITE_TITLE, CORNER_ICON } from "../utils/constants.js";
 
 /*
@@ -237,4 +237,4 @@ async function init() {
 
 // Vorhang sofort starten (nicht erst nach dem Laden der Daten)
 initCurtain();
-init();
+init().finally(markReady); // <html data-ready> für die Browser-Tests

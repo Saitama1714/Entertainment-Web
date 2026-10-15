@@ -135,7 +135,9 @@ und Hilfsfunktionen sind dieselben Dateien wie im Dashboard - die Liste steht
 in `gemeinsam.txt`. Das Dashboard ist die Quelle: Nach einer Änderung dort
 `Gemeinsames-holen.bat` doppelklicken (erwartet den Ordner `Dashboard` direkt
 neben diesem), in GitHub Desktop ansehen, committen, pushen.
-`tests/gemeinsam.test.mjs` meldet, wenn hier etwas vom Dashboard abweicht.
+`tests/gemeinsam.test.mjs` meldet, wenn hier etwas vom Dashboard abweicht
+(und schlägt fehl, wenn der Dashboard-Ordner fehlt). Die Logik-Tests für
+diese gemeinsamen Dateien laufen nur im Dashboard, nicht hier noch einmal.
 Diese Dateien hier nie direkt ändern - die nächste Übernahme würde es
 überschreiben.
 

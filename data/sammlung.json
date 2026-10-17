@@ -1,7 +1,7 @@
 {
  "version": 1,
- "generatedAt": "2026-10-15T17:24:24.723Z",
- "exportedAt": "2026-10-15T17:24:24.744Z",
+ "generatedAt": "2026-10-17T15:24:48.678Z",
+ "exportedAt": "2026-10-17T15:24:07.530Z",
  "include": [
   "medium",
   "seen",
@@ -30125,5 +30125,9 @@
     "IMDB Bewertungen"
    ]
   }
- ]
+ ],
+ "access": {
+  "salt": "ebd7ce44ba8ccc8c74ebfce0e83c85e8",
+  "hash": "06c0da32e764ce07340712d272fc98e513618431f987c022f88d2a3cf7651453"
+ }
 }

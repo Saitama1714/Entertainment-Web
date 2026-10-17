@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.14.1 – Vom Dashboard entkoppelt
+- Die Website übernimmt keinen Code mehr aus dem Dashboard und wird nur noch
+  auf ausdrückliche Anweisung weiterentwickelt. Entfallen: `gemeinsam.txt`,
+  `Gemeinsames-holen.bat` und der Abgleich-Test `tests/gemeinsam.test.mjs`.
+- Die Daten kommen weiter wie bisher: `sammlung.json` aus der automatischen
+  Sicherung des Dashboards, per `Sammlung-holen.bat` nach `data/`.
+
 ## 1.14.0 – Sternbild
 - Neue Registerkarte „Sternbild“ wie im Dashboard 2.29: Genres als zoombare
   Karte mit Galaxien, Covern, Umrissen und Schnittmengen; Cover führen zur

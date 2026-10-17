@@ -95,23 +95,21 @@ werkzeug.html            Daten vorbereiten: Sicherung → sammlung.json
 data/sammlung.json       Die veröffentlichten Daten (vom Werkzeug erzeugt)
 assets/logo.svg          Logo (Medaillon, Favicon)
 css/
-├── app.css              Design (gemeinsam mit dem Dashboard)
-├── curtain.css          Kinovorhang (gemeinsam mit dem Dashboard)
+├── app.css              Design (Stand Dashboard 2.29)
+├── curtain.css          Kinovorhang
 └── site.css             Ergänzungen nur für die Website
 js/
 ├── boot.js              Vor dem ersten Zeichnen: Design, ob/wie der Vorhang spielt
-├── cover-flight.js      Cover-Flug: setzt das Cover vor dem ersten Zeichnen (gemeinsam)
+├── cover-flight.js      Cover-Flug: setzt das Cover vor dem ersten Zeichnen
 ├── data-source.js       Lädt data/sammlung.json
-├── collection.js        Datenmodell der Titel (gemeinsam mit dem Dashboard)
+├── collection.js        Datenmodell der Titel
 ├── pages/               Einstieg je Seite: sammlung.js, titel.js, werkzeug.js
 ├── logic/               Reine Funktionen (Filter, Statistik, Zeitleiste, Vorhang, Medaillon,
-│                        Umwandlung Sicherung → sammlung.json, Passwort-Prüfwert) - gemeinsam
-├── ui/                  Karten, Chips, Statistik, Zeitleiste, Vorhang, Medaillon, Tastenkürzel - gemeinsam;
-│                        nur hier: site-shell.js (Kopfleiste und Dialog „Ansicht"),
+│                        Umwandlung Sicherung → sammlung.json, Passwort-Prüfwert)
+├── ui/                  Karten, Chips, Statistik, Zeitleiste, Sternbild, Vorhang, Medaillon, Tastenkürzel;
+│                        nur Website: site-shell.js (Kopfleiste und Dialog „Ansicht"),
 │                        site-gate.js (Einlass mit Passwort)
-└── utils/               Helfer und media.js (Medien) - gemeinsam; nur hier: constants.js
-gemeinsam.txt            Liste der Dateien, die aus dem Dashboard kommen
-Gemeinsames-holen.bat    Doppelklick: diese Dateien aus ..\Dashboard herüberkopieren
+└── utils/               Helfer und media.js (Medien), constants.js
 Sammlung-holen.bat       Doppelklick: sammlung.json aus Downloads\Dashboard-Sicherungen nach data\
 tests/                   Logik-Tests (npm test), Browser-Test in tests/browser/
 robots.txt, .nojekyll    Suchmaschinen aussperren; GitHub Pages ohne Jekyll
@@ -132,19 +130,17 @@ Notizen nur, wenn im Werkzeug angehakt; Cover- und IMDb-Links, die keine
 Web-Adresse sind (z. B. `javascript:`), werden nicht veröffentlicht - das
 Dashboard zeigt dort ohnehin nur den Platzhalter.
 
-**Gemeinsamer Code:** Karten, Filter, Statistik, Zeitleiste, Sternbild, Vorhang, Medaillon, Design
-und Hilfsfunktionen sind dieselben Dateien wie im Dashboard - die Liste steht
-in `gemeinsam.txt`. Das Dashboard ist die Quelle: Nach einer Änderung dort
-`Gemeinsames-holen.bat` doppelklicken (erwartet den Ordner `Dashboard` direkt
-neben diesem), in GitHub Desktop ansehen, committen, pushen.
-`tests/gemeinsam.test.mjs` meldet, wenn hier etwas vom Dashboard abweicht
-(und schlägt fehl, wenn der Dashboard-Ordner fehlt). Die Logik-Tests für
-diese gemeinsamen Dateien laufen nur im Dashboard, nicht hier noch einmal.
-Diese Dateien hier nie direkt ändern - die nächste Übernahme würde es
-überschreiben.
+**Eingefroren (seit 1.14.1):** Bis 1.14.0 kamen Karten, Filter, Statistik,
+Zeitleiste, Sternbild, Vorhang, Medaillon, Design und Hilfsfunktionen als
+gemeinsame Dateien aus dem Dashboard. Seitdem sind beide Projekte entkoppelt:
+Die Dateien hier sind eigene Kopien (Stand Dashboard 2.29), die Website wird
+nur noch auf ausdrückliche Anweisung weiterentwickelt und übernimmt keinen
+Code mehr aus dem Dashboard.
 
 Die Datei `data/sammlung.json` ist der einzige Weg, auf dem Daten vom
-Dashboard hierher kommen.
+Dashboard hierher kommen (weiter per `Sammlung-holen.bat`). Das Dashboard
+hält ihr Format und das Passwort-Verfahren fest, damit diese Seite sie
+auch künftig versteht.
 
 ## Tests
 

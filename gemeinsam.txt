@@ -38,3 +38,6 @@ js\ui\seen-ticket.js
 js\ui\projector-dust.js
 assets\fonts\cinzel-latin.woff2
 assets\fonts\LIESMICH.txt
+css\constellation.css
+js\logic\constellation-logic.js
+js\ui\constellation.js

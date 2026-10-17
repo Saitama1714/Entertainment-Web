@@ -24,6 +24,8 @@ Pages – Anleitung in [docs/HOSTING.md](docs/HOSTING.md).
   nach Erscheinen oder (wenn veröffentlicht) nach dem Tag meiner Bewertung;
   Klick aufs mittlere Cover zeigt den Abstand dazwischen. Suche und Filter
   wirken mit.
+- **Sternbild**: die Genres als zoombare Karte – Sterne, Galaxien, Cover.
+  Ein Genre antippen umrandet alle seine Titel; Cover führen zur Detailseite.
 - **Auf einen Blick**: Gesamt/Gesehen/Offen und „Was schauen wir heute?".
 - **Detailseite** je Titel mit allen veröffentlichten Angaben, Blättern per
   Knopf oder Pfeiltaste (in der Reihenfolge der Sammlung).
@@ -87,7 +89,7 @@ der Link).
 ## Aufbau
 
 ```
-index.html               Sammlung (Titel, Zeitleiste, Auf einen Blick), Kinovorhang
+index.html               Sammlung (Titel, Zeitleiste, Sternbild, Auf einen Blick), Kinovorhang
 titel.html               Detailseite eines Titels (?id=…)
 werkzeug.html            Daten vorbereiten: Sicherung → sammlung.json
 data/sammlung.json       Die veröffentlichten Daten (vom Werkzeug erzeugt)
@@ -130,7 +132,7 @@ Notizen nur, wenn im Werkzeug angehakt; Cover- und IMDb-Links, die keine
 Web-Adresse sind (z. B. `javascript:`), werden nicht veröffentlicht - das
 Dashboard zeigt dort ohnehin nur den Platzhalter.
 
-**Gemeinsamer Code:** Karten, Filter, Statistik, Zeitleiste, Vorhang, Medaillon, Design
+**Gemeinsamer Code:** Karten, Filter, Statistik, Zeitleiste, Sternbild, Vorhang, Medaillon, Design
 und Hilfsfunktionen sind dieselben Dateien wie im Dashboard - die Liste steht
 in `gemeinsam.txt`. Das Dashboard ist die Quelle: Nach einer Änderung dort
 `Gemeinsames-holen.bat` doppelklicken (erwartet den Ordner `Dashboard` direkt

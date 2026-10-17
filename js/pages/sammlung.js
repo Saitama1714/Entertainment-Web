@@ -14,18 +14,20 @@ import { initShortcuts } from "../ui/shortcuts.js";
 import { initCurtain, renderCornerDecoration, releaseCurtain } from "../ui/curtain.js";
 import { openGate, releaseGate } from "../ui/site-gate.js";
 import { initTimeline } from "../ui/timeline.js";
+import { initConstellation } from "../ui/constellation.js";
 import { renderQuoteOfDay } from "../ui/quote-of-day.js";
 import { $, $$, escapeHtml, debounce, emptyState, markReady } from "../utils/dom.js";
 import { CONFIG, SITE_TITLE, CORNER_ICON } from "../utils/constants.js";
 
 /*
- * Hauptseite (index.html): die Sammlung mit drei Registerkarten - „Titel"
+ * Hauptseite (index.html): die Sammlung mit vier Registerkarten - „Titel"
  * (Raster mit Suche, Filter-Chips, Sortierung), „Zeitleiste" (Cover Flow +
- * Zeitleiste, gemeinsam mit dem Dashboard; dieselbe Suche und dieselben
- * Filter, ohne Sortierung) und „Auf einen Blick" (Zahlen und Zufallspicker).
+ * Zeitleiste) und „Sternbild" (Genres als zoombare Karte) - beide gemeinsam
+ * mit dem Dashboard, mit derselben Suche und denselben Filtern, ohne
+ * Sortierung - und „Auf einen Blick" (Zahlen und Zufallspicker).
  * Nur lesen: Daten kommen aus data/sammlung.json.
  *
- * Suche, Filter, Sortierung, Registerkarte und Ansicht der Zeitleiste bleiben
+ * Suche, Filter, Sortierung, Registerkarte und Ansichten von Zeitleiste und Sternbild bleiben
  * für die Dauer des Besuchs erhalten (sessionStorage), damit man nach einer
  * Detailseite dort weitermacht, wo man war.
  */
@@ -48,7 +50,12 @@ function syncTimeline() {
   if (!timeline) return;
   if (timelineVisible()) { timeline.update(timelineList); timelineStale = false; }
   else timelineStale = true;
+  constellation?.update(timelineList); // zeichnet selbst erst, wenn sichtbar
 }
+
+// Sternbild: dieselbe gesuchte und gefilterte Liste
+let constellation = null;
+let constellationMode = "";
 
 /** Merkt sich Suche, Filter, Sortierung und Registerkarte für diesen Besuch. */
 function saveView() {
@@ -56,6 +63,7 @@ function saveView() {
     sessionStorage.setItem(VIEW_KEY, JSON.stringify({
       query: $("#movie-search").value, filters, sortKey, sortDirection, tab: $(".view-tab[aria-selected='true']")?.id,
       timelineMode: timeline ? timeline.mode() : timelineMode,
+      constellationMode: constellation ? constellation.mode() : constellationMode,
     }));
   } catch { /* ohne Speicher: beim Zurückkommen eben wieder ungefiltert */ }
 }
@@ -71,6 +79,7 @@ function restoreView() {
     filters = base;
     if (view.sortKey) ({ key: sortKey, direction: sortDirection } = resolveSort(view.sortKey, view.sortDirection));
     if (typeof view.timelineMode === "string") timelineMode = view.timelineMode;
+    if (typeof view.constellationMode === "string") constellationMode = view.constellationMode;
     return view.tab;
   } catch {
     return null;
@@ -123,9 +132,10 @@ function renderMovies({ animate = false } = {}) {
 }
 
 /**
- * Registerkarten „Titel" / „Zeitleiste" / „Auf einen Blick" (ARIA-Tablist,
- * Pfeiltasten). Suche und Filter stehen über den Panels; bei „Auf einen
- * Blick" sind sie ausgeblendet, in der Zeitleiste nur die Sortierung.
+ * Registerkarten „Titel" / „Zeitleiste" / „Sternbild" / „Auf einen Blick"
+ * (ARIA-Tablist, Pfeiltasten). Suche und Filter stehen über den Panels; bei
+ * „Auf einen Blick" sind sie ausgeblendet, in Zeitleiste und Sternbild nur
+ * die Sortierung.
  */
 function initTabs(initial) {
   const tabs = $$(".view-tab");
@@ -145,6 +155,7 @@ function initTabs(initial) {
       if (timelineStale) { timeline.update(timelineList); timelineStale = false; }
       timeline.show();
     }
+    if (view === "constellation" && constellation) constellation.show();
     saveView();
   };
   tabs.forEach((tab, index) => {
@@ -226,6 +237,14 @@ async function init() {
     detailHref: "titel.html",
     modes: collection.include.has("rating") ? ["release", "rated"] : ["release"],
     mode: timelineMode || undefined,
+    ratingLabel: "Meine Bewertung",
+    onModeChange: saveView,
+  });
+  // Sternbild: „Bewertet" nur, wenn die eigene Bewertung veröffentlicht ist
+  constellation = initConstellation($("#constellation-panel"), {
+    detailHref: "titel.html",
+    modes: collection.include.has("rating") ? ["rated", "all"] : ["all"],
+    mode: constellationMode || undefined,
     ratingLabel: "Meine Bewertung",
     onModeChange: saveView,
   });

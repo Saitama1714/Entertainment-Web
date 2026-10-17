@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/app.css">
     <link rel="stylesheet" href="css/curtain.css">
     <link rel="stylesheet" href="css/link-transition.css">
+    <link rel="stylesheet" href="css/constellation.css">
     <link rel="stylesheet" href="css/site.css">
   </head>
   <body>
@@ -57,6 +58,8 @@
                 aria-selected="true" aria-controls="titles-panel">Titel</button>
         <button class="view-tab" type="button" id="tab-timeline" role="tab"
                 aria-selected="false" tabindex="-1" aria-controls="timeline-panel">Zeitleiste</button>
+        <button class="view-tab" type="button" id="tab-constellation" role="tab"
+                aria-selected="false" tabindex="-1" aria-controls="constellation-panel">Sternbild</button>
         <button class="view-tab" type="button" id="tab-stats" role="tab"
                 aria-selected="false" tabindex="-1" aria-controls="stats-panel">Auf einen Blick</button>
       </div>
@@ -80,6 +83,11 @@
             <button type="button" class="timeline-mode-option" role="radio" data-timeline-mode="release" aria-checked="false" tabindex="-1">Erschienen</button>
             <button type="button" class="timeline-mode-option" role="radio" data-timeline-mode="rated" aria-checked="true">Bewertet</button>
           </div>
+          <!-- Nur im Sternbild sichtbar (anstelle der Sortierung) -->
+          <div class="constellation-mode" role="radiogroup" aria-label="Titel im Sternbild">
+            <button type="button" class="timeline-mode-option" role="radio" data-constellation-mode="rated" aria-checked="true">Bewertet</button>
+            <button type="button" class="timeline-mode-option" role="radio" data-constellation-mode="all" aria-checked="false" tabindex="-1">Ganze Sammlung</button>
+          </div>
         </div>
       </div>
 
@@ -99,6 +107,11 @@
           <span><span id="timeline-count" aria-live="polite"></span><span id="timeline-missing"></span></span>
           <span id="timeline-help">← → blättern · Enter zeigt den Abstand · Strich anklicken springt dorthin</span>
         </p>
+      </section>
+
+      <section id="constellation-panel" class="constellation-panel" role="tabpanel" aria-labelledby="tab-constellation" hidden tabindex="-1">
+        <div class="cs-stage" id="constellation-stage"></div>
+        <p class="constellation-foot" id="constellation-foot" aria-live="polite"></p>
       </section>
 
       <section id="stats-panel" role="tabpanel" aria-labelledby="tab-stats" hidden tabindex="0">

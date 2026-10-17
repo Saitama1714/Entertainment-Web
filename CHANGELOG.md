@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.14.0 – Sternbild
+- Neue Registerkarte „Sternbild“ wie im Dashboard 2.29: Genres als zoombare
+  Karte mit Galaxien, Covern, Umrissen und Schnittmengen; Cover führen zur
+  Detailseite. Umschalter „Bewertet / Ganze Sammlung“ nur, wenn die eigene
+  Bewertung veröffentlicht ist. Ansicht bleibt für den Besuch gemerkt.
+
 ## 1.13.1 – Schlankere, schnellere Tests
 - Logik-Tests der gemeinsamen Dateien laufen nur noch im Dashboard; hier
   bleiben Parität, Website-Logik und der Gleichstand-Test (der jetzt

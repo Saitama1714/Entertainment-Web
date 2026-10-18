@@ -47,7 +47,7 @@ Website mit dem Dashboard gleichziehen soll. Von Hand gepflegt werden hier nur
   Dashboard gewählt.
 - **Ansicht** (oben rechts): Kinovorhang („Lebendiger Stoff") bei jedem
   Besuch / einmal am Tag / nie, Vorschau, Kachel-Zoom beim Klick (an/aus,
-  Tempo), Tastenkürzel. Design hell/dunkel/System. Gilt nur im
+  Tempo), Logo-Animation (wann, welche Bewegungen, Tempo), Tastenkürzel. Design hell/dunkel/System. Gilt nur im
   Browser des jeweiligen Besuchers.
 - Fehlt eine wahlweise Angabe in der Datendatei (z. B. Gesehen-Status),
   verschwinden die passenden Filter, Sortierungen und Zahlen automatisch.

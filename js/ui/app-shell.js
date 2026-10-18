@@ -45,7 +45,7 @@ darkQuery.addEventListener("change", () => {
 export function initAppShell(state, hooks = {}) {
   applyTheme(state);
   followOtherTabs(state, hooks);
-  initBrandMedallion();
+  initBrandMedallion({ motion: state.logoMotion }); // Logo-Animation nach den Einstellungen
   initLinkTransitions(state);
   initAutoBackup(state); // Sicherung nach Import/Änderungen (Einstellungen → Daten)
 

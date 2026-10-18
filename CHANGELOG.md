@@ -1,5 +1,15 @@
 # Änderungen
 
+## 1.16.1 – Lichtkegel aus dem Objektiv (Dashboard 2.34.1)
+- Der Lichtkegel im Logo kommt jetzt genau aus dem Objektiv der Kamera.
+
+## 1.16.0 – Das Logo bewegt sich (Dashboard 2.34)
+- Das Medaillon oben links bewegt sich: Filmrollen samt Filmband und Kurbel,
+  flackerndes Projektorlicht, Messing-Glanz. Standard: einmal beim Öffnen
+  jeder Seite (nach dem Vorhang bzw. Einlass) und beim Darüberfahren.
+- „Ansicht“ → Bewegung → Logo-Animation: Wann, welche Bewegungen, Tempo,
+  Vorschau. Gilt nur im Browser des jeweiligen Besuchers.
+
 ## 1.15.0 – Gleichstand mit Dashboard 2.33
 - Die Website wird jetzt aus dem Code des Dashboards gebaut
   (`npm run build:site` im Dashboard) – nur auf Anfrage. Alles hier außer

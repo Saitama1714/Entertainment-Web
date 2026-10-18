@@ -19,6 +19,8 @@ import { createAccess, readAccess } from "../logic/access-logic.js";
 import { AUTO_BACKUP_FOLDER, AUTO_BACKUP_KEEP } from "../logic/auto-backup-logic.js";
 import { readCastData, castStatus, dropEmptyCast } from "../logic/cast-logic.js";
 import { readCastFetch, enableCastFetch, disableCastFetch, castFetchActive } from "../cast-fetch.js";
+import { logoMotionSettingsHtml, bindLogoMotionSettings } from "./logo-motion-settings.js";
+import { setLogoMotion } from "./brand-medallion.js";
 
 /** "Datenstand: 22.09.2026 (vor 3 Tagen)" oder Hinweis, dass noch nichts importiert wurde. */
 function importStatusText(state) {
@@ -106,6 +108,7 @@ export function openSettingsModal(state, onImported) {
         <input type="checkbox" id="projector-dust-check" ${state.projectorDust === false ? "" : "checked"}>
         Lichtkegel mit Staub im Kopf der Übersicht
       </label>
+      ${logoMotionSettingsHtml(state.logoMotion)}
     </section>
 
     <section class="form-section" aria-labelledby="settings-entertainment">
@@ -247,6 +250,14 @@ export function openSettingsModal(state, onImported) {
       showToast(state.clickEffect === "off" ? "Klick-Effekt ausgeschaltet." : "Klick-Effekt gespeichert.", "success");
     };
   }
+  // Logo-Animation: gilt sofort, Änderungen spielen gleich als Vorschau
+  bindLogoMotionSettings(document.querySelector(".modal"), state.logoMotion, async (motion, { preview, what }) => {
+    if (what !== "preview") {
+      state.logoMotion = motion;
+      saveDashboardData({ logoMotion: motion }).catch(() => showToast("Die Einstellung konnte nicht gespeichert werden.", "error"));
+    }
+    setLogoMotion(motion, { preview });
+  });
   $("#projector-dust-check").onchange = async event => {
     state.projectorDust = event.target.checked;
     await saveDashboardData({ projectorDust: state.projectorDust });

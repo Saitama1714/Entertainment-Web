@@ -1,0 +1,61 @@
+/* =========================================================================
+   Logo-Animation (Medaillon oben links)
+   Das Logo steckt als SVG in der Kopfleiste (js/ui/brand-medallion.js,
+   Markup js/ui/logo-svg.js). Klassen am SVG (js/logic/logo-motion-logic.js):
+     fx-reels / fx-light / fx-sheen  welche Effekte an sind
+     once        einmal anlaufen und ausrollen (beim Öffnen, Vorschau)
+     hoverable   bewegt sich, solange die Maus auf dem Logo ist
+     loop        dauerhaft, ruhig
+   --logo-t: Tempo-Faktor (1 = normal, größer = langsamer).
+   Endstand von „once" = Ruhestand, damit nichts springt.
+   „Bewegung reduzieren" im System: alles steht.
+   ========================================================================= */
+
+.brand-logo { --logo-t: 1; display: block; width: 100%; height: 100%; overflow: visible; }
+.brand-logo .reel, .brand-logo .crank, .brand-logo .rays, .brand-logo .spark { transform-box: fill-box; transform-origin: center; }
+.brand-logo .sheen { transform: translateX(-140px); }
+
+@keyframes logo-spin { to { transform: rotate(360deg); } }
+@keyframes logo-spin2 { to { transform: rotate(720deg); } }
+@keyframes logo-spin3 { to { transform: rotate(1080deg); } }
+@keyframes logo-film { to { stroke-dashoffset: -6; } }
+@keyframes logo-film-once { to { stroke-dashoffset: -84; } }
+@keyframes logo-flicker { 0%, 100% { opacity: 1; } 8% { opacity: .6; } 12% { opacity: .95; } 40% { opacity: .8; } 46% { opacity: 1; } 71% { opacity: .68; } 74% { opacity: .98; } }
+@keyframes logo-lens { 0%, 100% { opacity: .8; } 50% { opacity: 1; } }
+@keyframes logo-beam-once { 0% { opacity: 0; } 18% { opacity: .9; } 24% { opacity: .35; } 32% { opacity: 1; } 44% { opacity: .7; } 52%, 100% { opacity: 1; } }
+@keyframes logo-rays-once { from { transform: rotate(-14deg); opacity: .3; } to { transform: rotate(0); opacity: 1; } }
+@keyframes logo-sheen { 0% { transform: translateX(-140px); } 20%, 100% { transform: translateX(440px); } }
+@keyframes logo-sheen-once { from { transform: translateX(-140px); } to { transform: translateX(440px); } }
+@keyframes logo-spark { 0%, 22%, 34%, 100% { transform: scale(1); } 27% { transform: scale(1.8); } }
+@keyframes logo-spark-once { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.9); } }
+
+/* Dauerhaft (ruhig) und beim Darüberfahren: Endlosschleife */
+.brand-logo.fx-reels:is(.loop, .hoverable) .reel-big { animation: logo-spin calc(9s * var(--logo-t)) linear infinite; }
+.brand-logo.fx-reels:is(.loop, .hoverable) .reel-small { animation: logo-spin calc(7s * var(--logo-t)) linear infinite; }
+.brand-logo.fx-reels:is(.loop, .hoverable) .crank { animation: logo-spin calc(9s * var(--logo-t)) linear infinite; }
+.brand-logo.fx-reels:is(.loop, .hoverable) .film { animation: logo-film calc(1.4s * var(--logo-t)) linear infinite; }
+.brand-logo.fx-light:is(.loop, .hoverable) .beam { animation: logo-flicker calc(2.6s * var(--logo-t)) linear infinite; }
+.brand-logo.fx-light:is(.loop, .hoverable) .lens { animation: logo-lens calc(2.6s * var(--logo-t)) ease-in-out infinite; }
+.brand-logo.fx-light:is(.loop, .hoverable) .rays { animation: logo-spin calc(120s * var(--logo-t)) linear infinite; }
+.brand-logo.fx-sheen.loop .sheen { animation: logo-sheen calc(8s * var(--logo-t)) ease-in-out infinite; }
+.brand-logo.fx-sheen.loop .spark { animation: logo-spark calc(8s * var(--logo-t)) ease-in-out infinite; }
+/* Beim Darüberfahren: steht, solange die Maus woanders ist - und macht beim nächsten Mal dort weiter */
+/* (:not(.once): solange „einmal" läuft, gilt das; :not(.loop) hebt die Gewichtung über die Regeln oben) */
+.brand-logo.hoverable:not(.once):not(.loop) :is(.reel-big, .reel-small, .crank, .film, .beam, .lens, .rays) { animation-play-state: paused; }
+.brand--medallion:hover .brand-logo.hoverable:not(.once):not(.loop) :is(.reel-big, .reel-small, .crank, .film, .beam, .lens, .rays) { animation-play-state: running; }
+.brand--medallion:hover .brand-logo.fx-sheen.hoverable .sheen { animation: logo-sheen-once calc(1.6s * var(--logo-t)) ease-in-out; }
+.brand--medallion:hover .brand-logo.fx-sheen.hoverable .spark { animation: logo-spark-once calc(1.6s * var(--logo-t)) ease-in-out; }
+
+/* Beim Öffnen (und Vorschau): einmal anlaufen und ausrollen */
+.brand-logo.once.fx-reels .reel-big { animation: logo-spin2 calc(3.2s * var(--logo-t)) cubic-bezier(.4, 0, .2, 1); }
+.brand-logo.once.fx-reels .reel-small { animation: logo-spin3 calc(3.2s * var(--logo-t)) cubic-bezier(.4, 0, .2, 1); }
+.brand-logo.once.fx-reels .crank { animation: logo-spin2 calc(3.2s * var(--logo-t)) cubic-bezier(.4, 0, .2, 1); }
+.brand-logo.once.fx-reels .film { animation: logo-film-once calc(3.2s * var(--logo-t)) cubic-bezier(.4, 0, .2, 1); }
+.brand-logo.once.fx-light :is(.beam, .lens) { animation: logo-beam-once calc(2.4s * var(--logo-t)) linear; }
+.brand-logo.once.fx-light .rays { animation: logo-rays-once calc(3.2s * var(--logo-t)) cubic-bezier(.2, 0, .2, 1); }
+.brand-logo.once.fx-sheen .sheen { animation: logo-sheen-once calc(1.6s * var(--logo-t)) ease-in-out calc(.6s * var(--logo-t)) both; }
+.brand-logo.once.fx-sheen .spark { animation: logo-spark-once calc(1.4s * var(--logo-t)) ease-in-out calc(1.6s * var(--logo-t)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-logo * { animation: none !important; }
+}

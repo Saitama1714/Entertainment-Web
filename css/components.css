@@ -175,6 +175,7 @@ kbd {
 .intro-picker { display: flex; align-items: flex-end; gap: var(--s-2); margin-top: var(--s-3); }
 .intro-picker .field { flex: 1; min-width: 0; margin: 0; }
 .intro-picker .small-button { flex: none; padding-block: 8px; }
+.small-button:disabled { opacity: .45; cursor: default; }
 .decor-picker .field { flex: 1; min-width: 0; margin: 0; }
 .decor-preview {
   flex: none;

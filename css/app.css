@@ -11,5 +11,6 @@
 @import url("components.css");   /* Werkzeug-Menü, Dialoge, Leerzustände, Toasts */
 @import url("timeline.css");   /* Zeitleiste mit Cover Flow */
 @import url("motion.css");   /* Bewegung */
+@import url("logo.css");   /* Logo-Animation (Medaillon) */
 @import url("responsive.css");   /* Schmale Fenster */
 @import url("cover-flight.css");   /* Cover-Flug */

@@ -6,7 +6,8 @@ import { CLICK_EFFECT_OPTIONS, CLICK_DURATION_OPTIONS } from "../utils/constants
 import { INTRO_OPTIONS } from "./site-constants.js";
 import { initLinkTransitions } from "../ui/link-transition.js";
 import { normalizeClickEffect, normalizeClickDuration } from "../logic/link-transition-logic.js";
-import { initBrandMedallion } from "../ui/brand-medallion.js";
+import { initBrandMedallion, setLogoMotion } from "../ui/brand-medallion.js";
+import { logoMotionSettingsHtml, bindLogoMotionSettings } from "../ui/logo-motion-settings.js";
 import { openShortcutHelp, configureShortcutHelp } from "../ui/shortcuts.js";
 import { replayCurtain } from "../ui/curtain.js";
 
@@ -22,7 +23,12 @@ import { replayCurtain } from "../ui/curtain.js";
  * vor dem ersten Zeichnen.
  */
 
-const KEYS = { theme: "site:theme", intro: "site:intro-mode", clickEffect: "site:click-effect", clickDuration: "site:click-duration", dust: "site:projector-dust" };
+const KEYS = { theme: "site:theme", intro: "site:intro-mode", clickEffect: "site:click-effect", clickDuration: "site:click-duration", dust: "site:projector-dust", logo: "site:logo-motion" };
+
+/** Logo-Animation des Besuchers (JSON); ohne Eintrag gilt der Standard. */
+function readLogo() {
+  try { return JSON.parse(read(KEYS.logo, "null")); } catch { return null; }
+}
 const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
 /** Liest eine Einstellung; ohne Speicher (privates Fenster o. Ä.) gilt der Standard. */
@@ -99,6 +105,7 @@ function openViewSettings() {
         <input type="checkbox" id="projector-dust-check" ${motion.projectorDust ? "checked" : ""}>
         Lichtkegel mit Staub im Kopf der Sammlung
       </label>
+      ${logoMotionSettingsHtml(readLogo())}
     </section>
     <section class="form-section" aria-labelledby="view-keys">
       <h2 id="view-keys">Bedienung</h2>
@@ -120,6 +127,10 @@ function openViewSettings() {
       showToast(radio.value === "off" ? "Klick-Effekt ausgeschaltet." : "Klick-Effekt gespeichert.", "success");
     };
   }
+  bindLogoMotionSettings(document.querySelector(".modal"), readLogo(), (motion, { preview, what }) => {
+    if (what !== "preview") write(KEYS.logo, JSON.stringify(motion));
+    setLogoMotion(motion, { preview });
+  });
   $("#projector-dust-check").onchange = event => {
     motion.projectorDust = event.target.checked;
     write(KEYS.dust, motion.projectorDust ? "on" : "off");
@@ -137,7 +148,7 @@ function openViewSettings() {
 
 /** Verdrahtet die Kopfleiste. Einmal pro Seite aufrufen. */
 export function initSiteShell() {
-  initBrandMedallion();
+  initBrandMedallion({ motion: readLogo() });
   loadMotion();
   initLinkTransitions(motion);
   configureShortcutHelp({ list: "Sammlung", newTabNote: false });

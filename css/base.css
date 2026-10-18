@@ -120,15 +120,17 @@ button { cursor: pointer; }
   border-radius: 50%;
   transition: width var(--medal-time) var(--medal-ease), height var(--medal-time) var(--medal-ease), top var(--medal-time) var(--medal-ease);
 }
-.brand--medallion img {
+.brand--medallion :is(img, .brand-logo) {
   display: block; width: 100%; height: 100%;
   filter: drop-shadow(0 6px 14px rgb(0 0 0 / .45));
   transition: transform .25s var(--medal-ease), filter var(--medal-time) var(--medal-ease);
 }
-:root[data-theme="light"] .brand--medallion img { filter: drop-shadow(0 5px 12px rgb(60 20 20 / .28)); }
-.brand--medallion:hover img { transform: rotate(-4deg) scale(1.03); }
+:root[data-theme="light"] .brand--medallion :is(img, .brand-logo) { filter: drop-shadow(0 5px 12px rgb(60 20 20 / .28)); }
+.brand--medallion:hover :is(img, .brand-logo) { transform: rotate(-4deg) scale(1.03); }
 .brand--medallion:focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; }
 .brand-fallback { display: none; }
+/* Logo als eingebettetes SVG (bewegbar, css/logo.css); das <img> bleibt als Rückfall im HTML */
+.brand--medallion.has-svg img { display: none; }
 
 /* Klein in der Leiste (beim Scrollen) */
 .appbar--compact .appbar-inner { padding-left: calc(var(--s-5) + var(--medal-small) + var(--s-4)); }
@@ -136,16 +138,16 @@ button { cursor: pointer; }
   width: var(--medal-small); height: var(--medal-small);
   top: calc(50% - var(--medal-small) / 2);
 }
-.appbar--compact .brand--medallion img { filter: drop-shadow(0 2px 5px rgb(0 0 0 / .35)); }
+.appbar--compact .brand--medallion :is(img, .brand-logo) { filter: drop-shadow(0 2px 5px rgb(0 0 0 / .35)); }
 
 /* Seitenüberschrift rückt neben das große Medaillon */
 .page-head { padding-left: calc(var(--medal) + var(--s-5)); }
 
 /* Ohne Übergang (Seitenstart mit Scroll-Position, „Bewegung reduzieren") */
-.appbar--instant .appbar-inner, .appbar--instant .brand--medallion, .appbar--instant .brand--medallion img { transition: none; }
+.appbar--instant .appbar-inner, .appbar--instant .brand--medallion, .appbar--instant .brand--medallion :is(img, .brand-logo) { transition: none; }
 @media (prefers-reduced-motion: reduce) {
-  .appbar .appbar-inner, .brand--medallion, .brand--medallion img { transition: none; }
-  .brand--medallion:hover img { transform: none; }
+  .appbar .appbar-inner, .brand--medallion, .brand--medallion :is(img, .brand-logo) { transition: none; }
+  .brand--medallion:hover :is(img, .brand-logo) { transform: none; }
 }
 
 /* Logo-Datei fehlt: Wort „Dashboard" statt Medaillon */

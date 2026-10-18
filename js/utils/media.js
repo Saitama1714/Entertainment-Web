@@ -1,7 +1,5 @@
 /**
- * Medientypen und ihre Abzeichen auf den Karten. Eigene Datei, weil Dashboard
- * und Website (Entertainment-Web) sie gemeinsam nutzen - siehe
- * docs/ENTWICKLUNG.md, „Gemeinsamer Code mit der Website".
+ * Medientypen und ihre Abzeichen auf den Karten.
  */
 
 /** Wählbare Medien (Bearbeiten-Formular, Filter-Chips). */

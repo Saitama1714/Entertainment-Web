@@ -1,0 +1,67 @@
+/* =========================================================================
+   Bewegung: nur als Antwort auf eine Handlung
+   ========================================================================= */
+
+@media (prefers-reduced-motion: no-preference) {
+  .button, .small-button, .icon-button, .nav-link, .tools-menu-item,
+  .bookmark-tile, .bookmark-item,
+  .movie-card-cover, .movie-card-title {
+    transition: transform .2s cubic-bezier(.2, .7, .3, 1), background-color .15s ease,
+                border-color .15s ease, box-shadow .2s ease, color .15s ease;
+  }
+
+  /* Cover wächst beim Überfahren und legt sich über die Nachbarn */
+  .movie-card:hover .movie-card-cover,
+  .movie-card:focus-visible .movie-card-cover {
+    transform: scale(1.15);
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / .07), var(--shadow-hover);
+  }
+  .movie-card:hover .movie-card-title { color: var(--accent-ink); }
+
+  .bookmark-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-pop); }
+  .button:hover, .small-button:hover { transform: translateY(-1px); }
+
+  /* Klick wie ein echter Knopf: schnell hinein, weich (leicht federnd) zurück */
+  .button, .small-button, .icon-button {
+    transition: transform .22s cubic-bezier(.3, 1.45, .5, 1), background-color .15s ease,
+                border-color .15s ease, box-shadow .2s ease, color .15s ease, filter .15s ease;
+  }
+  .button:active:not(:disabled), .small-button:active:not(:disabled), .icon-button:active:not(:disabled) {
+    transform: scale(.95);
+    transition-duration: .07s;
+  }
+  .nav-link:active, .bookmark-tile:active { transform: scale(.97); transition-duration: .07s; }
+  /* Karte: vom vergrößerten Hover-Zustand aus nur leicht eindrücken, statt auf
+     Normalgröße zurückzuspringen */
+  .movie-card:active .movie-card-cover { transform: scale(1.11); transition-duration: .07s; }
+
+  /* Cover stellen sich nach dem Laden weich scharf */
+  .movie-card-cover .cover-image {
+    transition: opacity .3s ease, filter .8s cubic-bezier(.2, .7, .3, 1), transform .8s cubic-bezier(.2, .7, .3, 1);
+  }
+  .movie-card-cover.is-loading .cover-image { filter: blur(16px); transform: scale(1.08); }
+
+  .movie-card-cover.is-loading::before { animation: skeleton-shine 1.4s ease-in-out infinite; }
+
+  .decor-preview.is-popping svg { animation: decor-pop .42s cubic-bezier(.3, 1.6, .5, 1) both; }
+  .decor-preview.is-popping .pop-parts > * {
+    transform-box: fill-box; transform-origin: center;
+    animation: decor-part-pop .3s cubic-bezier(.3, 1.7, .5, 1) both;
+  }
+  .decor-preview.is-popping .pop-parts > :nth-child(2n) { animation-delay: .12s; }
+  .decor-preview.is-popping .pop-parts > :nth-child(3n) { animation-delay: .2s; }
+
+  /* Cover Flow: Cover gleiten und drehen sich an ihren Platz */
+  .coverflow-item { transition: transform .45s cubic-bezier(.2, .7, .3, 1), opacity .35s ease, filter .35s ease; }
+
+  .modal { animation: modal-in .17s ease-out; }
+  .modal-backdrop { animation: fade-in .15s ease-out; }
+  .tools-menu[open] .tools-menu-panel { animation: menu-in .12s ease-out; }
+}
+
+@keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+@keyframes modal-in { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+@keyframes menu-in { from { opacity: 0; transform: translateY(-4px) } to { opacity: 1; transform: none } }
+@keyframes decor-pop { from { opacity: 0; transform: translateY(10px) scale(.7) } to { opacity: 1; transform: none } }
+@keyframes decor-part-pop { from { transform: scale(0) } to { transform: scale(1) } }
+@keyframes skeleton-shine { from { transform: translateX(-60%) } to { transform: translateX(90%) } }

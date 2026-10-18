@@ -1,0 +1,90 @@
+/* =========================================================================
+   Sammlung - die Cover sind der Held der Seite
+   ========================================================================= */
+
+.movie-grid.spaced { margin-top: var(--s-5); }
+
+.movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
+  gap: var(--s-5) var(--s-4);
+}
+
+.movie-card { display: block; text-decoration: none; min-width: 0; position: relative; z-index: 0; }
+/* Wegsinkendes Abbild eines Covers (js/ui/grid-motion.js), liegt neben dem Raster */
+.grid-ghost {
+  position: absolute; margin: 0; pointer-events: none; z-index: 0;
+  border-radius: var(--r-poster); overflow: hidden;
+  background: var(--surface-sunken);
+  box-shadow: 0 6px 16px rgb(0 0 0 / .18);
+}
+.grid-ghost img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.movie-card:hover, .movie-card:focus-within { z-index: 3; }
+
+.movie-card-cover {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  transform-origin: 50% 100%; /* wächst beim Hover nach oben, Titel bleibt frei */
+  border-radius: var(--r-poster);
+  background: var(--surface-sunken);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / .08), 0 6px 16px rgb(0 0 0 / .18);
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.movie-card-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Klick-Rückmeldung ohne Bewegung (gilt auch bei "Bewegung reduzieren") */
+.button:active:not(:disabled), .small-button:active:not(:disabled) { filter: brightness(.93); }
+
+/* Gelöschter Film, kurz bevor er aus dem Raster verschwindet */
+.movie-card.is-removing { pointer-events: none; }
+.movie-card.is-removing .movie-card-cover { filter: grayscale(1); opacity: .7; }
+.movie-card.is-removing .movie-card-title { text-decoration: line-through; color: var(--text-faint); }
+
+/* Lade-Skelett: solange das Cover lädt (oder ein Cover-Abruf läuft), zeigt die
+   Fläche einen wandernden Glanz; das Bild blendet danach weich ein. */
+.movie-card-cover .cover-image { transition: opacity .35s ease; }
+.movie-card-cover.is-loading .cover-image { opacity: 0; }
+/* Der Glanz wandert per transform (vom Compositor erledigt) - so kosten auch
+   hunderte noch nicht geladene Cover außerhalb des Fensters nichts */
+.movie-card-cover.is-loading::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 250%;
+  background: linear-gradient(100deg, transparent 30%, var(--skeleton-shine) 50%, transparent 70%);
+  transform: translateX(-60%);
+}
+
+.cover-placeholder { color: var(--text-faint); }
+.cover-placeholder svg { width: 26px; height: 26px; }
+
+.movie-card-body { padding-top: 10px; }
+
+.movie-card-title {
+  font-size: .89rem; font-weight: 500; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.movie-card-facts {
+  display: flex; align-items: center; gap: var(--s-2);
+  margin-top: 3px;
+  color: var(--text-faint); font-size: .79rem;
+}
+.movie-card-facts .seen { color: var(--brass); }
+
+.media-badge {
+  position: absolute; top: 7px; right: 7px;
+  display: inline-flex; align-items: center;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--badge-scrim);
+  backdrop-filter: blur(3px);
+  color: var(--badge-gray);
+  font-size: .67rem; font-weight: 700; letter-spacing: .02em; line-height: 1.35;
+}
+.media-badge svg { width: 13px; height: 13px; display: block; }
+.media-badge.tone-gray span { color: var(--badge-gray); }
+.media-badge.tone-blue span { color: var(--badge-blue); }
+.media-badge.tone-green span { color: var(--badge-green); }

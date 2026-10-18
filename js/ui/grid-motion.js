@@ -13,7 +13,6 @@ import { reducedMotion } from "../utils/dom.js";
  * Bewegung, das Raster wechselt sofort.
  *
  * Verwendung:  const before = captureGrid(grid);  …neu zeichnen…;  animateGrid(grid, before);
- * Gemeinsam mit der Website (gemeinsam.txt).
  */
 
 const EASE = "cubic-bezier(.2, .8, .2, 1)";

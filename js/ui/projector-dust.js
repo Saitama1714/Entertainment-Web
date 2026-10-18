@@ -7,8 +7,7 @@ import { reducedMotion } from "../utils/dom.js";
  *
  * Läuft nur, solange der Kopfbereich zu sehen ist und der Tab offen ist.
  * „Bewegung reduzieren": ein stilles Bild ohne Bewegung. Abschaltbar
- * (Dashboard: Einstellungen → Bewegung; Website: Ansicht → Bewegung).
- * Gemeinsam mit der Website (gemeinsam.txt).
+ * (Einstellungen → Bewegung).
  */
 
 const MAX_MOTES = 90;

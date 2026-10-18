@@ -9,8 +9,7 @@ import { formatDay } from "../utils/format.js";
  * noch offen = „Eintrittskarte / Noch offen", der Abschnitt hängt noch dran.
  * Reine Anzeige - ob ein Titel gesehen ist, kommt aus dem IMDb-Import.
  *
- * Aussehen: .seen-ticket in css/app.css, Schrift Cinzel aus assets/fonts.
- * Gemeinsam mit der Website (gemeinsam.txt).
+ * Aussehen: .seen-ticket in css/detail.css, Schrift Cinzel aus assets/fonts.
  */
 
 /**

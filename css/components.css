@@ -1,0 +1,205 @@
+/* =========================================================================
+   Werkzeug-Menü
+   ========================================================================= */
+
+.tools-menu { position: relative; }
+.tools-menu summary { list-style: none; cursor: pointer; }
+.tools-menu summary::-webkit-details-marker { display: none; }
+.tools-menu[open] summary { background: var(--surface-hover); color: var(--text); }
+
+.tools-menu-panel {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 25;
+  min-width: 232px;
+  display: flex; flex-direction: column;
+  padding: var(--s-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+}
+
+.tools-menu-item {
+  display: block; width: 100%;
+  padding: 9px 11px;
+  border: 0; border-radius: var(--r-chip);
+  background: none;
+  font-size: .87rem; text-align: left; cursor: pointer;
+}
+.tools-menu-item:hover { background: var(--surface-hover); }
+.tools-menu-item input[type="file"] { display: none; }
+
+/* =========================================================================
+   Dialoge
+   ========================================================================= */
+
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 50;
+  display: grid; place-items: center;
+  padding: var(--s-4);
+  background: rgb(12 6 5 / .62);
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  width: min(880px, 100%);
+  max-height: min(78vh, 760px);
+  display: flex; flex-direction: column; overflow: hidden;
+  border-radius: var(--r-modal);
+  background: var(--surface);
+  /* feine Messingkante oben, wie die Leiste eines Programmhefts */
+  box-shadow: var(--shadow-modal), inset 0 1px 0 var(--brass-line), inset 0 0 0 1px var(--line);
+}
+
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-4);
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--line);
+}
+.modal-content { overflow: auto; padding: var(--s-5); }
+
+.lookup-row { display: flex; gap: var(--s-2); }
+.lookup-row input { flex: 1; min-width: 0; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-4); margin-top: var(--s-4); }
+.field { display: grid; gap: 5px; font-size: .86rem; color: var(--text-muted); }
+.field.full { grid-column: 1 / -1; }
+.field input, .field select, .field textarea { color: var(--text); }
+.field textarea { resize: vertical; min-height: 72px; }
+.field-note { font-size: .76rem; line-height: 1.35; color: var(--text-faint); }
+.form-actions { display: flex; justify-content: flex-end; gap: var(--s-2); margin-top: var(--s-5); }
+
+.form-section { padding-top: var(--s-5); margin-top: var(--s-5); border-top: 1px solid var(--line); }
+.form-section h2, .form-section h3 { font-family: var(--font-text); font-size: .95rem; font-weight: 600; letter-spacing: normal; margin: 0 0 var(--s-1); }
+/* Formular mitten in einer Sektion (Einstellungen → Entertainment: OMDb-Schlüssel) */
+.form-section > form { margin-top: var(--s-4); }
+/* Einstellungen: die erste Sektion braucht keine Trennlinie nach oben */
+.modal-content > .form-section:first-child { padding-top: 0; margin-top: 0; border-top: 0; }
+
+/* Auswahl als Radio-Gruppe (z. B. Einstellungen → Bewegung) */
+.choice-group { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: var(--s-3) 0 0; padding: 0; border: 0; min-width: 0; }
+.choice-group + .meta { margin-top: var(--s-3); }
+.choice-group legend { width: 100%; padding: 0; margin-bottom: 5px; font-size: .86rem; color: var(--text-muted); }
+.choice {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  padding: 6px 12px 6px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-chip);
+  background: var(--surface);
+  font-size: .86rem; color: var(--text);
+  cursor: pointer;
+}
+.choice:hover { background: var(--surface-hover); border-color: var(--brass-line); }
+/* Ganze Gruppe gesperrt (z. B. Tempo, wenn der Klick-Effekt aus ist) */
+.choice-group:disabled .choice { opacity: .5; cursor: not-allowed; }
+.choice-group:disabled .choice:hover { background: var(--surface); border-color: var(--line-strong); }
+.choice-group:disabled .choice input { cursor: not-allowed; }
+.choice:has(input:checked) { border-color: var(--brass); background: var(--surface-hover); }
+.choice input { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+/* Fokus sichtbar am ganzen Feld, nicht nur am kleinen Kreis */
+.choice:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.choice input:focus-visible { outline: none; }
+/* Einstellungen → Daten → Automatisch sichern */
+.settings-subhead { margin-top: var(--s-5) !important; }
+.website-file { margin-top: var(--s-3); padding-left: var(--s-4); border-left: 2px solid var(--line); }
+.website-file-options { display: grid; gap: var(--s-2); margin: var(--s-3) 0 0; padding: 0; border: 0; min-width: 0; }
+.website-file-options legend { padding: 0; margin-bottom: 4px; font-size: .82rem; color: var(--text-muted); }
+.website-file-options:disabled { opacity: .5; }
+.website-password { max-width: 320px; margin-left: 24px; }
+.website-password[hidden] { display: none; }
+.form-section-actions { display: flex; gap: var(--s-2); margin-top: var(--s-3); flex-wrap: wrap; }
+
+/* =========================================================================
+   Leerzustände, Status, Hinweise
+   ========================================================================= */
+
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--s-2);
+  min-height: 140px; padding: var(--s-5);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-panel);
+  color: var(--text-muted); text-align: center;
+}
+.empty-state span { font-size: 1.4rem; color: var(--text-faint); }
+
+.status-line { min-height: 1.4em; color: var(--text-muted); font-size: .84rem; }
+
+/* =========================================================================
+   Toasts
+   ========================================================================= */
+
+.toast-stack {
+  position: fixed; right: var(--s-5); bottom: var(--s-5); z-index: 60;
+  display: grid; gap: var(--s-2);
+  max-width: min(360px, calc(100vw - 40px));
+}
+
+.toast {
+  padding: 11px 15px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+  font-size: .86rem;
+  cursor: pointer;
+  opacity: 0; transform: translateY(6px);
+  transition: opacity .16s ease, transform .16s ease;
+}
+.toast-visible { opacity: 1; transform: translateY(0); }
+.toast-success { border-left-color: var(--success); }
+.toast-warning { border-left-color: #c0891f; }
+.toast-error { border-left-color: var(--danger); }
+
+/* Tastenkürzel-Übersicht */
+.shortcut-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.shortcut-table td { padding: 9px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.shortcut-table tr:last-child td { border-bottom: 0; }
+.shortcut-table td + td { padding-left: var(--s-4); }
+.shortcut-table td.meta { text-align: right; white-space: nowrap; }
+.shortcut-keys { white-space: nowrap; width: 1%; }
+kbd {
+  display: inline-block; min-width: 26px;
+  padding: 3px 7px;
+  border: 1px solid var(--line-strong); border-bottom-width: 2px;
+  border-radius: 6px;
+  background: var(--surface-sunken); color: var(--text);
+  font-family: inherit; font-size: .8rem; font-weight: 600; line-height: 1.2;
+  text-align: center;
+}
+.shortcut-note { margin-top: var(--s-4); }
+
+/* Einstellungen -> Erscheinungsbild: Auswahlfeld mit Live-Vorschau daneben */
+.decor-picker { display: flex; align-items: flex-end; gap: var(--s-4, 16px); }
+.intro-picker { display: flex; align-items: flex-end; gap: var(--s-2); margin-top: var(--s-3); }
+.intro-picker .field { flex: 1; min-width: 0; margin: 0; }
+.intro-picker .small-button { flex: none; padding-block: 8px; }
+.decor-picker .field { flex: 1; min-width: 0; margin: 0; }
+.decor-preview {
+  flex: none;
+  width: 64px; height: 64px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 8px;
+  border-radius: var(--r-control);
+  background: var(--surface-sunken);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.decor-preview svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.decor-preview.is-empty { background: none; box-shadow: inset 0 0 0 1px var(--line-strong); }
+.decor-preview.is-empty span { font-size: 12px; color: var(--text-faint); }
+
+/* Einstellungen → Entertainment → Besetzung: Stand des Abrufs (js/ui/settings-modal.js) */
+.cast-fetch { display: grid; gap: var(--s-2); padding: var(--s-4); border: 1px solid var(--line); border-radius: var(--r-panel); background: var(--bg); }
+.cast-fetch:empty { display: none; }
+.cast-fetch .meta { margin: 0; }
+.cast-fetch .form-section-actions { margin: 0; }
+.cast-fetch-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-3); font-size: .88rem; font-variant-numeric: tabular-nums; }
+.cast-fetch-badge { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 650; color: var(--text-faint); }
+.cast-fetch-badge.is-busy { color: var(--brass); }
+.cast-fetch-badge.is-done { color: var(--success); }
+.cast-fetch-badge.is-warn { color: var(--danger); }
+.cast-fetch-meter { height: 8px; border-radius: 4px; background: var(--surface-sunken); overflow: hidden; }
+.cast-fetch-meter i { display: block; height: 100%; border-radius: 4px; background: var(--brass); transition: width .45s cubic-bezier(.2, .7, .3, 1); }
+.cast-fetch-meter.is-done i { background: var(--success); }
+@media (prefers-reduced-motion: reduce) { .cast-fetch-meter i { transition: none; } }

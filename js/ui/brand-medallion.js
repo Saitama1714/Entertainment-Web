@@ -6,7 +6,7 @@ import { isCompact } from "../logic/brand-logic.js";
  * Oben auf der Seite hängt es groß über die Leiste hinaus; sobald man nach
  * unten scrollt, schrumpft es auf die kleine Größe in der Leiste und die
  * Navigation rückt nach (Klasse .appbar--compact, Übergang in CSS). Wieder
- * ganz oben wird es groß. Größen und Abstände stehen in css/app.css
+ * ganz oben wird es groß. Größen und Abstände stehen in css/base.css
  * („Logo-Medaillon").
  *
  * Fehlt die Logo-Datei, zeigt die Leiste stattdessen den Namen in Schrift

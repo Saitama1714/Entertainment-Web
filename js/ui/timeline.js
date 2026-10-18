@@ -1,6 +1,7 @@
 import { $, escapeHtml, emptyState } from "../utils/dom.js";
 import { icon } from "../utils/icons.js";
 import { formatDay } from "../utils/format.js";
+import { own, has } from "../utils/host.js";
 import {
   DEFAULT_TIMELINE_MODE, timelineEntries, timelineDomain, axisTicks, stackMarks,
   formatGap, movieSpan, releaseInfo, ratedTime, nearestIndex,
@@ -21,16 +22,11 @@ import {
  * Für 500+ Titel werden nur die Cover nahe der Mitte als Elemente angelegt
  * (so viele, wie nebeneinander passen: windowFor()); die Achse ist ein SVG, das nach jeder Änderung neu entsteht.
  * Rechenlogik: js/logic/timeline-logic.js.
- *
- * Gemeinsam mit der Website Entertainment-Web (gemeinsam.txt): keine
- * Chrome-APIs, keine Dashboard-Einstellungen. Was je Projekt anders ist
- * (Detailseite, „Deine"/„Meine Bewertung", ob es Bewertungsdaten gibt),
- * kommt über die Optionen von initTimeline().
  */
 
 /*
  * Wie viele Cover je Seite sichtbar sind, hängt von der Breite ab: Lage wie in
- * .coverflow-item (app.css) - Mitte des n-ten Covers bei (0,95 + (n−1)·0,32)·Breite,
+ * .coverflow-item (css/timeline.css) - Mitte des n-ten Covers bei (0,95 + (n−1)·0,32)·Breite,
  * durch die Perspektive (800 px, 160 px nach hinten) auf 5/6 verkleinert; der
  * gedrehte Rand ragt noch etwa 0,3 Breiten weiter. Ein Cover mehr als sichtbar
  * wird als Element angelegt - unsichtbar, damit es beim Blättern einblendet.
@@ -53,21 +49,14 @@ const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)"
 
 /**
  * Baut die Zeitleiste in das Panel ein.
- * @param {HTMLElement} panel - #timeline-panel (Dashboard: views/movies.html, Website: index.html).
+ * @param {HTMLElement} panel - #timeline-panel (views/movies.html).
  * @param {object} [options]
- * @param {string} [options.detailHref] - Detailseite, relativ zur Seite.
- * @param {string[]} [options.modes] - verfügbare Ansichten ("release", "rated");
- *   fehlen Bewertungsdaten, nur ["release"]. Bei nur einer entfällt der Umschalter.
- * @param {string} [options.mode] - Ansicht beim Start (sonst "rated", falls verfügbar).
- * @param {string} [options.ratingLabel] - Beschriftung der eigenen Bewertung.
+ * @param {string} [options.mode] - Ansicht beim Start ("rated" oder "release").
  * @param {(mode: string) => void} [options.onModeChange] - z. B. zum Merken der Ansicht.
  * @returns {{update: (movies: Array) => void, show: () => void, mode: () => string}}
  */
 export function initTimeline(panel, {
-  detailHref = "movie.html",
-  modes = ["release", "rated"],
   mode: startMode = DEFAULT_TIMELINE_MODE,
-  ratingLabel = "Deine Bewertung",
   onModeChange = () => {},
 } = {}) {
   const flow = $("#coverflow", panel);
@@ -77,23 +66,22 @@ export function initTimeline(panel, {
   const peek = $("#timeline-peek", panel);
   const count = $("#timeline-count", panel);
   const missingNote = $("#timeline-missing", panel);
-  // Ohne Bewertungsdaten (Website, wenn die eigene Bewertung nicht
-  // veröffentlicht ist) gibt es weder Bewertungsdatum noch Abstand
-  const hasRatings = modes.includes("rated");
+  // Umschalter steht in der Filterzeile über den Panels (views/movies.html)
+  const modeGroup = $(".timeline-mode");
+  // Website ohne veröffentlichte eigene Bewertung (js/utils/host.js): kein
+  // Bewertungsdatum, kein Abstand - nur „Erschienen", ohne Umschalter
+  const hasRatings = has("rating");
+  const modeButtons = [...modeGroup.querySelectorAll("[data-timeline-mode]")]
+    .filter(button => {
+      button.hidden = !hasRatings && button.dataset.timelineMode === "rated";
+      return !button.hidden;
+    });
+  modeGroup.classList.toggle("is-single", modeButtons.length < 2);
+  const modes = modeButtons.map(button => button.dataset.timelineMode);
   if (!hasRatings) {
     const help = $("#timeline-help", panel);
     if (help) help.textContent = "← → blättern · Strich anklicken springt dorthin";
   }
-  // Umschalter steht in der Filterzeile über den Panels (views/movies.html)
-  const modeGroup = $(".timeline-mode");
-  const modeButtons = [...modeGroup.querySelectorAll("[data-timeline-mode]")]
-    .filter(button => {
-      const available = modes.includes(button.dataset.timelineMode);
-      button.hidden = !available;
-      return available;
-    });
-  // Nur eine Ansicht (z. B. Website ohne Bewertungsdaten): kein Umschalter
-  modeGroup.classList.toggle("is-single", modeButtons.length < 2);
 
   let movies = [];
   let mode = modes.includes(startMode) ? startMode : modes.includes(DEFAULT_TIMELINE_MODE) ? DEFAULT_TIMELINE_MODE : modes[0];
@@ -137,7 +125,7 @@ export function initTimeline(panel, {
       : `<span class="coverflow-fallback"><span class="cover-placeholder">${icon("image")}</span><span class="coverflow-fallback-title">${escapeHtml(movie.title)}</span></span>`;
   }
 
-  /** Setzt Lage und Drehung eines Covers über CSS-Variablen (Formeln in app.css). */
+  /** Setzt Lage und Drehung eines Covers über CSS-Variablen (Formeln in css/timeline.css). */
   function place(element, offset) {
     const distance = Math.min(Math.abs(offset), WINDOW);
     element.style.setProperty("--side", String(Math.sign(offset)));
@@ -209,7 +197,7 @@ export function initTimeline(panel, {
     const facts = [
       release ? `Erschienen ${release.approx ? escapeHtml(movie.year) : escapeHtml(formatDay(release.time))}` : "",
       !hasRatings ? "" : rated !== null ? `Bewertet ${escapeHtml(formatDay(rated))}` : "Noch nicht bewertet",
-      movie.yourRating ? `${escapeHtml(ratingLabel)} ${escapeHtml(movie.yourRating)}/10` : "",
+      movie.yourRating ? `${own("Deine", "Meine")} Bewertung ${escapeHtml(movie.yourRating)}/10` : "",
     ].filter(Boolean).join(" · ");
 
     let gap = "";
@@ -222,7 +210,7 @@ export function initTimeline(panel, {
         gap = `<p class="timeline-gap is-open">${rated === null ? "Noch nicht bewertet – kein Abstand" : "Erscheinungsdatum unbekannt"}</p>`;
       }
     }
-    const href = `${detailHref}?id=${encodeURIComponent(movie.id)}`;
+    const href = `movie.html?id=${encodeURIComponent(movie.id)}`;
     info.innerHTML = `
       <p class="timeline-title"><a href="${href}">${escapeHtml(movie.title)}</a></p>
       <p class="timeline-facts">${facts}</p>

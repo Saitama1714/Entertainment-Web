@@ -1,0 +1,130 @@
+/* =========================================================================
+   Dashboard - Design-Tokens
+   Ein privates Archiv: die Cover tragen die Farbe, die Oberfläche tritt zurück.
+   ========================================================================= */
+
+@font-face {
+  font-family: "Dashboard Text";
+  /* Nur installierte Schriften (Inter, Instrument Serif), sonst Systemschrift */
+  src: local("Inter"), local("Inter Variable");
+  font-weight: 100 900;
+  font-display: swap;
+}
+/* Cinzel für das Kinoticket - liegt im Projekt (assets/fonts, OFL), damit es überall gleich aussieht */
+@font-face {
+  font-family: "Cinzel";
+  src: local("Cinzel"), url("../assets/fonts/cinzel-latin.woff2") format("woff2");
+  font-weight: 400 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Dashboard Display";
+  src: local("Instrument Serif"), local("InstrumentSerif-Regular");
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light dark;
+
+  /* ---- Hell: Programmheft (Alternative) --------------------------------
+     Helles Papier, dunkle Tinte, Granat als Akzent. */
+  --bg: #f3f1ee;
+  --surface: #fdfcfa;
+  --surface-sunken: #ebe7e2;
+  --surface-hover: #f1ede8;
+
+  --text: #1d1614;
+  --text-muted: #5e524d;
+  --text-faint: #8a7e77;
+
+  --line: #e2dcd5;
+  --line-strong: #cbc1b7;
+
+  /* Granat: Fläche (Knöpfe, aktive Chips) und Schrift (Links, Hervorhebung) */
+  --accent: #9C0205;
+  --accent-hover: #7d0104;
+  --accent-text: #fff7ef;
+  --accent-ink: #9C0205;
+  --accent-wash: #f6e4e1;
+
+  /* Messing: sparsam - feine Linien, Statistik-Zahlen, Fokusrahmen */
+  --brass: #7a5c1c;
+  --brass-line: rgb(122 92 28 / .35);
+  --focus: #7a5c1c;
+
+  --danger: #a3242c;
+  --success: #2f6b46;
+
+  /* Badge-Töne auf dem Cover */
+  --badge-scrim: rgb(20 12 11 / .6);
+  --badge-gray: #e6ded4;
+  --badge-blue: #9cc6f5;
+  --badge-green: #93d4a8;
+
+  /* Lichtkegel über der Startseite (siehe .page-head) */
+  --spotlight: radial-gradient(60% 120% at 50% 0%, rgb(156 2 5 / .07), transparent 70%);
+
+  /* Radien: gestaffelt nach Rolle, nicht ein Wert für alles */
+  --r-chip: 999px;
+  --r-control: 8px;
+  --r-poster: 3px;
+  --r-panel: 12px;
+  --r-modal: 16px;
+
+  /* Abstände */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 22px; --s-6: 30px; --s-7: 44px; --s-8: 64px;
+
+  /* Schatten: nur wo etwas wirklich schwebt; warm getönt */
+  --shadow-pop: 0 14px 34px rgb(40 18 14 / .14), 0 2px 6px rgb(40 18 14 / .08);
+  --shadow-hover: 0 22px 44px rgb(40 18 14 / .28), 0 4px 12px rgb(40 18 14 / .16);
+  --shadow-modal: 0 30px 80px rgb(30 12 10 / .32);
+
+  /* Lade-Skelett: Glanzstreifen, der über ladende Cover wandert */
+  --skeleton-shine: rgb(255 255 255 / .7);
+
+  /* Breite des Inhaltsbereichs - auch der Vorhang richtet sich danach */
+  --container-max: 1440px;
+
+  /* Überschriften: klassische Buchschrift (Palatino unter Windows);
+     Text: die Systemschrift - oder Inter/Instrument Serif, wenn installiert */
+  --font-text: "Dashboard Text", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --font-display: "Dashboard Display", "Palatino Linotype", Palatino, "Book Antiqua", "Iowan Old Style", Georgia, serif;
+
+  font-family: var(--font-text);
+  font-size: 16px;
+}
+
+:root[data-theme="light"] { color-scheme: light; }
+
+/* ---- Dunkel: Kinosaal (Standard) -----------------------------------------
+   Schwarz mit rotem Unterton statt neutralem Grau, Elfenbein statt Weiß. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #140d0c;
+  --surface: #1e1514;
+  --surface-sunken: #271c1a;
+  --surface-hover: #2a1e1c;
+  --text: #efe6d8;
+  --text-muted: #b3a596;
+  --text-faint: #85776b;
+  --line: #2f2320;
+  --line-strong: #463531;
+  --accent: #9C0205;
+  --accent-hover: #b50a0e;
+  --accent-text: #fbeee0;
+  --accent-ink: #e0635a;           /* Granat aufgehellt: lesbar auf dunklem Grund */
+  --accent-wash: #3a1614;
+  --brass: #c9a45c;
+  --brass-line: rgb(201 164 92 / .28);
+  --focus: #d9b76e;
+  --danger: #e8868a;
+  --success: #7cc49a;
+  --badge-scrim: rgb(10 5 5 / .66);
+  --spotlight: radial-gradient(52% 115% at 50% 0%, rgb(222 186 118 / .17), rgb(156 2 5 / .07) 42%, transparent 72%);
+  --shadow-pop: 0 16px 40px rgb(0 0 0 / .55), 0 2px 6px rgb(0 0 0 / .35);
+  --shadow-hover: 0 26px 50px rgb(0 0 0 / .7), 0 0 0 1px rgb(201 164 92 / .22);
+  --shadow-modal: 0 34px 90px rgb(0 0 0 / .7);
+  --skeleton-shine: rgb(255 240 220 / .06);
+}

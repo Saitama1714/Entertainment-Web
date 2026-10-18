@@ -12,11 +12,10 @@
  * (sessionStorage „cover-flight") in den festen Rahmen [data-cover-landing]
  * und den Titel in [data-cover-title]. <link rel="expect"> im <head> sorgt
  * dafür, dass der Rahmen bis dahin gelesen ist. <html data-cover-landed>
- * lässt den Rest der Seite weich einblenden (css/app.css) und auf der
- * Website Cover und Titel schon während der Einlass-Prüfung sehen.
+ * lässt den Rest der Seite weich einblenden (css/cover-flight.css).
  *
  * Ohne passenden Merkzettel (Seite direkt geöffnet, neu geladen, geblättert)
- * passiert nichts. Gemeinsam mit der Website (gemeinsam.txt).
+ * passiert nichts.
  */
 (function coverFlightLanding() {
   const KEY = "cover-flight";

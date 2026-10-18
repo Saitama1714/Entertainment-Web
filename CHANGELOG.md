@@ -1,5 +1,22 @@
 # Änderungen
 
+## 1.15.0 – Gleichstand mit Dashboard 2.33
+- Die Website wird jetzt aus dem Code des Dashboards gebaut
+  (`npm run build:site` im Dashboard) – nur auf Anfrage. Alles hier außer
+  `data/`, `docs/`, README, CHANGELOG, `robots.txt` und `Sammlung-holen.bat`
+  kommt von dort.
+- Neu wie im Dashboard: Registerkarten „Genres“ (vorher „Sternbild“, mit
+  Legende), „Besetzung“ (Netz der Menschen, Rangliste, Personenkarten) und
+  „Heute“ (Eingrenzen, Ziehen, Cover-Roulette) statt „Auf einen Blick“;
+  Suche auch nach Darstellern und Drehbuch; „Ähnlich in der Sammlung“ auf der
+  Detailseite.
+- Detailseite heißt jetzt `movie.html`; alte Links auf `titel.html?id=…`
+  leiten weiter.
+- Die Tests der Website laufen jetzt im Dashboard; `tests/` hier entfällt.
+- Besetzung braucht eine neue `sammlung.json` aus Dashboard 2.33 (nach der
+  nächsten automatischen Sicherung `Sammlung-holen.bat`); bis dahin zeigt
+  „Besetzung“ nur die Regie.
+
 ## 1.14.1 – Vom Dashboard entkoppelt
 - Die Website übernimmt keinen Code mehr aus dem Dashboard und wird nur noch
   auf ausdrückliche Anweisung weiterentwickelt. Entfallen: `gemeinsam.txt`,

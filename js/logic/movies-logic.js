@@ -2,16 +2,23 @@ import { MEDIA_TYPES } from "../utils/media.js";
 
 /**
  * Filtert Filme anhand eines Suchbegriffs über Titel, Originaltitel, Medium,
- * Genre, Regie und Jahr. Case-insensitive, deutsche Sortierregeln (ä/ö/ü).
+ * Genre, Regie und Jahr - und, sobald die Besetzung geladen ist, auch über
+ * Darsteller und Drehbuch (castData aus js/logic/cast-logic.js, je
+ * IMDb-Kennung). Case-insensitive, deutsche Sortierregeln (ä/ö/ü).
  * @param {Array} movies
  * @param {string} query
+ * @param {Object} [castData] - IMDb-Kennung → {a: string[], w: string[]}.
  * @returns {Array} Gefilterte Filme.
  */
-export function searchMovies(movies, query) {
+export function searchMovies(movies, query, castData = null) {
   const normalized = query.trim().toLocaleLowerCase("de");
   if (!normalized) return movies;
+  const people = movie => {
+    const entry = castData?.[String(movie.imdbId || "").trim()];
+    return entry ? [...(entry.a || []), ...(entry.w || [])].join(" ") : "";
+  };
   return movies.filter(movie =>
-    [movie.title, movie.originalTitle, movie.medium, movie.genre, movie.directors, movie.year]
+    [movie.title, movie.originalTitle, movie.medium, movie.genre, movie.directors, movie.year, people(movie)]
       .join(" ")
       .toLocaleLowerCase("de")
       .includes(normalized)
@@ -162,9 +169,13 @@ export function importFilterOptions(movies, now = Date.now()) {
   return movies.some(movie => importStatus(movie, now).length) ? IMPORT_FILTER_OPTIONS : [];
 }
 
-/** Ein leerer Filterzustand (keine Kategorie schränkt ein). */
+/**
+ * Ein leerer Filterzustand (keine Kategorie schränkt ein).
+ * genresAll: Schnittmenge aus dem Sternbild - ein Titel muss ALLE diese
+ * Genres haben (die Gruppe „Genre" dagegen: irgendeines davon).
+ */
 export function emptyFilters() {
-  return { kind: [], genres: [], media: [], seen: [], lists: [], import: [] };
+  return { kind: [], genres: [], media: [], seen: [], lists: [], import: [], genresAll: [], person: [], personName: "" };
 }
 
 /**
@@ -191,7 +202,7 @@ export function genreFilterOptions(movies) {
 
 /** True, sobald irgendeine Kategorie mindestens einen Wert aktiv hat. */
 export function hasActiveFilters(filters) {
-  return Object.values(filters).some(values => values.length > 0);
+  return Object.values(filters).some(values => Array.isArray(values) && values.length > 0);
 }
 
 /**
@@ -214,6 +225,10 @@ export function listFilterOptions(movies) {
  * @param {string} value
  */
 export function toggleFilterValue(filters, category, value) {
+  // Die Schnittmenge gibt es nur als Ganzes: antippen hebt sie auf
+  if (category === "genresAll") return { ...filters, genresAll: [] };
+  // Ebenso die Titel einer Person aus „Besetzung"
+  if (category === "person") return { ...filters, person: [], personName: "" };
   const active = filters[category] || [];
   const next = active.includes(value) ? active.filter(entry => entry !== value) : [...active, value];
   return { ...filters, [category]: next };
@@ -244,8 +259,12 @@ export function filterMovies(movies, filters, ignore = "") {
   const active = Object.keys(valuesOf)
     .filter(category => category !== ignore && filters[category]?.length)
     .map(category => [category, new Set(filters[category])]);
+  const all = filters.genresAll?.length ? filters.genresAll : null;
+  const person = filters.person?.length ? new Set(filters.person) : null;
   return movies.filter(movie =>
-    active.every(([category, wanted]) => valuesOf[category](movie).some(value => wanted.has(value))));
+    active.every(([category, wanted]) => valuesOf[category](movie).some(value => wanted.has(value)))
+    && (!all || all.every(name => genresOf(movie).includes(name)))
+    && (!person || person.has(movie.id)));
 }
 
 /**
@@ -276,11 +295,11 @@ export function facetCounts(movies, filters) {
  * (Bewertungen, Jahr, Laufzeit, Bewertet am: absteigend; Titel: A–Z).
  * Fehlende Werte (keine Bewertung, kein Jahr, kein Datum) landen immer am
  * Ende, unabhängig von der Richtung. Bei Gleichstand entscheidet "neueste
- * zuerst" (createdAt). Standard: Website IMDb-Bewertung (DEFAULT_SORT), das
- * Dashboard nutzt "Deine Bewertung". Die Vorschau auf der Startseite nutzt
+ * zuerst" (createdAt). Standard: "Deine Bewertung" (DEFAULT_SORT) - im
+ * Raster unter Entertainment und beim Blättern auf der Detailseite. Die Vorschau auf der Startseite nutzt
  * dagegen previewMovies() (Zufallsauswahl, siehe oben).
  */
-export const DEFAULT_SORT = "imdbRating";
+export const DEFAULT_SORT = "yourRating";
 
 export const SORT_OPTIONS = [
   { value: "yourRating", label: "Deine Bewertung", direction: "desc" },
@@ -291,7 +310,7 @@ export const SORT_OPTIONS = [
   { value: "dateRated", label: "Bewertet am", direction: "desc" },
 ];
 
-/** Ältere Sortier-Werte (z. B. in einer gemerkten Ansicht der Website). */
+/** Ältere Sortier-Werte (frühere Versionen), werden auf die heutigen abgebildet. */
 const LEGACY_SORT = { yearDesc: ["year", "desc"], yearAsc: ["year", "asc"], seenAt: ["dateRated"] };
 
 /**

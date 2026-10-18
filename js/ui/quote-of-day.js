@@ -11,7 +11,6 @@ import { quoteOfDay } from "../logic/quote-logic.js";
  * Glühbirnen rahmt das Zitat (Birnen per Skript passend zur Größe verteilt),
  * und sobald der Kinovorhang offen ist, schreibt sich der Text Buchstabe für
  * Buchstabe auf. „Bewegung reduzieren": Birnen stehen still, Text ist gleich da.
- * Gemeinsam mit der Website (gemeinsam.txt).
  */
 
 const BULB_GAP = 24;          // Abstand der Birnen in px

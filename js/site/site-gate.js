@@ -1,20 +1,20 @@
 import { checkPassword } from "../logic/access-logic.js";
 import { escapeHtml } from "../utils/dom.js";
-import { SITE_TITLE } from "../utils/constants.js";
+import { SITE_TITLE } from "./site-constants.js";
 
 /*
  * „Einlass": Ist in data/sammlung.json ein Passwort hinterlegt, liegt bis
  * zur richtigen Eingabe ein Overlay über der Seite. Danach ist alles wie
  * bisher. Ein reiner Sichtschutz (siehe js/logic/access-logic.js).
  *
- * Ablauf: js/boot.js setzt auf Seiten mit Daten <html data-gate="pending">;
+ * Nur Website. Ablauf: js/site/boot.js setzt auf Seiten mit Daten <html data-gate="pending">;
  * site.css hält Kopfleiste und Inhalt bis dahin unsichtbar. Sobald die Daten
  * geladen sind, ruft die Seite openGate(access):
  *   - kein Passwort, oder in diesem Browser schon freigeschaltet → frei
  *   - sonst → Overlay; nach richtiger Eingabe frei und gemerkt (localStorage)
  * Ein neues Passwort (neuer Prüfwert) fragt automatisch wieder.
  *
- * Wartet der Kinovorhang geschlossen (data-curtain-hold, js/boot.js), liegt
+ * Wartet der Kinovorhang geschlossen (data-curtain-hold, js/site/boot.js), liegt
  * die Eingabe auf dem Vorhang statt auf eigenem Hintergrund; die Seite gibt
  * ihn nach dem Einlass mit releaseCurtain() frei - er öffnet sich dann.
  */

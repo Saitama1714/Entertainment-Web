@@ -1,6 +1,6 @@
 /* =========================================================================
-   Registerkarte „Sternbild" (js/ui/constellation.js). Gemeinsam mit der
-   Website (gemeinsam.txt). Farben der Datenpunkte geprüft auf Abstand und
+   Registerkarte „Sternbild" (js/ui/constellation.js). Farben der
+   Datenpunkte geprüft auf Abstand und
    Farbsehschwäche: Gold = Titel, Rot = deine 9er und 10er.
    Schriftgrößen in der Karte: px × --u (Welt-Einheiten je Bildschirmpunkt),
    damit Beschriftungen beim Zoomen gleich groß bleiben.
@@ -26,7 +26,8 @@
   display: inline-flex; justify-self: end; gap: 2px; padding: 3px;
   border-radius: var(--r-chip); background: var(--surface-sunken);
 }
-.entertainment-controls[data-view="constellation"] .constellation-mode.is-single { display: none; }
+/* Nur eine Ansicht (Website ohne eigene Bewertung): kein Umschalter - auch unter Besetzung */
+.entertainment-controls .constellation-mode.is-single { display: none !important; }
 
 .constellation-panel { margin-top: var(--s-2); display: grid; gap: var(--s-2); }
 .constellation-panel[hidden] { display: none; }
@@ -40,6 +41,9 @@
 .cs-map.is-dragging { cursor: grabbing; }
 .cs-map text { font-family: var(--font-text); fill: var(--text-muted); paint-order: stroke; stroke: var(--cs-stage); stroke-width: calc(3px * var(--u, 1)); stroke-linejoin: round; }
 .cs-map :focus { outline: none; }
+.cs-map:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
+.cs-actions { display: grid; gap: var(--s-2); }
+.cs-actions .button { justify-content: center; }
 
 .cs-dust circle { fill: var(--cs-dust); }
 .cs-edges line { stroke: var(--text-faint); stroke-width: calc(var(--w, 1) * 1px); stroke-linecap: round; vector-effect: non-scaling-stroke; }
@@ -52,6 +56,9 @@
 .cs-glabel { font-family: var(--font-display) !important; font-size: calc(15px * var(--u, 1)); fill: var(--text) !important; text-anchor: middle; cursor: pointer; }
 .cs-glabel:focus-visible { text-decoration: underline; }
 .cs-glabel tspan { font-family: var(--font-text); font-size: calc(10.5px * var(--u, 1)); fill: var(--text-faint); }
+/* ⌂ Zahl = Titel, die in dieser Galaxie wohnen (Legende unten rechts) */
+.cs-home { font-family: "Segoe UI Symbol", "Segoe UI", "Noto Sans Symbols 2", "Apple Symbols", var(--font-text); }
+.cs-glabel tspan.cs-home { fill: var(--brass); }
 .cs-dots { pointer-events: none; }
 .cs-dot { r: var(--dot, .7px); fill: var(--cs-gold); }
 .cs-dot.is-top { fill: var(--cs-red); }
@@ -82,6 +89,16 @@
 .cs-levels i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--text-faint); }
 .cs-levels .is-on { color: var(--text); }
 .cs-levels .is-on i { background: var(--brass); border-color: var(--brass); }
+.cs-legend {
+  position: absolute; right: var(--s-2); bottom: var(--s-2); z-index: 2; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center;
+  max-width: calc(100% - 200px); box-sizing: border-box; padding: 6px 12px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-control);
+  font-size: .76rem; color: var(--text-muted); pointer-events: none;
+}
+.cs-legend span { display: inline-flex; align-items: center; gap: 7px; }
+.cs-legend .cs-home { font-weight: 600; color: var(--brass); }
+.cs-key { width: 9px; height: 9px; border-radius: 50%; background: var(--cs-gold); }
+.cs-key.is-top { background: var(--cs-red); }
 .cs-empty { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: var(--s-5); color: var(--text-muted); text-align: center; }
 .cs-empty[hidden] { display: none; }
 .constellation-foot { margin: 0; color: var(--text-faint); font-size: .84rem; }
@@ -142,6 +159,7 @@
   .cs-stage { height: 64vh; }
   .cs-card { top: auto; left: var(--s-2); width: auto; max-height: 72%; }
   .cs-levels button { padding: 2px 6px; font-size: .74rem; }
+  .cs-legend { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .cs-card, .cs-tip { transition: none; }

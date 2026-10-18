@@ -3,7 +3,7 @@ import { genresOf } from "./movies-logic.js";
 /*
  * Rechenlogik der Registerkarte „Sternbild" unter Entertainment (Oberfläche:
  * js/ui/constellation.js). Ohne DOM, mit Node testbar
- * (tests/constellation.test.mjs). Gemeinsam mit der Website (gemeinsam.txt).
+ * (tests/constellation.test.mjs).
  *
  * Aufbau:
  * - Jedes Genre ist ein Stern. Größe = Anzahl, Linien = Titel, die zu beiden

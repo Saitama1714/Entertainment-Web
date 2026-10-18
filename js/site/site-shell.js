@@ -2,22 +2,23 @@ import { $ } from "../utils/dom.js";
 import { escapeHtml } from "../utils/dom.js";
 import { openModal, closeModal } from "../utils/modal.js";
 import { showToast } from "../utils/toast.js";
-import { INTRO_OPTIONS, CLICK_EFFECT_OPTIONS, CLICK_DURATION_OPTIONS } from "../utils/constants.js";
-import { initLinkTransitions } from "./link-transition.js";
+import { CLICK_EFFECT_OPTIONS, CLICK_DURATION_OPTIONS } from "../utils/constants.js";
+import { INTRO_OPTIONS } from "./site-constants.js";
+import { initLinkTransitions } from "../ui/link-transition.js";
 import { normalizeClickEffect, normalizeClickDuration } from "../logic/link-transition-logic.js";
-import { initBrandMedallion } from "./brand-medallion.js";
-import { openShortcutHelp, configureShortcutHelp } from "./shortcuts.js";
-import { replayCurtain } from "./curtain.js";
+import { initBrandMedallion } from "../ui/brand-medallion.js";
+import { openShortcutHelp, configureShortcutHelp } from "../ui/shortcuts.js";
+import { replayCurtain } from "../ui/curtain.js";
 
 /*
- * Kopfleiste aller Seiten: Logo-Medaillon, Design-Auswahl und der Dialog
+ * Nur Website. Kopfleiste aller Seiten: Logo-Medaillon, Design-Auswahl und der Dialog
  * „Ansicht" (wann der Kinovorhang spielt, Vorschau, Klick-Effekt, Lichtkegel,
  * Tastenkürzel).
  * Schaltet außerdem den Kachel-Zoom beim Klick auf Links ein
  * (js/ui/link-transition.js, gemeinsam mit dem Dashboard).
  *
  * Alles hier gilt nur im Browser des jeweiligen Besuchers (localStorage) -
- * die Website selbst speichert nichts. js/boot.js liest dieselben Schlüssel
+ * die Website selbst speichert nichts. js/site/boot.js liest dieselben Schlüssel
  * vor dem ersten Zeichnen.
  */
 

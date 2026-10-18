@@ -7,10 +7,10 @@
  * Overlay (js/ui/site-gate.js). Wichtig: Das ist KEIN echter Schutz - die
  * Datendatei bleibt für jeden abrufbar, der ihre Adresse kennt.
  *
- * Gemeinsam mit der Website (gemeinsam.txt): Das Dashboard erzeugt den
- * Prüfwert für die automatisch gespeicherte sammlung.json (Einstellungen →
- * Daten), die Website prüft die Eingabe. Getestet in der Website
- * (tests/access.test.mjs) und in tests/publish.test.mjs.
+ * Das Dashboard erzeugt den Prüfwert für die automatisch gespeicherte
+ * sammlung.json (Einstellungen → Daten), die Website (js/site/site-gate.js) prüft
+ * die Eingabe. Das Verfahren darf sich deshalb nicht ändern
+ * (tests/website-format.test.mjs).
  */
 
 const HEX = /^[0-9a-f]{64}$/;

@@ -37,7 +37,7 @@ export function renderCornerDecoration(state, { instant = false } = {}) {
  * nicht, öffnet CSS den Vorhang nach 1,5 s von selbst.
  *
  * Warten (nur Website, Einlass mit Passwort): Steht <html data-curtain-hold>
- * (gesetzt von js/boot.js der Website), bleibt der Vorhang geschlossen, bis
+ * (gesetzt von js/site/boot.js), bleibt der Vorhang geschlossen, bis
  * releaseCurtain() aufgerufen wird - erst dann öffnet er sich.
  *
  * Zustand für Tests und CSS: <html data-curtain-phase="playing|rest">,

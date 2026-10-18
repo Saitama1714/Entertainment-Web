@@ -8,13 +8,19 @@ Dashboard; die Website zeigt einen Stand, den du ab und zu aktualisierst.
 Dashboard  →  „Sicherung speichern"  →  werkzeug.html  →  data/sammlung.json  →  Website
 ```
 
-Reine statische Seite (HTML, CSS, JavaScript-Module), kein Server, kein Build,
-keine Datenbank. Läuft bei jedem Anbieter für statische Seiten, z. B. GitHub
-Pages – Anleitung in [docs/HOSTING.md](docs/HOSTING.md).
+Reine statische Seite (HTML, CSS, JavaScript-Module), kein Server, keine
+Datenbank. Läuft bei jedem Anbieter für statische Seiten, z. B. GitHub Pages –
+Anleitung in [docs/HOSTING.md](docs/HOSTING.md).
+
+**Der Code kommt aus dem Dashboard:** Seiten, Skripte, Stile und Bilder baut
+das Dashboard mit `npm run build:site` hierher – nur auf Anfrage, wenn die
+Website mit dem Dashboard gleichziehen soll. Von Hand gepflegt werden hier nur
+`data/`, `docs/`, diese README, das CHANGELOG, `robots.txt` und
+`Sammlung-holen.bat`.
 
 ## Was die Website kann
 
-- **Titel**: Raster mit Covern, Suche (Titel, Regie, Genre), Filterleiste
+- **Titel**: Raster mit Covern, Suche (Titel, Regie, Genre, Darsteller, Drehbuch), Filterleiste
   mit aufklappbaren Gruppen (Art, Genre, Medium, Status, Liste, Import) und Sortierung (Standard:
   IMDb-Bewertung). „Import" zeigt, was im Dashboard im dort eingestellten Zeitraum (Standard 4 Wochen)
   neu importiert oder durch den Import geändert wurde. Suche, Filter und Sortierung
@@ -24,11 +30,15 @@ Pages – Anleitung in [docs/HOSTING.md](docs/HOSTING.md).
   nach Erscheinen oder (wenn veröffentlicht) nach dem Tag meiner Bewertung;
   Klick aufs mittlere Cover zeigt den Abstand dazwischen. Suche und Filter
   wirken mit.
-- **Sternbild**: die Genres als zoombare Karte – Sterne, Galaxien, Cover.
+- **Genres**: die Genres als zoombare Karte – Sterne, Galaxien, Cover.
   Ein Genre antippen umrandet alle seine Titel; Cover führen zur Detailseite.
-- **Auf einen Blick**: Gesamt/Gesehen/Offen und „Was schauen wir heute?".
-- **Detailseite** je Titel mit allen veröffentlichten Angaben, Blättern per
-  Knopf oder Pfeiltaste (in der Reihenfolge der Sammlung).
+- **Besetzung**: das Netz der Menschen hinter den Titeln (Regie, Darsteller,
+  Drehbuch), Rangliste „Meine Stammbesetzung" und Personenkarten.
+- **Heute**: Gesamt/Gesehen/Offen und „Was schaue ich heute?" – eingrenzen
+  (Laufzeit, Art, Medium, Genre), ziehen, Cover-Roulette.
+- **Detailseite** je Titel mit allen veröffentlichten Angaben, „Ähnlich in
+  der Sammlung", Blättern per Knopf oder Pfeiltaste (in der Reihenfolge der
+  Sammlung). Alte Links auf `titel.html?id=…` leiten weiter.
 - **Streaming**: Auf der Detailseite führt „Bei WerStreamt.es ansehen" zu
   den Anbietern, bei denen der Titel läuft (über die IMDb-Kennung).
 - **Passwort** (wahlweise, im Werkzeug): Besucher sehen die Sammlung erst
@@ -89,66 +99,51 @@ der Link).
 ## Aufbau
 
 ```
-index.html               Sammlung (Titel, Zeitleiste, Sternbild, Auf einen Blick), Kinovorhang
-titel.html               Detailseite eines Titels (?id=…)
-werkzeug.html            Daten vorbereiten: Sicherung → sammlung.json
-data/sammlung.json       Die veröffentlichten Daten (vom Werkzeug erzeugt)
-assets/logo.svg          Logo (Medaillon, Favicon)
-css/
-├── app.css              Design (Stand Dashboard 2.29)
-├── curtain.css          Kinovorhang
-└── site.css             Ergänzungen nur für die Website
-js/
-├── boot.js              Vor dem ersten Zeichnen: Design, ob/wie der Vorhang spielt
-├── cover-flight.js      Cover-Flug: setzt das Cover vor dem ersten Zeichnen
-├── data-source.js       Lädt data/sammlung.json
-├── collection.js        Datenmodell der Titel
-├── pages/               Einstieg je Seite: sammlung.js, titel.js, werkzeug.js
-├── logic/               Reine Funktionen (Filter, Statistik, Zeitleiste, Vorhang, Medaillon,
-│                        Umwandlung Sicherung → sammlung.json, Passwort-Prüfwert)
-├── ui/                  Karten, Chips, Statistik, Zeitleiste, Sternbild, Vorhang, Medaillon, Tastenkürzel;
-│                        nur Website: site-shell.js (Kopfleiste und Dialog „Ansicht"),
-│                        site-gate.js (Einlass mit Passwort)
-└── utils/               Helfer und media.js (Medien), constants.js
-Sammlung-holen.bat       Doppelklick: sammlung.json aus Downloads\Dashboard-Sicherungen nach data\
-tests/                   Logik-Tests (npm test), Browser-Test in tests/browser/
-robots.txt, .nojekyll    Suchmaschinen aussperren; GitHub Pages ohne Jekyll
+Gebaut aus dem Dashboard (npm run build:site):
+  index.html             Sammlung (Titel, Zeitleiste, Genres, Besetzung, Heute), Kinovorhang
+  movie.html             Detailseite eines Titels (?id=…)
+  titel.html             Weiterleitung alter Links auf movie.html
+  werkzeug.html          Daten vorbereiten: Sicherung → sammlung.json
+  css/, assets/          Design, Logo, Schrift
+  js/                    Bausteine des Dashboards; js/site/ nur für die Website
+
+Gehört der Website:
+  data/sammlung.json     Die veröffentlichten Daten (automatische Sicherung oder Werkzeug)
+  docs/HOSTING.md        Veröffentlichen mit GitHub Pages
+  Sammlung-holen.bat     Doppelklick: sammlung.json aus Downloads\Dashboard-Sicherungen nach data\
+  robots.txt, .nojekyll  Suchmaschinen aussperren; GitHub Pages ohne Jekyll
 ```
 
-Den Namen der Seite („Filmsammlung") änderst du in `js/utils/constants.js`
-(`SITE_TITLE`) und in den `<title>`-Zeilen der drei HTML-Dateien.
+Jede Seite nennt im Kopf (`<meta name="generator">`), aus welcher
+Dashboard-Version sie gebaut ist.
 
 ## Verhältnis zum Dashboard
 
-**1:1-Abbildung:** Das Werkzeug bereitet jeden Titel genauso auf wie das
-Dashboard selbst (gleiche Funktion `newMovie()`), die Website zeigt Karten,
-Filter, Sortierungen, Suche, Statistik und Detailangaben mit denselben
-Bausteinen. `tests/parity.test.mjs` gleicht beides Feld für Feld ab, auch mit
-Sonderfällen (fehlendes/leeres Medium, Einträge ohne Titel, kaputte Links).
-Bewusste Unterschiede: „Meine Bewertung" statt „Deine Bewertung";
-Notizen nur, wenn im Werkzeug angehakt; Cover- und IMDb-Links, die keine
-Web-Adresse sind (z. B. `javascript:`), werden nicht veröffentlicht - das
-Dashboard zeigt dort ohnehin nur den Platzhalter.
+**Ein Code:** Die Website ist die Entertainment-Seite des Dashboards, nur
+lesend. Derselbe Code erkennt an `<html data-site>`, dass er hier läuft:
+Daten aus `data/sammlung.json` statt aus Chrome, kein Import, keine Abrufe,
+kein Bearbeiten; „Meine Bewertung" statt „Deine Bewertung"; Angaben, die
+nicht veröffentlicht sind, verschwinden samt Filtern und Ansichten. Dazu
+kommen Einlass mit Passwort, Filmzitat, Stand und der Dialog „Ansicht".
 
-**Eingefroren (seit 1.14.1):** Bis 1.14.0 kamen Karten, Filter, Statistik,
-Zeitleiste, Sternbild, Vorhang, Medaillon, Design und Hilfsfunktionen als
-gemeinsame Dateien aus dem Dashboard. Seitdem sind beide Projekte entkoppelt:
-Die Dateien hier sind eigene Kopien (Stand Dashboard 2.29), die Website wird
-nur noch auf ausdrückliche Anweisung weiterentwickelt und übernimmt keinen
-Code mehr aus dem Dashboard.
+**Gleichziehen nur auf Anfrage:** Neue Funktionen des Dashboards kommen erst
+hierher, wenn im Dashboard `npm run build:site` läuft. Danach hier in GitHub
+Desktop ansehen, committen, **Push origin**. Dateien, die der Bau nicht mehr
+braucht, nennt er am Ende (löschen).
 
 Die Datei `data/sammlung.json` ist der einzige Weg, auf dem Daten vom
-Dashboard hierher kommen (weiter per `Sammlung-holen.bat`). Das Dashboard
-hält ihr Format und das Passwort-Verfahren fest, damit diese Seite sie
-auch künftig versteht.
+Dashboard hierher kommen. Ihr Format wächst nur um neue Angaben (seit
+Dashboard 2.33: die Besetzung); was schon drin war, bleibt gleich.
 
 ## Tests
 
-```
-npm test                          # Logik-Tests (Node)
-python tests/browser/test_site.py # Browser-Test (Playwright + Chromium)
-```
+Die Tests der Website laufen im Dashboard (`tests/site.test.mjs`,
+`tests/browser/test_site.py`): Sie bauen die Website in einen temporären
+Ordner und prüfen sie dort.
 
 Lokal ansehen geht nur über einen kleinen Webserver (Browser laden
 JavaScript-Module nicht von der Festplatte), z. B. `python -m http.server`
 in diesem Ordner und dann http://localhost:8000.
+
+Den Namen der Seite („Filmsammlung") legt das Dashboard fest
+(`js/site/site-constants.js` und die `<!--site …-->`-Teile der Vorlagen).

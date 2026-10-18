@@ -1,0 +1,69 @@
+/* =========================================================================
+   Schmale Fenster
+   ========================================================================= */
+
+@media (max-width: 860px) {
+  /* Schmal: Medaillon immer klein und in der Leiste, Überschrift ohne Einzug */
+  .appbar .appbar-inner, .appbar--compact .appbar-inner { padding-left: var(--s-5); }
+  .brand--medallion, .appbar--compact .brand--medallion { position: static; flex-shrink: 0; width: var(--medal-small); height: var(--medal-small); }
+  .page-head { padding-left: 0; }
+  .detail-layout { grid-template-columns: 1fr; gap: var(--s-5); }
+  .detail-cover { max-width: 210px; }
+  .details-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 680px) {
+  .appbar-inner { padding: var(--s-2) var(--s-4); gap: var(--s-3); flex-wrap: wrap; }
+  .appbar .appbar-inner, .appbar--compact .appbar-inner { padding-left: var(--s-4); }
+  .nav { order: 3; width: 100%; margin: 0; overflow-x: auto; }
+  .appbar-actions { margin-left: auto; }
+  .shell { padding: var(--s-5) var(--s-4) var(--s-7); }
+  .projector-dust { --dust-bleed: var(--s-4); }
+  .movie-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--s-4) var(--s-3); }
+  .bookmark-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .form-grid { grid-template-columns: 1fr; }
+  .field.full { grid-column: auto; }
+  .modal-content, .modal-header { padding-left: var(--s-4); padding-right: var(--s-4); }
+  .toast-stack { right: var(--s-4); left: var(--s-4); bottom: var(--s-4); max-width: none; }
+  .import-file { grid-template-columns: minmax(0, 1fr) auto; }
+  .import-file-name { grid-column: 1 / -1; grid-row: 2; }
+  .import-file.has-error .import-file-info { grid-column: 1; }
+  .toolbar-row { grid-template-columns: 1fr; }
+  .coverflow { --cf-w: 118px; }
+  .timeline-title { font-size: 1.25rem; }
+  /* Lesezeichen: Knopf unter den Titel, damit der Titel die volle Breite behält */
+  .bookmark-item { grid-template-columns: 20px minmax(0, 1fr); row-gap: var(--s-2); }
+  .bookmark-item .small-button { grid-column: 2; justify-self: start; }
+  .sort-field { display: flex; }
+  .sort-field select { flex: 1; width: auto; }
+  /* Filter: Auswahl als Blatt von unten, Seite dahinter abgedunkelt */
+  .filter-drop-panel, .filter-drop-panel.align-end, .filter-drop-panel.is-many {
+    position: fixed; top: auto; left: 0; right: 0; bottom: 0; z-index: 60;
+    width: auto; max-height: 72vh; overflow-y: auto;
+    padding: 0 var(--s-3) var(--s-4);
+    border-radius: var(--r-modal) var(--r-modal) 0 0; border-bottom: 0;
+    box-shadow: 0 0 0 100vmax rgb(8 4 4 / .55), var(--shadow-modal);
+    animation: filter-sheet-in .2s ease-out;
+  }
+  .filter-drop-head {
+    position: sticky; top: 0; z-index: 1;
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 0 calc(-1 * var(--s-3)) var(--s-2); padding: var(--s-3) var(--s-4);
+    border-bottom: 1px solid var(--line); background: var(--surface);
+    font-family: var(--font-display); font-size: 1.3rem;
+  }
+  .filter-drop-done { padding: 6px 14px; border: 0; border-radius: var(--r-chip); background: var(--accent); color: var(--accent-text); font: inherit; font-family: var(--font-text); font-size: .88rem; font-weight: 600; }
+  .is-many .filter-drop-options { max-height: none; overflow: visible; }
+  .filter-chip { padding: 10px 8px; font-size: .95rem; }
+  .filter-drop-search { font-size: 1rem; }
+  html.filter-sheet-open { overflow: hidden; }
+}
+@keyframes filter-sheet-in { from { transform: translateY(24px); opacity: 0; } }
+
+/* Entertainment: fünf Registerkarten passen auf dem Handy nicht nebeneinander -
+   die Leiste lässt sich dann waagerecht wischen, statt die Seite zu verbreitern */
+@media (max-width: 680px) {
+  .view-tabs { max-width: 100%; box-sizing: border-box; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .view-tabs::-webkit-scrollbar { display: none; }
+  .view-tab { flex: none; white-space: nowrap; padding-inline: 12px; }
+}

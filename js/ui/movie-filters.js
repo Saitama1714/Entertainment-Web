@@ -1,3 +1,4 @@
+import { has } from "../utils/host.js";
 import { escapeHtml } from "../utils/dom.js";
 import {
   KIND_FILTER_OPTIONS, MEDIA_FILTER_OPTIONS, SEEN_FILTER_OPTIONS, IMPORT_FILTER_OPTIONS,
@@ -5,8 +6,7 @@ import {
 } from "../logic/movies-logic.js";
 
 /*
- * Filterleiste unter Entertainment (auch auf der Website Entertainment-Web
- * genutzt): je Gruppe ein Knopf (Art, Genre, Medium, Status, Liste, Import),
+ * Filterleiste unter Entertainment: je Gruppe ein Knopf (Art, Genre, Medium, Status, Liste, Import),
  * der eine kleine Auswahlliste aufklappt. Gefiltert wird sofort beim Anklicken.
  *
  * Die Optionen sind weiterhin <button class="filter-chip" data-category
@@ -82,11 +82,12 @@ function groupHtml(label, category, options, filters, counts) {
  * @param {Array} allMovies - komplette Sammlung.
  * @param {Array} searched - Sammlung nach Suchbegriff, vor den Filtern.
  * @param {{kind: string[], genres: string[], media: string[], seen: string[], lists: string[], import: string[]}} filters
- * @param {{hide?: string[]}} [options] - Gruppen, die entfallen (z. B. auf der
- *   Website, wenn Medium oder Gesehen-Status nicht veröffentlicht sind).
  * @returns {string} Leer, solange es nichts zu filtern gibt.
+ * Auf der Website entfallen Gruppen, deren Angaben nicht veröffentlicht sind
+ * (Medium, Status, Liste - js/utils/host.js).
  */
-export function filterChipsHtml(allMovies, searched, filters, { hide = [] } = {}) {
+export function filterChipsHtml(allMovies, searched, filters) {
+  const published = { media: "medium", seen: "seen", lists: "lists" };
   const counts = facetCounts(searched, filters);
   const listOptions = listFilterOptions(allMovies).map(name => ({ value: name, label: name }));
   const genreOptions = genreFilterOptions(allMovies).map(name => ({ value: name, label: name }));
@@ -98,14 +99,25 @@ export function filterChipsHtml(allMovies, searched, filters, { hide = [] } = {}
     ["Status", "seen", SEEN_FILTER_OPTIONS],
     ["Liste", "lists", listOptions],
     ["Import", "import", importOptions],
-  ].filter(([, category]) => !hide.includes(category))
+  ]
+    .filter(([, category]) => !published[category] || has(published[category]))
     .map(([label, category, options]) => groupHtml(label, category, options, filters, counts))
     .join("");
   if (!groups) return "";
+  // Schnittmenge aus dem Sternbild: ein Knopf, Antippen hebt sie auf
+  const set = filters.genresAll?.length
+    ? `<button type="button" class="filter-chip filter-set" data-category="genresAll" data-value="all" aria-pressed="true" title="Schnittmenge aufheben">
+        <span class="filter-chip-label">${escapeHtml(filters.genresAll.join(" + "))}</span><span aria-hidden="true">×</span></button>`
+    : "";
+  // Titel einer Person aus „Besetzung": ebenso ein Knopf
+  const person = filters.person?.length
+    ? `<button type="button" class="filter-chip filter-set" data-category="person" data-value="all" aria-pressed="true" title="Filter aufheben">
+        <span class="filter-chip-label">Mit ${escapeHtml(filters.personName || "Person")}</span><span aria-hidden="true">×</span></button>`
+    : "";
   const reset = hasActiveFilters(filters)
     ? `<button type="button" class="filter-reset" id="filter-reset">Filter zurücksetzen</button>`
     : "";
-  return `<div class="filter-bar">${groups}${reset}</div>`;
+  return `<div class="filter-bar">${set}${person}${groups}${reset}</div>`;
 }
 
 /* ---------------------------------------------------------------------------

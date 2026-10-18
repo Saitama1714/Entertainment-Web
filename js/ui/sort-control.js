@@ -1,7 +1,7 @@
 import { escapeHtml } from "../utils/dom.js";
 
 /*
- * Sortier-Steuerung unter Entertainment (auch auf der Website): Auswahl des
+ * Sortier-Steuerung unter Entertainment: Auswahl des
  * Kriteriums plus Pfeil-Knopf für die Richtung. Wechselt das Kriterium,
  * springt die Richtung auf dessen Startrichtung (z. B. Titel A–Z,
  * Bewertungen absteigend). Markup: <select> + <button class="sort-dir">.

@@ -7,13 +7,12 @@ import { escapeHtml, reducedMotion } from "../utils/dom.js";
  * Zeichen bis zum neuen Wert. Ändert sich ein Wert später (z. B. nach einem
  * Import), blättert nur, was sich geändert hat.
  *
- * Aufbau einer Klappe (CSS: .flap in css/app.css): obere und untere Hälfte
+ * Aufbau einer Klappe (CSS: .flap in css/base.css): obere und untere Hälfte
  * stehen fest, darüber klappt die obere Hälfte des alten Zeichens nach unten
  * weg (.flap-fold), danach klappt die untere Hälfte des neuen Zeichens herunter
  * (.flap-unfold). Für Screenreader steht die Zahl unsichtbar daneben.
  *
  * „Bewegung reduzieren": Die Zahlen stehen sofort da.
- * Gemeinsam mit der Website (gemeinsam.txt).
  */
 
 const CHARS = " 0123456789";

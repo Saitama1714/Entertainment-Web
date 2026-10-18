@@ -1,41 +1,35 @@
+import { MEDIA_TYPES } from "./media.js";
+import { own } from "./host.js";
+
 /**
- * Zentrale Konfigurationswerte der Website. Hier ändern statt an mehreren
- * Stellen im Code. Diese Datei gehört nur der Website (nicht in gemeinsam.txt).
+ * Zentrale Konfigurationswerte. Hier ändern statt an mehreren Stellen im Code.
+ * Medientypen und ihre Abzeichen stehen in utils/media.js.
  */
-
-/** Name der Seite: Überschrift, Fenstertitel, Name des Logos für Screenreader. */
-export const SITE_TITLE = "Filmsammlung";
-
-/** Die Datendatei, die das Umwandlungs-Werkzeug (werkzeug.html) erzeugt. */
-export const DATA_URL = "data/sammlung.json";
-
-/** Medientypen und Abzeichen stehen in utils/media.js (gemeinsam mit dem Dashboard). */
 export const CONFIG = {
+  MAX_PINNED_BOOKMARKS: 32,
+  MEDIA_TYPES,
+  MOVIE_PREVIEW_COUNT: 16,
   SEARCH_DEBOUNCE_MS: 300,
   TOAST_DURATION_MS: 4000,
+  OMDB_FETCH_DELAY_MS: 260, // Free-Tier: ~1000 Anfragen/Tag, kleine Pause zwischen Requests
 };
 
 /**
- * Kinovorhang: wann er spielt (Ansicht → Kinovorhang). Ausgewertet in
- * js/boot.js. „Bei jedem Besuch" = einmal pro geöffnetem Browserfenster, nicht
- * bei jedem Zurückkehren von einer Detailseite.
+ * Kinovorhang auf der Startseite: wann er spielt (Einstellungen →
+ * Erscheinungsbild). Ausgewertet in js/boot.js; „Jede Stunde"/„Alle 2 Stunden"
+ * zählen ab dem letzten Abspielen.
  */
 export const INTRO_OPTIONS = [
-  { value: "visit", label: "Bei jedem Besuch" },
+  { value: "always", label: "Bei jedem neuen Tab" },
+  { value: "hourly", label: "Jede Stunde" },
+  { value: "every2h", label: "Alle 2 Stunden" },
   { value: "daily", label: "Einmal am Tag" },
   { value: "off", label: "Nie" },
 ];
 
 /**
- * Dekoration unten links, nachdem sich der Vorhang geöffnet hat (siehe
- * ui/curtain-icons.js). Nur der Rückfall: Die Datendatei bringt die im
- * Dashboard gewählte Deko mit (`decor`).
- */
-export const CORNER_ICON = "popcorn";
-
-/**
- * Klick-Animation für Links (Ansicht → Bewegung), wie im Dashboard. Werte
- * wie in js/logic/link-transition-logic.js (gemeinsam).
+ * Klick-Animation für Links (Einstellungen → Bewegung). Werte wie in
+ * js/logic/link-transition-logic.js; Reihenfolge = Reihenfolge der Optionen.
  */
 export const CLICK_EFFECT_OPTIONS = [
   { value: "zoom", label: "Kachel-Zoom" },
@@ -48,7 +42,30 @@ export const CLICK_DURATION_OPTIONS = [
 ];
 
 /**
- * Logo für den Kachel-Zoom (js/ui/link-transition.js, gemeinsam). Relativ,
- * weil die Website auch in einem Unterordner liegen kann (GitHub Pages).
+ * Logo für den Kachel-Zoom (Klick-Animation), in seinen eigenen Farben.
+ * Dashboard: Pfad ab Erweiterungs-Wurzel. Website: relativ, weil sie auch in
+ * einem Unterordner liegen kann (GitHub Pages). Fehlt die Datei, zeigt der
+ * Zoom stattdessen das Monogramm (erster Buchstabe).
  */
-export const BRAND_LOGO = { src: "assets/logo.svg" };
+export const BRAND_LOGO = { src: own("/assets/logo.svg", "assets/logo.svg") };
+
+/** Erinnerung an einen neuen IMDb-Export: Wert = Tage, 0 = nie erinnern. */
+export const REMINDER_OPTIONS = [
+  { value: 0, label: "Nie" },
+  { value: 7, label: "Nach 1 Woche" },
+  { value: 14, label: "Nach 2 Wochen" },
+  { value: 30, label: "Nach 1 Monat" },
+  { value: 90, label: "Nach 3 Monaten" },
+];
+
+/**
+ * Wählbare Dekoration unten links auf der Startseite (siehe ui/curtain.js).
+ * "none" zeigt keine Dekoration. Reihenfolge = Reihenfolge im Dropdown.
+ */
+export const CURTAIN_ICONS = [
+  { value: "none", label: "Kein Symbol" },
+  { value: "popcorn", label: "Popcornbox" },
+  { value: "clapperboard", label: "Filmklappe" },
+  { value: "ticket", label: "Kinoticket" },
+  { value: "watermelon", label: "Wassermelone" },
+];

@@ -1,4 +1,6 @@
+import { own, has } from "../utils/host.js";
 import { $, escapeHtml, reducedMotion } from "../utils/dom.js";
+import { constellationSignature } from "../logic/view-logic.js";
 import {
   CONSTELLATION_MODES, DEFAULT_CONSTELLATION_MODE, CELL, POSTER,
   buildConstellation, bubblePath, genreNeighbors, genreIntersections,
@@ -18,9 +20,7 @@ import {
  * Cover werden erst ab der Cover-Stufe und nur für den sichtbaren Ausschnitt
  * angelegt (bei 1.000+ Titeln wichtig).
  *
- * Rechenlogik: js/logic/constellation-logic.js. Gemeinsam mit der Website
- * (gemeinsam.txt): keine Chrome-APIs; was je Projekt anders ist, kommt über
- * die Optionen von initConstellation().
+ * Rechenlogik: js/logic/constellation-logic.js.
  */
 
 const NS = "http://www.w3.org/2000/svg";
@@ -28,7 +28,6 @@ const fmt = n => n.toLocaleString("de-DE");
 const f1 = n => n.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const level = (v, a, b) => clamp((v - a) / (b - a), 0, 1);
-const MODE_LABELS = { rated: "Bewertet", all: "Ganze Sammlung" };
 // Plakatfarben für Titel ohne Cover (wie ein Filmplakat - in beiden Designs gleich)
 const POSTER_COLORS = [["#3b1d1a", "#7a2e24"], ["#16242e", "#2f5464"], ["#1f2a1c", "#4b6236"], ["#2b1f33", "#5d3f73"], ["#2e2412", "#7a5c1c"], ["#1a1a1f", "#4a4a58"], ["#331414", "#9c0205"], ["#122a2a", "#2d6b66"]];
 // Cover wie im Raster (movie-card.js): als Bildquelle, nie als Link
@@ -59,23 +58,31 @@ function wrapTitle(title, max = 11, lines = 4) {
  * Baut das Sternbild in das Panel ein.
  * @param {HTMLElement} panel - #constellation-panel mit #constellation-stage und #constellation-foot.
  * @param {object} [options]
- * @param {string} [options.detailHref] - Detailseite, relativ zur Seite.
- * @param {string} [options.ratingLabel] - Beschriftung der eigenen Bewertung.
- * @param {string[]} [options.modes] - verfügbare Ansichten ("rated", "all"); bei einer entfällt der Umschalter.
- * @param {string} [options.mode] - Ansicht beim Start.
+ * @param {string} [options.mode] - Ansicht beim Start ("rated" oder "all").
  * @param {(mode: string) => void} [options.onModeChange]
+ * @param {{sig: string, cx: number, cy: number, w: number}} [options.camera] - gemerkter
+ *   Ausschnitt; gilt nur, wenn die Karte gleich aussieht (sig).
+ * @param {(camera: {sig: string, cx: number, cy: number, w: number}) => void} [options.onCameraChange]
+ *   - nach dem Zoomen/Verschieben (beruhigt, nicht bei jedem Bild).
+ * @param {(genres: string[]) => void} [options.onShowTitles] - „Im Raster zeigen":
+ *   ein Genre oder eine Schnittmenge (alle Genres zugleich).
  * @returns {{update: (movies: Array) => void, show: () => void, mode: () => string}}
  */
 export function initConstellation(panel, {
-  detailHref = "movie.html",
-  ratingLabel = "Deine Bewertung",
-  modes = CONSTELLATION_MODES,
   mode: startMode = DEFAULT_CONSTELLATION_MODE,
   onModeChange = () => {},
+  camera: savedCamera = null,
+  onCameraChange = () => {},
+  onShowTitles = null,
 } = {}) {
+  let pendingCamera = savedCamera;
+  let signature = "";
+  let cameraTimer = 0;
   const stage = $("#constellation-stage", panel);
   const foot = $("#constellation-foot", panel);
-  let mode = modes.includes(startMode) ? startMode : modes[0];
+  // Website ohne veröffentlichte eigene Bewertung: nur „Ganze Sammlung"
+  const modes = has("rating") ? CONSTELLATION_MODES : ["all"];
+  let mode = modes.includes(startMode) ? startMode : modes.includes(DEFAULT_CONSTELLATION_MODE) ? DEFAULT_CONSTELLATION_MODE : modes[0];
   let movies = [];
   let data = null;
   let stale = true;
@@ -95,9 +102,17 @@ export function initConstellation(panel, {
       <button type="button" data-level="1"><i></i>Galaxien</button>
       <button type="button" data-level="2"><i></i>Cover</button>
     </div>
+    <div class="cs-legend" aria-hidden="true">
+      <span><i class="cs-key"></i>Titel</span>
+      ${has("rating") ? `<span><i class="cs-key is-top"></i>${own("deine", "meine")} 9 und 10</span>` : ""}
+      <span><b class="cs-home">⌂ 12</b> Titel, die hier wohnen – ihr seltenstes Genre</span>
+    </div>
     <aside class="cs-card" aria-live="polite" hidden></aside>
     <p class="cs-empty" hidden></p>`;
-  const svg = el(stage, "svg", { class: "cs-map", role: "img", "aria-label": "Sternbild der Genres" });
+  const svg = el(stage, "svg", {
+    class: "cs-map", role: "application", tabindex: 0,
+    "aria-label": "Karte der Genres. Pfeiltasten wählen ein Cover, Plus und Minus zoomen, Escape schließt die Karte, Tab erreicht die Sterne.",
+  });
   stage.insertBefore(svg, stage.firstChild);
   const defs = el(svg, "defs");
   const clip = el(defs, "clipPath", { id: "cs-clip", clipPathUnits: "objectBoundingBox" });
@@ -139,6 +154,9 @@ export function initConstellation(panel, {
     svg.setAttribute("viewBox", `${cam.x} ${cam.y} ${cam.w} ${cam.h}`);
     svg.style.setProperty("--u", unit());
     levels();
+    // Ausschnitt merken, sobald die Kamera zur Ruhe kommt
+    clearTimeout(cameraTimer);
+    if (signature) cameraTimer = setTimeout(() => onCameraChange({ sig: signature, cx: cam.x + cam.w / 2, cy: cam.y + cam.h / 2, w: cam.w }), 500);
   }
   function setCam(x, y, w) {
     cancelAnimationFrame(cam.raf);
@@ -216,6 +234,9 @@ export function initConstellation(panel, {
   function rebuild() {
     data = buildConstellation(movies, { mode });
     stale = false;
+    generation++;
+    queue.length = 0;
+    waiting.clear();
     bubbleCache.clear();
     posterEls.clear();
     selA = selB = selItem = null;
@@ -226,6 +247,7 @@ export function initConstellation(panel, {
       ? "Keine bewerteten Titel für diese Auswahl. „Ganze Sammlung“ zeigt alle."
       : "Keine Titel für diese Auswahl.";
     svg.style.visibility = data.items.length ? "" : "hidden";
+    signature = data.items.length ? constellationSignature(mode, data.items, data.genres) : "";
     if (!data.items.length) { foot.textContent = ""; return; }
 
     // Sternenstaub (immer gleich, nur Kulisse)
@@ -251,13 +273,20 @@ export function initConstellation(panel, {
       el(L.slabels, "text", { x: genre.x, y: genre.y + r + 15, class: `cs-slabel${genre.n > data.items.length / 7 ? " is-big" : ""}`, "data-genre": genre.i }, genre.name);
       if (genre.home.length) {
         const label = el(L.glabels, "text", { x: genre.x, y: genre.y - genre.galaxy - 2.6, class: "cs-glabel", "data-genre": genre.i, tabindex: 0, role: "button", "aria-label": `Genre-Karte ${genre.name}` }, `${genre.name} `);
-        el(label, "tspan", {}, fmt(genre.home.length));
+        el(label, "tspan", { class: "cs-home" }, `⌂\u2009${fmt(genre.home.length)}`); // ⌂ = wohnen hier (Legende)
       }
     }
     data.items.forEach((item, k) => {
       el(L.dots, "circle", { cx: item.x, cy: item.y, class: `cs-dot${item.rating >= 9 ? " is-top" : item.rating === null ? " is-open" : ""}`, "fill-opacity": item.rating === null ? 0.5 : item.rating >= 9 ? 1 : 0.3 + 0.55 * Math.max(0, item.rating - 4) / 4, "data-item": k });
     });
     home();
+    // Gemerkter Ausschnitt (nur einmal, nur bei gleicher Karte)
+    if (pendingCamera) {
+      const saved = pendingCamera;
+      pendingCamera = null;
+      if (saved.sig === signature) setCam(saved.cx - saved.w / 2, saved.cy - saved.w * aspect / 2, saved.w);
+    }
+    precomputeBubbles();
   }
 
   function buildVisiblePosters() {
@@ -299,19 +328,79 @@ export function initConstellation(panel, {
     el(g, "rect", { class: "cs-frame", width: POSTER.w, height: POSTER.h, rx: 0.18 });
   }
 
-  /* ---------------- Umrisse und Fäden ---------------- */
+  /* ---------------- Umrisse (im Hintergrund gerechnet) ---------------- */
+  // Ein Umriss kostet bei 1.000+ Titeln rund 0,1 s. Ein Worker rechnet ihn
+  // abseits der Oberfläche; nach dem Aufbau rechnet er alle Genres vor (ein
+  // Auftrag nach dem anderen), angetippte Genres kommen in der Schlange nach vorn.
+  let worker = null;
+  try {
+    worker = new Worker(new URL("../workers/bubble-worker.js", import.meta.url), { type: "module" });
+  } catch {
+    worker = null; // ohne Worker: direkt rechnen
+  }
+  let generation = 0, busy = false;
+  const queue = [], waiting = new Map();
+  const bubbleJob = (key, members) => {
+    const set = new Set(members);
+    const pos = list => list.map(item => ({ x: item.x, y: item.y }));
+    return { key, gen: generation, members: pos(members), others: pos(data.items.filter(item => !set.has(item))) };
+  };
+  function finishBubble(key, path) {
+    bubbleCache.set(key, path);
+    waiting.get(key)?.forEach(resolve => resolve(path));
+    waiting.delete(key);
+  }
+  function pump() {
+    while (!busy && queue.length) {
+      const job = queue.shift();
+      if (job.gen !== generation || bubbleCache.has(job.key)) continue;
+      busy = true;
+      worker.postMessage(job);
+    }
+  }
+  if (worker) {
+    worker.onmessage = ({ data: reply }) => {
+      busy = false;
+      if (reply.gen === generation) finishBubble(reply.key, reply.path);
+      pump();
+    };
+    worker.onerror = () => {
+      // Worker geht nicht (z. B. alter Browser): ab jetzt direkt rechnen
+      worker = null; busy = false;
+      for (const job of queue.splice(0)) if (job.gen === generation) finishBubble(job.key, bubblePath(job.members, job.others));
+    };
+  }
+  /** Umriss einer Menge; urgent = angetippt (vor die vorgerechneten). */
+  function requestBubble(key, members, urgent = false) {
+    if (bubbleCache.has(key)) return Promise.resolve(bubbleCache.get(key));
+    const promise = new Promise(resolve => { if (!waiting.has(key)) waiting.set(key, []); waiting.get(key).push(resolve); });
+    if (!worker) { const job = bubbleJob(key, members); finishBubble(key, bubblePath(job.members, job.others)); return promise; }
+    const index = queue.findIndex(job => job.key === key);
+    const job = index >= 0 ? queue.splice(index, 1)[0] : bubbleJob(key, members);
+    if (urgent) queue.unshift(job); else queue.push(job);
+    pump();
+    return promise;
+  }
+  function precomputeBubbles() {
+    if (!worker || !data) return;
+    [...data.genres].sort((a, b) => b.n - a.n).forEach(genre => requestBubble(`g${genre.i}`, genre.titles));
+  }
+
   function drawBubbles() {
     L.bubbles.replaceChildren();
     for (const [sel, kind] of [[selA, "a"], [selB, "b"]]) {
       if (!sel) continue;
-      if (!bubbleCache.has(sel.key)) {
-        const set = new Set(sel.members);
-        bubbleCache.set(sel.key, bubblePath(sel.members, data.items.filter(item => !set.has(item))));
+      const path = el(L.bubbles, "path", { class: `cs-bubble is-${kind}`, "fill-rule": "evenodd" });
+      if (bubbleCache.has(sel.key)) path.setAttribute("d", bubbleCache.get(sel.key));
+      else {
+        path.classList.add("is-pending");
+        requestBubble(sel.key, sel.members, true).then(d => { path.setAttribute("d", d); path.classList.remove("is-pending"); });
       }
-      el(L.bubbles, "path", { d: bubbleCache.get(sel.key), class: `cs-bubble is-${kind}`, "fill-rule": "evenodd" });
     }
     levels();
   }
+
+  /* ---------------- Fäden ---------------- */
   function drawThreads() {
     L.threads.replaceChildren();
     if (!selItem) return;
@@ -332,7 +421,7 @@ export function initConstellation(panel, {
       ? `<img src="${escapeHtml(src)}" alt="" loading="lazy">`
       : `<span class="cs-cover-fallback">${escapeHtml(item.title)}</span>`;
   };
-  const href = item => `${detailHref}?id=${encodeURIComponent(item.id)}`;
+  const href = item => `movie.html?id=${encodeURIComponent(item.id)}`; // Detailseite im selben Ordner (views/)
 
   function showCard(html, x, y) {
     const wasOpen = !card.hidden;
@@ -387,8 +476,8 @@ export function initConstellation(panel, {
     showCard(`
       <div class="cs-card-top"><div><p class="cs-kicker">Genre</p><h3>${escapeHtml(genre.name)}</h3></div>
         <button type="button" class="cs-close" aria-label="Schließen">×</button></div>
-      <p class="cs-meta"><b>${fmt(genre.n)}</b> Titel${genre.avg !== null ? ` · Ø <b>${f1(genre.avg)}</b>` : ""} · ${fmt(genre.home.length)} davon wohnen in dieser Galaxie</p>
-      ${rated ? `<div><p class="cs-kicker">${escapeHtml(ratingLabel)}</p>
+      <p class="cs-meta"><b>${fmt(genre.n)}</b> Titel${genre.avg !== null ? ` · Ø <b>${f1(genre.avg)}</b>` : ""} · <span class="cs-home">⌂</span> ${fmt(genre.home.length)} wohnen in dieser Galaxie</p>
+      ${rated ? `<div><p class="cs-kicker">${own("Deine", "Meine")} Bewertung</p>
         <div class="cs-hist">${genre.dist.map((v, k) => `<i class="${k >= 8 ? "is-top" : ""}" style="height:${v / max * 100}%" title="${k + 1}: ${v}"></i>`).join("")}</div>
         <div class="cs-histx">${genre.dist.map((_, k) => `<span>${k + 1}</span>`).join("")}</div></div>` : ""}
       <div><p class="cs-kicker">${rated ? "Lieblinge" : "Beliebteste"}</p><div class="cs-covers">${genre.titles.slice(0, 8).map(item => `<button type="button" data-item="${data.items.indexOf(item)}" aria-label="${escapeHtml(item.title)}">${coverHtml(item)}</button>`).join("")}</div></div>
@@ -396,7 +485,11 @@ export function initConstellation(panel, {
         <span class="cs-set-name">${escapeHtml([genre.name, ...set.with.map(i => data.genres[i].name)].join(" + "))}</span>
         <span class="cs-set-bar"><b style="width:${set.count / setMax * 100}%"></b></span><span class="cs-set-count">${fmt(set.count)}</span></button>`).join("")}</div></div>` : ""}
       ${neighbors.length ? `<div><p class="cs-kicker">Nachbarn</p><div class="cs-chips">${neighbors.map(n => `<button type="button" data-genre="${n.i}">${escapeHtml(data.genres[n.i].name)} <span>${fmt(n.w)}</span></button>`).join("")}</div></div>` : ""}
-      ${genre.home.length ? `<button type="button" class="button cs-primary" data-zoom="${genre.i}">Zu den Covern zoomen</button>` : ""}`, genre.x, genre.y);
+      <div class="cs-actions">
+        ${genre.home.length ? `<button type="button" class="button cs-primary" data-zoom="${genre.i}">Zu den Covern zoomen</button>` : ""}
+        ${onShowTitles && !genre.other ? `<button type="button" class="button secondary" data-show="genre">${fmt(genre.n)} Titel im Raster zeigen</button>
+        <button type="button" class="button secondary" data-show="set" hidden></button>` : ""}
+      </div>`, genre.x, genre.y);
     card.dataset.genre = genre.i;
   }
 
@@ -413,7 +506,7 @@ export function initConstellation(panel, {
         <button type="button" class="cs-close" aria-label="Schließen">×</button></div>
       <div class="cs-film"><div class="cs-film-cover">${coverHtml(item)}</div>
         <div class="cs-film-facts">
-          ${item.rating !== null ? `<p class="cs-rating">${item.rating}<small> / 10 ${escapeHtml(ratingLabel)}</small></p>` : `<p class="cs-meta">Noch nicht bewertet</p>`}
+          ${item.rating !== null ? `<p class="cs-rating">${item.rating}<small> / 10 ${own("Deine", "Meine")} Bewertung</small></p>` : `<p class="cs-meta">Noch nicht bewertet</p>`}
           <p class="cs-meta">${[item.year, m.imdbRating ? `IMDb ${escapeHtml(m.imdbRating)}` : ""].filter(Boolean).join(" · ")}</p>
         </div></div>
       <div><p class="cs-kicker">Genres</p><div class="cs-chips">${item.gs.map(i => `<button type="button" data-genre="${i}">${escapeHtml(data.genres[i].name)}</button>`).join("")}</div></div>
@@ -432,8 +525,19 @@ export function initConstellation(panel, {
       const need = [genre.i, ...target.dataset.set.split(",").map(Number)];
       const on = target.getAttribute("aria-pressed") !== "true";
       card.querySelectorAll("[data-set]").forEach(button => button.setAttribute("aria-pressed", String(button === target && on)));
-      selB = on ? { key: `s${need.join(",")}`, members: data.items.filter(item => need.every(i => item.gs.includes(i))) } : null;
+      selB = on ? { key: `s${need.join(",")}`, members: data.items.filter(item => need.every(i => item.gs.includes(i))), genres: need } : null;
       drawBubbles();
+      const show = card.querySelector('[data-show="set"]');
+      if (show) {
+        show.hidden = !selB;
+        if (selB) show.textContent = `Schnittmenge im Raster zeigen (${fmt(selB.members.length)})`;
+      }
+      return;
+    }
+    if (target.dataset.show !== undefined && onShowTitles) {
+      const genre = data.genres[Number(card.dataset.genre)];
+      const names = target.dataset.show === "set" && selB ? selB.genres.map(i => data.genres[i].name) : [genre.name];
+      onShowTitles(names);
     }
   });
 
@@ -454,17 +558,58 @@ export function initConstellation(panel, {
     const genre = genreAt(event.target);
     if (genre) openGenre(genre);
   });
+  /* ---------------- Tastatur ---------------- */
+  // Pfeiltasten: nächstes Cover in dieser Richtung (ohne gewähltes: das nächste
+  // zur Bildmitte), Kamera folgt; + / − zoomen; Enter/Leertaste auf einem Stern
+  // oder Galaxie-Namen öffnet seine Karte.
+  const DIRECTIONS = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowDown: [0, 1], ArrowUp: [0, -1] };
+  function neighbourItem(from, [dx, dy]) {
+    let best = null, bestScore = Infinity;
+    for (const item of data.items) {
+      if (item === from) continue;
+      const vx = item.x - from.x, vy = item.y - from.y;
+      const along = vx * dx + vy * dy;
+      if (along <= 0.1) continue;
+      const across = Math.abs(vx * dy - vy * dx);
+      if (across > along * 1.2) continue; // nur grob in Pfeilrichtung
+      const score = along + across * 2.5;
+      if (score < bestScore) { bestScore = score; best = item; }
+    }
+    return best;
+  }
+  function nearestToCentre() {
+    const [cx, cy] = centre();
+    return data.items.reduce((a, b) => (Math.hypot(b.x - cx, b.y - cy) < Math.hypot(a.x - cx, a.y - cy) ? b : a));
+  }
+  /** Kamera nachziehen, wenn das Cover aus dem Kern des Ausschnitts wandert. */
+  function keepInView(item) {
+    const coverW = POSTER.w * 26;
+    const w = POSTER.w / unit() < 13 ? Math.min(cam.w, coverW) : cam.w; // noch keine Cover: hinein
+    const rightSpace = card.hidden ? 0 : 0.2;
+    const inside = item.x > cam.x + cam.w * 0.15 && item.x < cam.x + cam.w * (0.85 - rightSpace)
+      && item.y > cam.y + cam.h * 0.15 && item.y < cam.y + cam.h * 0.85;
+    if (!inside || w !== cam.w) fly(item.x + w * rightSpace, item.y, w, 450);
+  }
   svg.addEventListener("keydown", event => {
-    if (event.key !== "Enter" && event.key !== " ") return;
+    if (!data || !data.items.length) return;
     const genre = genreAt(event.target);
-    if (genre) { event.preventDefault(); openGenre(genre); }
+    if ((event.key === "Enter" || event.key === " ") && genre) { event.preventDefault(); openGenre(genre); return; }
+    if (event.key === "+" || event.key === "=") { event.preventDefault(); zoomAt(...centre(), 1.6, 300); return; }
+    if (event.key === "-" || event.key === "_") { event.preventDefault(); zoomAt(...centre(), 1 / 1.6, 300); return; }
+    const dir = DIRECTIONS[event.key];
+    if (!dir) return;
+    event.preventDefault();
+    const next = selItem ? neighbourItem(selItem, dir) : nearestToCentre();
+    if (!next) return;
+    openFilm(next, false);
+    keepInView(next);
   });
   svg.addEventListener("pointermove", event => {
     if (dragging || !data) return;
     const item = itemAt(event.target);
-    if (item) { showTip(event, `<b>${escapeHtml(item.title)}</b>${item.year ? ` (${escapeHtml(item.year)})` : ""}<br>${item.rating !== null ? `${escapeHtml(ratingLabel)}: ${item.rating}` : "Noch nicht bewertet"}`); return; }
+    if (item) { showTip(event, `<b>${escapeHtml(item.title)}</b>${item.year ? ` (${escapeHtml(item.year)})` : ""}<br>${item.rating !== null ? `${own("Deine", "Meine")} Bewertung: ${item.rating}` : "Noch nicht bewertet"}`); return; }
     const genre = genreAt(event.target);
-    if (genre) { showTip(event, `<b>${escapeHtml(genre.name)}</b><br>${fmt(genre.n)} Titel${genre.avg !== null ? ` · Ø ${f1(genre.avg)}` : ""}`); return; }
+    if (genre) { showTip(event, `<b>${escapeHtml(genre.name)}</b><br>${fmt(genre.n)} Titel${genre.avg !== null ? ` · Ø ${f1(genre.avg)}` : ""}${genre.home.length ? `<br>⌂ ${fmt(genre.home.length)} wohnen hier` : ""}`); return; }
     hideTip();
   });
   svg.addEventListener("pointerleave", hideTip);
@@ -540,11 +685,10 @@ export function initConstellation(panel, {
   /* ---------------- Umschalter Bewertet / Ganze Sammlung ---------------- */
   const modeGroup = $(".constellation-mode");
   const modeButtons = modeGroup ? [...modeGroup.querySelectorAll("[data-constellation-mode]")] : [];
-  modeButtons.forEach(button => {
+  const visibleModes = modeButtons.filter(button => {
     button.hidden = !modes.includes(button.dataset.constellationMode);
-    button.textContent = MODE_LABELS[button.dataset.constellationMode] || button.textContent;
+    return !button.hidden;
   });
-  const visibleModes = modeButtons.filter(button => !button.hidden);
   modeGroup?.classList.toggle("is-single", visibleModes.length < 2);
   const syncModes = () => modeButtons.forEach(button => {
     const active = button.dataset.constellationMode === mode;

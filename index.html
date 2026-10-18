@@ -1,17 +1,20 @@
 <!doctype html>
-<html lang="de">
+<html lang="de" data-site>
   <head>
     <meta charset="utf-8">
+    <meta name="generator" content="Dashboard 2.33.0 (npm run build:site)">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="Meine Filmsammlung">
     <title>Filmsammlung</title>
     <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
-    <script src="js/boot.js" data-intro data-gate></script>
+    <script src="js/site/boot.js" data-intro data-gate></script>
     <link rel="stylesheet" href="css/app.css">
-    <link rel="stylesheet" href="css/curtain.css">
     <link rel="stylesheet" href="css/link-transition.css">
+    <link rel="stylesheet" href="css/curtain.css">
     <link rel="stylesheet" href="css/constellation.css">
+    <link rel="stylesheet" href="css/cast.css">
+    <link rel="stylesheet" href="css/tonight.css">
     <link rel="stylesheet" href="css/site.css">
   </head>
   <body>
@@ -19,7 +22,6 @@
 
     <div class="curtain curtain--left" aria-hidden="true"><div class="curtain-fabric"></div></div>
     <div class="curtain curtain--right" aria-hidden="true"><div class="curtain-fabric"></div></div>
-
     <div class="corner-decor" id="corner-decor" aria-hidden="true"></div>
 
     <header class="appbar">
@@ -53,22 +55,24 @@
         <figcaption class="quote-source"></figcaption>
       </figure>
 
-      <div class="view-tabs" role="tablist" aria-label="Ansicht der Sammlung">
+      <div class="view-tabs" role="tablist" aria-label="Entertainment-Ansicht">
         <button class="view-tab" type="button" id="tab-titles" role="tab"
                 aria-selected="true" aria-controls="titles-panel">Titel</button>
         <button class="view-tab" type="button" id="tab-timeline" role="tab"
                 aria-selected="false" tabindex="-1" aria-controls="timeline-panel">Zeitleiste</button>
         <button class="view-tab" type="button" id="tab-constellation" role="tab"
-                aria-selected="false" tabindex="-1" aria-controls="constellation-panel">Sternbild</button>
+                aria-selected="false" tabindex="-1" aria-controls="constellation-panel">Genres</button>
+        <button class="view-tab" type="button" id="tab-cast" role="tab"
+                aria-selected="false" tabindex="-1" aria-controls="cast-panel">Besetzung</button>
         <button class="view-tab" type="button" id="tab-stats" role="tab"
-                aria-selected="false" tabindex="-1" aria-controls="stats-panel">Auf einen Blick</button>
+                aria-selected="false" tabindex="-1" aria-controls="stats-panel">Heute</button>
       </div>
 
-      <!-- Suche, Filter und Sortierung gelten für „Titel" und „Zeitleiste" (dort ohne Sortierung) -->
+      <!-- Suche, Filter und Sortierung gelten für „Titel", „Zeitleiste", „Genres" und „Besetzung" (dort ohne Sortierung) -->
       <div class="entertainment-controls" id="entertainment-controls">
         <div class="search-row">
-          <label class="visually-hidden" for="movie-search">Sammlung durchsuchen</label>
-          <input class="search" id="movie-search" type="search" placeholder="Nach Titel, Regie oder Genre suchen">
+          <label class="visually-hidden" for="movie-search">Entertainment durchsuchen</label>
+          <input class="search" id="movie-search" placeholder="Nach Titel, Person oder Genre suchen">
         </div>
 
         <div class="toolbar-row" id="toolbar-row" hidden>
@@ -83,12 +87,13 @@
             <button type="button" class="timeline-mode-option" role="radio" data-timeline-mode="release" aria-checked="false" tabindex="-1">Erschienen</button>
             <button type="button" class="timeline-mode-option" role="radio" data-timeline-mode="rated" aria-checked="true">Bewertet</button>
           </div>
-          <!-- Nur im Sternbild sichtbar (anstelle der Sortierung) -->
-          <div class="constellation-mode" role="radiogroup" aria-label="Titel im Sternbild">
+          <!-- Nur unter Genres und Besetzung sichtbar (anstelle der Sortierung) -->
+          <div class="constellation-mode" role="radiogroup" aria-label="Welche Titel">
             <button type="button" class="timeline-mode-option" role="radio" data-constellation-mode="rated" aria-checked="true">Bewertet</button>
             <button type="button" class="timeline-mode-option" role="radio" data-constellation-mode="all" aria-checked="false" tabindex="-1">Ganze Sammlung</button>
           </div>
         </div>
+
       </div>
 
       <section id="titles-panel" role="tabpanel" aria-labelledby="tab-titles" tabindex="0">
@@ -114,28 +119,57 @@
         <p class="constellation-foot" id="constellation-foot" aria-live="polite"></p>
       </section>
 
-      <section id="stats-panel" role="tabpanel" aria-labelledby="tab-stats" hidden tabindex="0">
+      <section id="cast-panel" class="cast-panel" role="tabpanel" aria-labelledby="tab-cast" hidden tabindex="-1">
+        <div class="ca-layout">
+          <div class="cs-stage ca-stage" id="cast-stage"></div>
+          <aside class="ca-side" id="cast-side" aria-label="Rangliste und Personenkarte"></aside>
+        </div>
+        <div class="ca-foot">
+          <p class="constellation-foot" id="cast-foot"></p>
+          <p class="ca-status" id="cast-status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section id="stats-panel" class="tonight-panel" role="tabpanel" aria-labelledby="tab-stats" hidden tabindex="0">
         <div class="stats-tile">
           <div class="stats-numbers" id="stats-numbers" aria-live="polite"></div>
-          <div class="stats-picker" id="stats-picker" hidden>
-            <div class="stats-controls">
-              <button class="button secondary" type="button" id="stats-shuffle"></button>
-              <label>
-                <span class="visually-hidden">Vorschläge beschränken auf</span>
-                <select id="stats-kind" class="compact">
-                  <option value="">Alles</option>
-                  <option value="film">Film</option>
-                  <option value="series">Serie</option>
-                </select>
-              </label>
+          <div class="stats-progress" id="stats-progress" hidden></div>
+        </div>
+        <div class="tonight" id="tonight" hidden>
+          <form class="tonight-filters" id="tonight-filters" aria-label="Eingrenzen">
+            <div class="tonight-head">
+              <p class="tonight-kicker">Was passt heute?</p>
+              <p class="tonight-count" id="tonight-count" aria-live="polite"></p>
             </div>
-            <div class="movie-grid stats-picks" id="stats-picks" aria-live="polite"></div>
-          </div>
+            <div class="tonight-group">
+              <label class="tonight-kicker" for="tonight-runtime">Zeit</label>
+              <input type="range" id="tonight-runtime" class="tonight-range" min="60" max="240" step="10" value="240" aria-describedby="tonight-runtime-label">
+              <p class="tonight-range-label" id="tonight-runtime-label"></p>
+            </div>
+            <fieldset class="tonight-group" id="tonight-kind"><legend class="tonight-kicker">Art</legend><div class="tonight-chips"></div></fieldset>
+            <fieldset class="tonight-group" id="tonight-medium"><legend class="tonight-kicker">Medium</legend><div class="tonight-chips"></div></fieldset>
+            <div class="tonight-group">
+              <label class="tonight-kicker" for="tonight-genre">Genre</label>
+              <select id="tonight-genre" class="tonight-select"></select>
+            </div>
+            <button type="button" class="tonight-toggle" id="tonight-unseen" aria-pressed="true"><i aria-hidden="true"></i>Nur, was noch nicht gesehen ist</button>
+          </form>
+          <section class="tonight-stage" aria-labelledby="tonight-title">
+            <div class="tonight-top">
+              <div>
+                <p class="tonight-kicker">Was schaue ich heute?</p>
+                <h2 class="tonight-title" id="tonight-title">Heute Abend läuft …</h2>
+              </div>
+              <button class="button" type="button" id="tonight-draw"></button>
+            </div>
+            <div class="tonight-reel" id="tonight-reel" aria-hidden="true" hidden></div>
+            <div class="tonight-result" id="tonight-result" aria-live="polite"></div>
+          </section>
         </div>
       </section>
     </main>
 
     <div id="modal-root"></div>
-    <script type="module" src="js/pages/sammlung.js"></script>
+    <script type="module" src="js/views/movies-view.js"></script>
   </body>
 </html>

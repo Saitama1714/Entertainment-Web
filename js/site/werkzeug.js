@@ -1,12 +1,12 @@
 import { buildPublicData, summarize, defaultOptions, OPTIONAL_GROUPS } from "../logic/publish-logic.js";
 import { createAccess, readAccess } from "../logic/access-logic.js";
-import { initSiteShell } from "../ui/site-shell.js";
+import { initSiteShell } from "./site-shell.js";
 import { $, escapeHtml } from "../utils/dom.js";
 import { formatDay } from "../utils/format.js";
 import { showToast } from "../utils/toast.js";
 
 /*
- * Werkzeug (werkzeug.html): Dashboard-Sicherung → data/sammlung.json.
+ * Nur Website. Werkzeug (werkzeug.html): Dashboard-Sicherung → data/sammlung.json.
  * Die eigentliche Umwandlung (Positivliste der Felder) steht in
  * js/logic/publish-logic.js. Die Seite wird mit veröffentlicht, ist aber
  * nirgends verlinkt und tut nichts ohne eine Sicherung, die man selbst wählt.
@@ -75,7 +75,7 @@ function updateResult() {
   button.disabled = info.total === 0 || !access.ready;
   $("#result-status").textContent = info.total === 0
     ? "Die Sicherung enthält keine Titel."
-    : `${info.total} Titel (${info.withCover} mit Cover)${info.labels.length ? `, dazu: ${info.labels.join(", ")}` : ", ohne persönliche Angaben"}${$("#access-enabled").checked ? ", mit Passwort" : ""}.`;
+    : `${info.total} Titel (${info.withCover} mit Cover${info.withCast ? `, ${info.withCast} mit Besetzung` : ""})${info.labels.length ? `, dazu: ${info.labels.join(", ")}` : ", ohne persönliche Angaben"}${$("#access-enabled").checked ? ", mit Passwort" : ""}.`;
 }
 
 async function onFile(event) {

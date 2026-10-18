@@ -1,0 +1,64 @@
+/* =========================================================================
+   Lesezeichen - bewusst andere Form als die Cover-Karten
+   ========================================================================= */
+
+.bookmark-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--s-2);
+}
+
+.bookmark-tile {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  text-decoration: none;
+  min-width: 0;
+}
+.bookmark-tile:hover { border-color: var(--line-strong); background: var(--surface-hover); }
+
+.favicon { width: 18px; height: 18px; border-radius: 3px; object-fit: contain; flex: none; }
+
+/* Sortiermodus der Favoriten (Startseite): Kacheln lassen sich per Ziehen
+   (oder Pfeiltaste links/rechts) neu anordnen. Nur aktiv, wenn "Sortieren"
+   eingeschaltet ist - sonst navigiert ein Klick ganz normal. */
+.favorites-sort-hint { margin: -6px 0 var(--s-4); }
+
+.bookmark-grid.is-sorting .bookmark-tile {
+  cursor: grab;
+  padding-left: 8px;
+  border-style: dashed;
+}
+.bookmark-grid.is-sorting .bookmark-tile:focus-visible { cursor: grab; }
+.bookmark-grid.is-sorting .bookmark-tile.is-dragging { cursor: grabbing; opacity: .45; }
+
+.drag-handle { display: none; flex: none; width: 16px; height: 16px; color: var(--text-faint); }
+.bookmark-grid.is-sorting .drag-handle { display: block; }
+
+#favorites-sort-toggle.is-active {
+  background: var(--surface-hover);
+  border-color: var(--brass);
+  color: var(--brass);
+}
+
+.tile-title {
+  font-size: .88rem; font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.bookmarks-list { display: flex; flex-direction: column; }
+
+.bookmark-item {
+  display: grid; grid-template-columns: 20px minmax(0, 1fr) auto;
+  gap: var(--s-3); align-items: center;
+  padding: 11px var(--s-2);
+  border-bottom: 1px solid var(--line);
+}
+.bookmark-item:last-child { border-bottom: 0; }
+.bookmark-item:hover { background: var(--surface-hover); }
+
+.bookmark-link { min-width: 0; text-decoration: none; }
+.bookmark-link strong { display: block; font-size: .9rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bookmark-link small { display: block; color: var(--text-faint); font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

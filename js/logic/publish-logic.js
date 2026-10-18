@@ -13,12 +13,18 @@
  *
  * Reine Funktionen, keine DOM-Abhängigkeit (getestet in tests/publish.test.mjs).
  *
- * Gemeinsam mit der Website (gemeinsam.txt), Quelle ist das Dashboard: Die
- * Website nutzt sie im Werkzeug (werkzeug.html), das Dashboard bei der
- * automatischen Sicherung (js/ui/auto-backup.js), die sammlung.json gleich
- * mit erzeugt.
+ * Das Dashboard nutzt sie bei der automatischen Sicherung
+ * (js/ui/auto-backup.js), die sammlung.json gleich mit erzeugt; die Website
+ * im Werkzeug (werkzeug.html, js/site/werkzeug.js). Die Website liest die
+ * Datei mit js/site/site-data.js. Ältere Websites lesen sie ebenfalls - das
+ * Format wächst deshalb nur um neue Schlüssel (tests/website-format.test.mjs).
+ *
+ * Besetzung (`cast`): Darsteller, Drehbuch und Regie je IMDb-Kennung, wie sie
+ * das Dashboard von OMDb geladen hat (castData, js/logic/cast-logic.js) -
+ * öffentliche Angaben wie die übrigen IMDb-Felder, nur für veröffentlichte Titel.
  */
 import { newMovie } from "../collection.js";
+import { readCastData } from "./cast-logic.js";
 
 /** Diese Felder sind immer dabei (öffentliche Angaben von IMDb plus Cover). */
 export const BASE_FIELDS = [
@@ -100,12 +106,28 @@ export function readBackup(backup) {
 }
 
 /**
+ * Besetzung der veröffentlichten Titel: nur Namen (Darsteller a, Drehbuch w,
+ * Regie d), ohne Abrufdatum; Titel ohne Angaben fallen weg.
+ */
+function publicCast(movies, castData) {
+  const data = readCastData(castData);
+  const out = {};
+  for (const movie of movies) {
+    const id = String(movie.imdbId || "").trim();
+    const entry = data[id];
+    if (!entry || out[id] || !(entry.a.length || entry.w.length || entry.d.length)) continue;
+    out[id] = { a: entry.a, w: entry.w, d: entry.d };
+  }
+  return out;
+}
+
+/**
  * Baut die Datendatei der Website.
  * @param {object} backup - Inhalt der Sicherungsdatei.
  * @param {Object<string, boolean>} [options] - Häkchen je OPTIONAL_GROUPS-Schlüssel.
  * @param {{now?: Date, access?: {salt: string, hash: string}|null}} [context] - access:
  *   Prüfwert des Passworts (js/logic/access-logic.js), null = ohne Passwort.
- * @returns {{version: 1, generatedAt: string, exportedAt: string, include: string[], importWindowDays: number, decor: string, movies: object[], access?: object}}
+ * @returns {{version: 1, generatedAt: string, exportedAt: string, include: string[], importWindowDays: number, decor: string, movies: object[], cast: object, access?: object}}
  */
 export function buildPublicData(backup, options = defaultOptions(), { now = new Date(), access = null } = {}) {
   const movies = readBackup(backup);
@@ -121,6 +143,7 @@ export function buildPublicData(backup, options = defaultOptions(), { now = new 
     // Dekoration unten links wie im Dashboard gewählt (Name aus CURTAIN_ICONS, "none" = keine)
     decor: typeof backup.data.curtainIcon === "string" ? backup.data.curtainIcon : "",
     movies: movies.map(movie => publicMovie(movie, fields)),
+    cast: publicCast(movies, backup.data.castData),
     // Nur der Prüfwert, nie das Passwort selbst
     ...(access ? { access: { salt: access.salt, hash: access.hash } } : {}),
   };
@@ -130,5 +153,5 @@ export function buildPublicData(backup, options = defaultOptions(), { now = new 
 export function summarize(data) {
   const withCover = data.movies.filter(movie => movie.cover).length;
   const labels = OPTIONAL_GROUPS.filter(group => data.include.includes(group.key)).map(group => group.label);
-  return { total: data.movies.length, withCover, labels };
+  return { total: data.movies.length, withCover, labels, withCast: Object.keys(data.cast || {}).length };
 }

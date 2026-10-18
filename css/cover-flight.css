@@ -1,0 +1,11 @@
+/* =========================================================================
+   Cover-Flug: auf der Detailseite gelandet (js/cover-flight.js)
+   Cover und Titel stehen schon, der Rest blendet weich ein.
+   ========================================================================= */
+
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-cover-landed] #movie-details,
+  :root[data-cover-landed] #detail-cover-actions,
+  :root[data-cover-landed] .detail-pager { animation: cover-landed-in .4s ease-out both; }
+}
+@keyframes cover-landed-in { from { opacity: 0; transform: translateY(6px); } }

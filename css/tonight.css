@@ -1,0 +1,198 @@
+/* =========================================================================
+   Registerkarte „Heute" (js/ui/stats.js): Zahlen oben, darunter links die
+   Eingrenzungen, rechts die Ziehung (Cover-Roulette) mit Hauptvorschlag und
+   zwei Alternativen. Granat nur für „Neu ziehen" und die gewählten Chips.
+   ========================================================================= */
+
+.tonight-panel { display: grid; gap: var(--s-4); }
+.tonight-panel[hidden] { display: none; }
+.stats-progress { flex: 1 1 220px; display: grid; gap: 6px; align-self: center; font-size: .8rem; color: var(--text-faint); }
+.stats-progress[hidden] { display: none; }
+.stats-bar { display: block; height: 8px; border-radius: 4px; background: var(--surface-sunken); overflow: hidden; }
+.stats-bar i { display: block; height: 100%; border-radius: 4px; background: var(--brass); }
+
+.tonight { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: var(--s-4); align-items: start; }
+.tonight[hidden] { display: none; }
+.tonight-kicker { margin: 0; padding: 0; font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--text-faint); font-weight: 650; }
+
+/* Eingrenzungen */
+.tonight-filters {
+  display: grid; gap: var(--s-5); padding: var(--s-5);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel);
+}
+.tonight-head { display: grid; gap: 4px; }
+.tonight-count { margin: 0; font-size: .84rem; color: var(--text-muted); }
+.tonight-count b { color: var(--text); font-variant-numeric: tabular-nums; }
+.tonight-group { display: grid; gap: var(--s-2); margin: 0; padding: 0; border: 0; min-width: 0; }
+.tonight-group[hidden] { display: none; }
+.tonight-group legend { margin-bottom: var(--s-2); }
+.tonight-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tonight-chip {
+  padding: 6px 13px; border: 1px solid var(--line-strong); border-radius: var(--r-chip);
+  background: var(--surface); color: var(--text-muted); font-size: .84rem; font-weight: 500;
+}
+.tonight-chip:hover { border-color: var(--brass-line); color: var(--text); }
+.tonight-chip[aria-pressed="true"] { background: var(--accent-wash); border-color: var(--accent-ink); color: var(--text); }
+.tonight-select { width: 100%; }
+
+/* Schieberegler Laufzeit */
+.tonight-range { --fill: 100%; width: 100%; height: 22px; margin: 0; padding: 0; border: 0; box-shadow: none; background: none; appearance: none; -webkit-appearance: none; cursor: pointer; }
+.tonight-range::-webkit-slider-runnable-track {
+  height: 6px; border-radius: 3px;
+  background: linear-gradient(90deg, var(--brass) 0 var(--fill), var(--surface-sunken) var(--fill) 100%);
+}
+.tonight-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 20px; height: 20px; margin-top: -7px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--brass); box-shadow: var(--shadow-pop);
+}
+.tonight-range:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: 4px; }
+.tonight-range-label { margin: 0; font-size: .88rem; color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* Schalter „Nur ungesehene" - eigene Farben, damit er in beiden Designs lesbar ist */
+.tonight-toggle {
+  display: flex; align-items: center; gap: 10px; justify-self: start;
+  padding: 4px 0; border: 0; background: none; color: var(--text); font-size: .88rem; text-align: left; cursor: pointer;
+}
+.tonight-toggle i {
+  position: relative; flex: none; width: 36px; height: 20px; box-sizing: border-box; border-radius: var(--r-chip);
+  background: var(--surface-sunken); border: 1px solid var(--line-strong); transition: background .2s, border-color .2s;
+}
+.tonight-toggle i::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--text-faint); transition: transform .2s, background .2s;
+}
+.tonight-toggle[aria-pressed="true"] i { background: var(--accent-wash); border-color: var(--accent-ink); }
+.tonight-toggle[aria-pressed="true"] i::after { transform: translateX(16px); background: var(--accent-ink); }
+.tonight-toggle:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+
+/* Bühne */
+.tonight-stage {
+  display: grid; gap: var(--s-5); padding: var(--s-5) var(--s-6); min-width: 0;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel);
+}
+.tonight-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: var(--s-3); }
+.tonight-top > div { display: grid; gap: 6px; }
+.tonight-title { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; line-height: 1.05; }
+.tonight-empty { margin: 0; padding: var(--s-6) 0; color: var(--text-muted); }
+
+.tonight-poster {
+  position: relative; display: block; overflow: hidden; flex: none;
+  width: 200px; aspect-ratio: 2 / 3; border-radius: var(--r-poster);
+  background: linear-gradient(160deg, var(--p1), var(--p2)); box-shadow: 0 10px 30px rgb(0 0 0 / .4);
+}
+.tonight-poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tonight-poster-fallback { position: absolute; inset: auto 10px 10px; display: grid; gap: 4px; color: #f3ead9; }
+.tonight-poster-fallback b { font-family: var(--font-display); font-weight: 400; font-size: 1.1rem; line-height: 1.1; }
+.tonight-poster-fallback small { font-size: .7rem; color: rgb(243 234 217 / .65); }
+.tonight-poster.is-small { width: 64px; box-shadow: none; }
+.tonight-poster.is-small .tonight-poster-fallback { inset: auto 5px 5px; }
+.tonight-poster.is-small b { font-size: .62rem; }
+.tonight-poster.is-small small { display: none; }
+
+/* Cover-Roulette */
+.tonight-reel {
+  position: relative; height: 300px; overflow: hidden; border-radius: var(--r-panel);
+  background: var(--surface-sunken); border: 1px solid var(--line);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+}
+.tonight-reel[hidden] { display: none; }
+.tonight-strip { position: absolute; top: 0; left: 50%; margin-left: -100px; display: flex; gap: 16px; animation: tonight-spin 3.3s cubic-bezier(.12, .75, .2, 1) both; }
+.tonight-strip .tonight-poster { width: 200px; height: 300px; aspect-ratio: auto; box-shadow: none; }
+.tonight-frame {
+  position: absolute; top: -1px; bottom: -1px; left: 50%; width: 204px; transform: translateX(-50%);
+  border: 2px solid var(--brass); border-radius: 6px; box-shadow: 0 0 0 9999px rgb(0 0 0 / .26); pointer-events: none;
+}
+@keyframes tonight-spin { from { transform: translateX(0); filter: blur(1.5px); } 70% { filter: blur(0); } to { transform: translateX(var(--end)); } }
+
+/* Ergebnis */
+.tonight-result[hidden] { display: none; }
+.tonight-pick { display: flex; flex-wrap: wrap; gap: var(--s-6); align-items: flex-start; }
+.tonight-cover { display: block; border-radius: var(--r-poster); }
+.tonight-cover:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.tonight-info { flex: 1 1 300px; min-width: 0; display: grid; gap: var(--s-3); align-content: start; }
+.tonight-name { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 2.6rem; line-height: 1.02; text-wrap: balance; }
+.tonight-meta { margin: 0; color: var(--text-muted); font-size: .9rem; }
+.tonight-meta b { color: var(--text); }
+.tonight-genres { display: flex; flex-wrap: wrap; gap: 6px; }
+.tonight-genres span { padding: 3px 10px; border: 1px solid var(--line); border-radius: var(--r-chip); font-size: .78rem; color: var(--text-muted); }
+.tonight-alts { display: grid; gap: var(--s-2); margin-top: var(--s-2); }
+.tonight-alt-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--s-2); }
+.tonight-alt {
+  display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--s-3); align-items: center;
+  padding: var(--s-2); border: 1px solid var(--line); border-radius: var(--r-panel);
+  background: var(--surface); color: var(--text); text-align: left; cursor: pointer;
+}
+.tonight-alt:hover { border-color: var(--brass-line); background: var(--surface-hover); }
+.tonight-alt span:last-child { display: grid; gap: 3px; min-width: 0; }
+.tonight-alt b { font-weight: 550; font-size: .9rem; }
+.tonight-alt small { font-size: .78rem; color: var(--text-faint); }
+.tonight-fade { animation: tonight-fade .5s cubic-bezier(.2, .7, .3, 1) both; }
+.tonight-fade.d1 { animation-delay: .08s; }
+.tonight-fade.d2 { animation-delay: .16s; }
+@keyframes tonight-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 900px) {
+  .tonight { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .tonight-stage { padding: var(--s-4); }
+  .tonight-poster { width: 150px; }
+  .tonight-name { font-size: 2rem; }
+  .tonight-reel { height: 240px; }
+  .tonight-strip { margin-left: -80px; }
+  .tonight-strip .tonight-poster { width: 160px; height: 240px; }
+  .tonight-frame { width: 164px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tonight-strip, .tonight-fade { animation: none; }
+  .tonight-toggle i, .tonight-toggle i::after { transition: none; }
+}
+
+/* Noch nichts gezogen: leere Bühne mit „?" */
+.tonight-idle {
+  position: relative; height: 300px; display: flex; justify-content: center; align-items: center; gap: 16px; overflow: hidden;
+  border-radius: var(--r-panel); background: var(--surface-sunken); border: 1px solid var(--line);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+}
+.tonight-idle i { flex: none; width: 200px; height: 300px; border-radius: var(--r-poster); background: linear-gradient(160deg, color-mix(in srgb, var(--text) 6%, transparent), color-mix(in srgb, var(--text) 2%, transparent)); }
+.tonight-idle-frame {
+  position: absolute; top: -1px; bottom: -1px; left: 50%; width: 204px; transform: translateX(-50%);
+  display: grid; place-items: center; border: 2px dashed color-mix(in srgb, var(--brass) 60%, transparent); border-radius: 6px;
+}
+.tonight-idle-frame b { font-family: var(--font-display); font-weight: 400; font-size: 4.5rem; line-height: 1; color: var(--brass); opacity: .85; }
+.tonight-caption { margin: var(--s-3) 0 0; text-align: center; color: var(--text-muted); font-size: .92rem; }
+.tonight-caption b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* Eingrenzung geändert: letzter Vorschlag tritt zurück, Hinweis darüber */
+.tonight-stale { position: relative; }
+.tonight-stale-pick { opacity: .32; filter: grayscale(.7); pointer-events: none; }
+.tonight-stale-pick .tonight-fade { animation: none; }
+.tonight-notice {
+  position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); margin: 0;
+  display: flex; align-items: center; gap: 10px; padding: 10px 16px; white-space: nowrap;
+  border-radius: var(--r-chip); background: var(--surface); border: 1px solid var(--brass); box-shadow: var(--shadow-pop); font-size: .9rem;
+}
+.tonight-notice i { width: 8px; height: 8px; border-radius: 50%; background: var(--brass); }
+.tonight-notice b { font-variant-numeric: tabular-nums; }
+
+/* Knopf: Zahl passender Titel; glimmt, solange eine Ziehung ansteht */
+.tonight-draw-count { margin-left: 4px; padding-left: 10px; border-left: 1px solid color-mix(in srgb, var(--accent-text) 35%, transparent); font-weight: 500; font-variant-numeric: tabular-nums; }
+#tonight-draw.is-waiting { animation: tonight-glow 2.4s ease-in-out infinite; }
+@keyframes tonight-glow {
+  0%, 100% { box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--brass) 55%, transparent), 0 0 28px 6px color-mix(in srgb, var(--brass) 28%, transparent); }
+}
+@media (max-width: 640px) {
+  .tonight-idle { height: 240px; }
+  .tonight-idle i { width: 160px; height: 240px; }
+  .tonight-idle-frame { width: 164px; }
+  .tonight-notice { white-space: normal; width: max-content; max-width: 90%; text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #tonight-draw.is-waiting { animation: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--brass) 55%, transparent); }
+}
+
+/* Website ohne Gesehen-Status (js/utils/host.js): kein Schalter */
+.tonight-toggle[hidden] { display: none; }

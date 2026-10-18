@@ -1,0 +1,107 @@
+/* =========================================================================
+   Filmdetails
+   ========================================================================= */
+
+.detail-layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: var(--s-7); align-items: start; }
+
+.detail-main { min-width: 0; }
+.detail-layout.is-missing { display: block; }
+.detail-layout.is-missing .detail-cover { display: none; }
+.detail-cover .movie-card-cover { box-shadow: inset 0 0 0 1px rgb(0 0 0 / .07), var(--shadow-pop); }
+.detail-cover-actions { display: grid; gap: var(--s-2); margin-top: var(--s-3); }
+
+/* „Ähnlich in deiner Sammlung": eine Reihe Cover unter den Angaben, seitlich blätterbar */
+.detail-similar { margin-top: var(--s-7); }
+.detail-similar[hidden] { display: none; }
+.detail-similar .section-head { margin-bottom: var(--s-4); }
+.detail-similar h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; }
+.movie-grid.similar-row {
+  grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 140px;
+  overflow-x: auto; padding-bottom: var(--s-3); scroll-snap-type: x proximity;
+}
+.similar-row .movie-card { scroll-snap-align: start; }
+
+.detail-summary {
+  display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap;
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid var(--line);
+}
+.detail-actions { display: flex; gap: var(--s-2); margin-left: auto; }
+
+
+/* Kinoticket „Goldprägung, Chamois" (js/ui/seen-ticket.js): Chamois-Karton mit
+   gestanzten Ecken und feiner Prägelinie, gesetzt in Cinzel. Gesehen = Datum in
+   Gold, der Abschnitt „Einlass" liegt abgerissen daneben; noch offen = Abschnitt
+   hängt an der Perforation. Ein Gegenstand: in beiden Designs gleich, nur der
+   Schatten passt sich an. */
+.seen-ticket {
+  --ticket-paper: linear-gradient(165deg, #f0e8da, #e0d5c2);
+  --ticket-ink: #201f1d;
+  --ticket-brown: #7d5411;
+  --ticket-line: rgb(160 111 36 / .5);
+  --ticket-notch:
+    radial-gradient(circle at 0 0, #0000 6px, #000 6.5px) left top / 51% 51% no-repeat,
+    radial-gradient(circle at 100% 0, #0000 6px, #000 6.5px) right top / 51% 51% no-repeat,
+    radial-gradient(circle at 0 100%, #0000 6px, #000 6.5px) left bottom / 51% 51% no-repeat,
+    radial-gradient(circle at 100% 100%, #0000 6px, #000 6.5px) right bottom / 51% 51% no-repeat;
+  position: relative;
+  display: inline-flex; align-items: center;
+  font-family: "Cinzel", var(--font-display);
+  font-weight: 600;
+  user-select: none;
+  filter: drop-shadow(0 0 1px rgb(225 173 102 / .35)) drop-shadow(0 8px 14px rgb(0 0 0 / .6));
+}
+:root[data-theme="light"] .seen-ticket {
+  filter: drop-shadow(0 1px 1px rgb(32 31 29 / .3)) drop-shadow(0 6px 12px rgb(32 31 29 / .18));
+}
+.seen-ticket-card {
+  position: relative;
+  width: 232px; height: 62px; box-sizing: border-box;
+  padding: 0 18px;
+  display: flex; flex-direction: column; justify-content: center; gap: 3px;
+  background: var(--ticket-paper);
+  -webkit-mask: var(--ticket-notch); mask: var(--ticket-notch);
+}
+/* Prägelinie */
+.seen-ticket-card::before {
+  content: ""; position: absolute; inset: 5px;
+  border: 1px solid var(--ticket-line); border-radius: 2px;
+}
+.seen-ticket-kicker { font-size: 8.5px; letter-spacing: .26em; text-transform: uppercase; color: var(--ticket-brown); }
+.seen-ticket-value {
+  font-size: 18px; letter-spacing: .06em; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--ticket-ink);
+}
+/* Goldprägung für das Datum (bzw. „Gesehen" ohne Datum) */
+.seen-ticket.is-seen .seen-ticket-value {
+  background: linear-gradient(#e1ad66, #a06f24 55%, #5a3b0a);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+.seen-ticket-stub {
+  position: relative;
+  width: 44px; height: 62px; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ticket-brown);
+  background: var(--ticket-paper);
+  border-left: 1.5px dashed var(--ticket-line);
+  -webkit-mask: var(--ticket-notch); mask: var(--ticket-notch);
+}
+.seen-ticket-stub span { writing-mode: vertical-rl; rotate: 180deg; font-size: 8.5px; letter-spacing: .26em; text-transform: uppercase; opacity: .65; }
+/* Gesehen: Abschnitt abgerissen, liegt leicht schräg daneben */
+.seen-ticket.is-seen { margin-right: 8px; } /* Platz für den schrägen Abschnitt */
+.seen-ticket.is-seen .seen-ticket-stub {
+  margin-left: 7px;
+  transform: translateY(5px) rotate(7deg);
+  transform-origin: 0 100%;
+}
+
+.details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s-7); margin: 0; }
+
+.detail-field { padding: var(--s-3) 0; border-bottom: 1px solid var(--line); }
+.detail-field dt { color: var(--text-faint); font-size: .79rem; }
+.detail-field dd { margin: 2px 0 0; font-size: .91rem; }
+
+.external-link { color: var(--accent-ink); text-decoration: none; font-weight: 500; }
+.external-link:hover { text-decoration: underline; }

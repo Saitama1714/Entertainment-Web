@@ -3,7 +3,7 @@
  */
 
 /** Name der Seite: Überschrift, Fenstertitel, Name des Logos für Screenreader. */
-export const SITE_TITLE = "Filmsammlung";
+export const SITE_TITLE = "Meine Kinothek";
 
 /**
  * Dekoration unten links, nachdem sich der Vorhang geöffnet hat (siehe

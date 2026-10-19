@@ -1,5 +1,17 @@
 # Änderungen
 
+## 1.17.0 – Meine Kinothek (Dashboard 2.35.2)
+- Die Website heißt jetzt „Meine Kinothek“; „Sammlung“ wird überall zu
+  „Kinothek“ („Ganze Kinothek“, „Zur Kinothek“ …).
+- Neue Detailseite: „Meine Bewertung“ als Leuchtreklame, Knöpfe IMDb und
+  WerStreamt.es mit dem Icon der Seite, aufgeräumte Angaben mit Besetzung,
+  Rotten Tomatoes/Metascore, Staffeln, Freigabe, Land und Sprache;
+  Genre-Schilder und Namen führen zu den passenden Titeln; „Mehr Details“
+  eingeklappt.
+- Kinoticket: Datum in dunkler Tinte, besser lesbar.
+- Die neuen Angaben brauchen eine `sammlung.json` aus Dashboard 2.35.2, nachdem
+  „Besetzung laden“ die Titel neu abgefragt hat.
+
 ## 1.16.1 – Lichtkegel aus dem Objektiv (Dashboard 2.34.1)
 - Der Lichtkegel im Logo kommt jetzt genau aus dem Objektiv der Kamera.
 

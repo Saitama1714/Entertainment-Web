@@ -1,7 +1,7 @@
-# Filmsammlung (Entertainment-Web)
+# Meine Kinothek (Entertainment-Web)
 
 Der Entertainment-Teil des Dashboards als eigenständige Website – zum
-Anschauen, nicht zum Bearbeiten. Gepflegt wird die Sammlung weiter im
+Anschauen, nicht zum Bearbeiten. Gepflegt wird die Kinothek weiter im
 Dashboard; die Website zeigt einen Stand, den du ab und zu aktualisierst.
 
 ```
@@ -36,14 +36,16 @@ Website mit dem Dashboard gleichziehen soll. Von Hand gepflegt werden hier nur
   Drehbuch), Rangliste „Meine Stammbesetzung" und Personenkarten.
 - **Heute**: Gesamt/Gesehen/Offen und „Was schaue ich heute?" – eingrenzen
   (Laufzeit, Art, Medium, Genre), ziehen, Cover-Roulette.
-- **Detailseite** je Titel mit allen veröffentlichten Angaben, „Ähnlich in
-  der Sammlung", Blättern per Knopf oder Pfeiltaste (in der Reihenfolge der
-  Sammlung). Alte Links auf `titel.html?id=…` leiten weiter.
-- **Streaming**: Auf der Detailseite führt „Bei WerStreamt.es ansehen" zu
-  den Anbietern, bei denen der Titel läuft (über die IMDb-Kennung).
-- **Passwort** (wahlweise, im Werkzeug): Besucher sehen die Sammlung erst
+- **Detailseite** je Titel: „Meine Bewertung" als Leuchtreklame, Knöpfe zu
+  IMDb und WerStreamt.es (zeigt, wo der Titel im Stream läuft), die
+  wichtigsten Angaben samt Besetzung, Wertungen, Freigabe, Land und Sprache;
+  Genre-Schilder und Namen führen zu den passenden Titeln; Seltenes unter
+  „Mehr Details"; „Ähnlich in der Kinothek"; Blättern per Knopf oder
+  Pfeiltaste (in der Reihenfolge der Kinothek). Alte Links auf
+  `titel.html?id=…` leiten weiter.
+- **Passwort** (wahlweise, im Werkzeug): Besucher sehen die Kinothek erst
   nach Eingabe; ihr Browser merkt sich das. Nur ein Sichtschutz, siehe unten.
-- **Filmzitat des Tages** über der Sammlung, **Ecken-Deko** wie im
+- **Filmzitat des Tages** über der Kinothek, **Ecken-Deko** wie im
   Dashboard gewählt.
 - **Ansicht** (oben rechts): Kinovorhang („Lebendiger Stoff") bei jedem
   Besuch / einmal am Tag / nie, Vorschau, Kachel-Zoom beim Klick (an/aus,
@@ -52,7 +54,7 @@ Website mit dem Dashboard gleichziehen soll. Von Hand gepflegt werden hier nur
 - Fehlt eine wahlweise Angabe in der Datendatei (z. B. Gesehen-Status),
   verschwinden die passenden Filter, Sortierungen und Zahlen automatisch.
 
-## Sammlung aktualisieren
+## Daten aktualisieren
 
 **Mit der automatischen Sicherung (Standard):** Das Dashboard legt nach
 jedem Import und jeder Änderung `sammlung.json` in den Download-Ordner
@@ -85,7 +87,7 @@ nicht. Sichtbar ist genau das, was in `data/sammlung.json` steht:
 |---|---|---|
 | Titel, Originaltitel, Jahr, Art, Genre, Regie, Laufzeit, Veröffentlichung, IMDb-Bewertung, -Stimmen, -Kennung und -Link, In IMDb aufgenommen/geändert, Position in der Liste, Beschreibung, Cover-Link, Zeitpunkt „vom Import angelegt/geändert" | Medium, Gesehen-Status und -Datum, eigene Bewertung, Namen der IMDb-Listen, Notizen (Standard: aus) | OMDb-Schlüssel, Favoriten, Einstellungen, interne Felder |
 
-**Passwort:** Ist im Werkzeug eins gesetzt, liegt vor der Sammlung ein
+**Passwort:** Ist im Werkzeug eins gesetzt, liegt vor der Kinothek ein
 Einlass. Das hält Neugierige ab, mehr nicht: Die Daten liegen weiterhin
 offen in `data/sammlung.json`, und wer sich auskennt, ruft die Datei direkt
 ab. In der Datei steht nur ein Prüfwert (SHA-256 mit Salz), nie das Passwort.
@@ -100,7 +102,7 @@ der Link).
 
 ```
 Gebaut aus dem Dashboard (npm run build:site):
-  index.html             Sammlung (Titel, Zeitleiste, Genres, Besetzung, Heute), Kinovorhang
+  index.html             Kinothek (Titel, Zeitleiste, Genres, Besetzung, Heute), Kinovorhang
   movie.html             Detailseite eines Titels (?id=…)
   titel.html             Weiterleitung alter Links auf movie.html
   werkzeug.html          Daten vorbereiten: Sicherung → sammlung.json
@@ -145,5 +147,5 @@ Lokal ansehen geht nur über einen kleinen Webserver (Browser laden
 JavaScript-Module nicht von der Festplatte), z. B. `python -m http.server`
 in diesem Ordner und dann http://localhost:8000.
 
-Den Namen der Seite („Filmsammlung") legt das Dashboard fest
+Den Namen der Seite („Meine Kinothek") legt das Dashboard fest
 (`js/site/site-constants.js` und die `<!--site …-->`-Teile der Vorlagen).

@@ -265,7 +265,7 @@ export function renderStats(appState) {
   playFlapsWhenVisible(numbersEl); // Klapptafel blättert, sobald die Zahlen zu sehen sind
   const share = Math.round(stats.seen / stats.total * 100);
   progress.hidden = !has("seen");
-  progress.innerHTML = `<span class="stats-bar"><i style="width:${share}%"></i></span><span>${share} % ${own("deiner", "der")} Sammlung gesehen</span>`;
+  progress.innerHTML = `<span class="stats-bar"><i style="width:${share}%"></i></span><span>${share} % ${own("deiner", "der")} Kinothek gesehen</span>`;
 
   tonightEl.hidden = false;
   bind();

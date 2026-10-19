@@ -268,7 +268,7 @@ export function initCast(panel, { mode: startMode = "rated", onShowTitles = null
     svg.style.visibility = hasCore ? "" : "hidden";
     if (!graph.items.length) {
       showEmpty(mode === "rated" && movies.length
-        ? "Keine bewerteten Titel für diese Auswahl. „Ganze Sammlung“ zeigt alle."
+        ? "Keine bewerteten Titel für diese Auswahl. „Ganze Kinothek“ zeigt alle."
         : "Keine Titel für diese Auswahl.");
     } else if (!hasCore) {
       showEmpty(`Noch keine Verbindungen: Im Netz stehen Personen mit mindestens ${MIN_CORE_TITLES} Titeln. Mit Darstellern und Drehbuch (Einstellungen → Entertainment) füllt es sich.`);
@@ -378,7 +378,7 @@ export function initCast(panel, { mode: startMode = "rated", onShowTitles = null
     const top = Math.max(1, ...list.map(p => (role === "all" ? p.n : p.roles[role])));
     const head = matches
       ? `<p class="cs-kicker">Suche</p><h2 class="ca-title">Treffer für „${escapeHtml(query.trim())}“</h2>`
-      : `<p class="cs-kicker">Am häufigsten in ${own("deiner", "der")} Sammlung</p><h2 class="ca-title">${own("Deine", "Meine")} Stammbesetzung</h2>`;
+      : `<p class="cs-kicker">Am häufigsten in ${own("deiner", "der")} Kinothek</p><h2 class="ca-title">${own("Deine", "Meine")} Stammbesetzung</h2>`;
     return `
       <div class="ca-head">${head}</div>
       <div class="ca-seg" role="radiogroup" aria-label="Rolle in der Rangliste">

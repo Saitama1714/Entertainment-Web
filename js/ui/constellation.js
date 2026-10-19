@@ -244,7 +244,7 @@ export function initConstellation(panel, {
     for (const layer of Object.values(L)) layer.replaceChildren();
     emptyNote.hidden = data.items.length > 0;
     emptyNote.textContent = mode === "rated" && movies.length
-      ? "Keine bewerteten Titel für diese Auswahl. „Ganze Sammlung“ zeigt alle."
+      ? "Keine bewerteten Titel für diese Auswahl. „Ganze Kinothek“ zeigt alle."
       : "Keine Titel für diese Auswahl.";
     svg.style.visibility = data.items.length ? "" : "hidden";
     signature = data.items.length ? constellationSignature(mode, data.items, data.genres) : "";

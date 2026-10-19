@@ -28,7 +28,7 @@ try { storedAccess = readAccess(JSON.parse(localStorage.getItem(ACCESS_KEY) || "
 function accessState() {
   const enabled = $("#access-enabled").checked;
   const typed = $("#access-password").value.trim();
-  if (!enabled) return { ready: true, text: "Ohne Passwort – die Sammlung ist sofort sichtbar." };
+  if (!enabled) return { ready: true, text: "Ohne Passwort – die Kinothek ist sofort sichtbar." };
   if (typed) return { ready: true, text: storedAccess ? "Das neue Passwort ersetzt das bisherige." : "Die Website bekommt dieses Passwort." };
   if (storedAccess) return { ready: true, text: "Es bleibt beim bisherigen Passwort. Für ein neues hier eintippen." };
   return { ready: false, text: "Bitte ein Passwort eingeben." };

@@ -106,8 +106,10 @@ export function readBackup(backup) {
 }
 
 /**
- * Besetzung der veröffentlichten Titel: nur Namen (Darsteller a, Drehbuch w,
- * Regie d), ohne Abrufdatum; Titel ohne Angaben fallen weg.
+ * Besetzung der veröffentlichten Titel: Namen (Darsteller a, Drehbuch w,
+ * Regie d) und - seit 2.35, nur wenn vorhanden - die OMDb-Angaben der
+ * Detailseite (Freigabe r, Länder c, Sprachen l, Rotten Tomatoes rt,
+ * Metascore mc, Staffeln s); ohne Abrufdatum. Titel ohne Angaben fallen weg.
  */
 function publicCast(movies, castData) {
   const data = readCastData(castData);
@@ -116,7 +118,11 @@ function publicCast(movies, castData) {
     const id = String(movie.imdbId || "").trim();
     const entry = data[id];
     if (!entry || out[id] || !(entry.a.length || entry.w.length || entry.d.length)) continue;
-    out[id] = { a: entry.a, w: entry.w, d: entry.d };
+    out[id] = {
+      a: entry.a, w: entry.w, d: entry.d,
+      ...(entry.r ? { r: entry.r } : {}), ...(entry.c.length ? { c: entry.c } : {}), ...(entry.l.length ? { l: entry.l } : {}),
+      ...(entry.rt ? { rt: entry.rt } : {}), ...(entry.mc ? { mc: entry.mc } : {}), ...(entry.s ? { s: entry.s } : {}),
+    };
   }
   return out;
 }

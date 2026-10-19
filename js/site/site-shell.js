@@ -58,7 +58,7 @@ function loadMotion() {
   motion.projectorDust = read(KEYS.dust, "on") !== "off";
 }
 
-/** Lichtkegel mit Staub im Kopf der Sammlung an? (Ansicht → Bewegung) */
+/** Lichtkegel mit Staub im Kopf der Kinothek an? (Ansicht → Bewegung) */
 export function projectorDustEnabled() {
   if (motion.projectorDust === undefined) loadMotion();
   return motion.projectorDust;
@@ -103,7 +103,7 @@ function openViewSettings() {
       <p class="meta">Beim Wechsel zwischen den Seiten. Cover fliegen beim Öffnen eines Titels direkt zur Detailseite. Gilt nur in diesem Browser.</p>
       <label class="check-row">
         <input type="checkbox" id="projector-dust-check" ${motion.projectorDust ? "checked" : ""}>
-        Lichtkegel mit Staub im Kopf der Sammlung
+        Lichtkegel mit Staub im Kopf der Kinothek
       </label>
       ${logoMotionSettingsHtml(readLogo())}
     </section>
@@ -151,7 +151,7 @@ export function initSiteShell() {
   initBrandMedallion({ motion: readLogo() });
   loadMotion();
   initLinkTransitions(motion);
-  configureShortcutHelp({ list: "Sammlung", newTabNote: false });
+  configureShortcutHelp({ list: "Kinothek", newTabNote: false });
 
   const select = $("#theme-select");
   if (select) {

@@ -21,12 +21,77 @@
 }
 .similar-row .movie-card { scroll-snap-align: start; }
 
-.detail-summary {
-  display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap;
-  padding-bottom: var(--s-4);
-  border-bottom: 1px solid var(--line);
+.detail-summary { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.detail-medium { font-size: .82rem; color: var(--text-muted); padding: 4px 11px; border: 1px solid var(--line-strong); border-radius: var(--r-chip); }
+
+/* Hervorgehoben: Bewertung (Leuchtreklame) und alle Knöpfe auf einer Höhe */
+.detail-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); flex-wrap: wrap;
+  padding: var(--s-5) 0; border-bottom: 1px solid var(--line);
 }
-.detail-actions { display: flex; gap: var(--s-2); margin-left: auto; }
+.detail-buttons { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; margin-left: auto; }
+.detail-buttons .small-button { min-height: 38px; padding: 0 14px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+.detail-favicon { width: 16px; height: 16px; border-radius: 3px; flex: none; }
+.detail-sep { width: 1px; height: 24px; background: var(--line-strong); margin: 0 var(--s-1); }
+
+/* Leuchtreklame „Meine Bewertung": ein Gegenstand, in beiden Designs gleich
+   (wie das Kinoticket). Zehn Birnen, so viele an wie Punkte; beim Öffnen
+   gehen sie nacheinander an. */
+.rating-marquee {
+  display: inline-flex; align-items: center; gap: 20px;
+  padding: 14px 22px 14px 20px; border-radius: var(--r-panel);
+  background: linear-gradient(180deg, #24120f, #190d0b);
+  border: 1px solid #5a3b1a;
+  box-shadow: inset 0 0 0 3px #1a0e0c, inset 0 0 0 4px rgb(201 164 92 / .35), 0 10px 26px rgb(0 0 0 / .35);
+}
+.rating-number { display: inline-flex; align-items: baseline; font-family: var(--font-display); }
+.rating-number b {
+  font-weight: 400; font-size: 4rem; line-height: .85; color: #ffe8c2;
+  text-shadow: 0 0 18px rgb(255 190 110 / .55), 0 0 2px #fff3dc;
+}
+.rating-number small { font-size: 1.35rem; color: #c9a45c; margin-left: 2px; }
+.rating-marquee.is-empty .rating-number b { color: #8a7563; text-shadow: none; }
+.rating-side { display: grid; gap: 9px; }
+.rating-kicker { font-size: .68rem; font-weight: 650; letter-spacing: .16em; text-transform: uppercase; color: #c9a45c; }
+.rating-bulbs { display: flex; gap: 7px; }
+.rating-bulb { width: 13px; height: 13px; border-radius: 50%; background: #3a2620; box-shadow: inset 0 1px 2px rgb(0 0 0 / .6); }
+.rating-bulb.is-on {
+  background: radial-gradient(circle at 40% 35%, #fffbe9, #f7d58f 45%, #d9a24a);
+  box-shadow: 0 0 8px 2px rgb(255 196 110 / .55), 0 0 18px 4px rgb(255 170 80 / .18);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rating-bulb.is-on { animation: rating-bulb-on .5s ease-out both; animation-delay: calc(300ms + var(--i) * 110ms); }
+  .rating-number b { animation: rating-number-on .9s ease-out both; }
+}
+@keyframes rating-bulb-on {
+  from { background: #3a2620; box-shadow: inset 0 1px 2px rgb(0 0 0 / .6); }
+}
+@keyframes rating-number-on { 0% { opacity: .15; text-shadow: none; } 30% { opacity: 1; } 40% { opacity: .5; } 55%, 100% { opacity: 1; } }
+
+/* Genre-Schilder und Personen: führen zu den passenden Titeln unter Entertainment */
+.detail-chips { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: 4px; }
+.detail-chip {
+  display: inline-flex; align-items: center; padding: 4px 11px; border-radius: var(--r-chip);
+  border: 1px solid var(--line-strong); background: var(--surface-sunken); color: var(--text);
+  font-size: .82rem; text-decoration: none;
+}
+.detail-chip:hover { border-color: var(--brass); }
+.detail-person { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--brass-line); }
+.detail-person:hover { border-bottom-color: var(--brass); }
+
+/* „Mehr Details": eingeklappt */
+.detail-more { margin-top: var(--s-2); }
+.detail-more summary {
+  display: inline-flex; align-items: center; gap: 10px; padding: var(--s-3) 0;
+  cursor: pointer; list-style: none; font-size: .88rem; color: var(--text-muted);
+}
+.detail-more summary::-webkit-details-marker { display: none; }
+.detail-more summary::before {
+  content: ""; width: 7px; height: 7px; border-right: 1.5px solid var(--brass); border-bottom: 1.5px solid var(--brass);
+  transform: rotate(-45deg); transition: transform .2s;
+}
+.detail-more[open] summary::before { transform: rotate(45deg); }
+.detail-more summary:hover { color: var(--text); }
 
 
 /* Kinoticket „Goldprägung, Chamois" (js/ui/seen-ticket.js): Chamois-Karton mit
@@ -73,9 +138,9 @@
   font-variant-numeric: tabular-nums;
   color: var(--ticket-ink);
 }
-/* Goldprägung für das Datum (bzw. „Gesehen" ohne Datum) */
+/* Datum (bzw. „Gesehen" ohne Datum) in dunkler Tinte mit leichtem Goldschimmer - gut lesbar auf dem Karton */
 .seen-ticket.is-seen .seen-ticket-value {
-  background: linear-gradient(#e1ad66, #a06f24 55%, #5a3b0a);
+  background: linear-gradient(#5a3b0a, #2e1f08 60%, #5a3b0a);
   -webkit-background-clip: text; background-clip: text;
   color: transparent;
 }
@@ -100,8 +165,16 @@
 .details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s-7); margin: 0; }
 
 .detail-field { padding: var(--s-3) 0; border-bottom: 1px solid var(--line); }
+.detail-field.is-wide { grid-column: 1 / -1; }
+.detail-field dd b { font-weight: 650; }
 .detail-field dt { color: var(--text-faint); font-size: .79rem; }
 .detail-field dd { margin: 2px 0 0; font-size: .91rem; }
 
 .external-link { color: var(--accent-ink); text-decoration: none; font-weight: 500; }
 .external-link:hover { text-decoration: underline; }
+
+/* Schmal: Knöpfe unter der Bewertung, links bündig */
+@media (max-width: 680px) {
+  .detail-buttons { margin-left: 0; }
+  .detail-sep { display: none; }
+}

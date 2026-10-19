@@ -5,8 +5,13 @@ import { fetchOmdbCover } from "../cover.js";
 import { openMovieForm } from "../ui/movie-form.js";
 import { initAppShell } from "../ui/app-shell.js";
 import { initShortcuts } from "../ui/shortcuts.js";
-import { $, escapeHtml, safeUrl, markReady } from "../utils/dom.js";
-import { sortMovies, searchMovies, filterMovies, streamingSearchUrl, DEFAULT_SORT } from "../logic/movies-logic.js";
+import { $, $$, escapeHtml, safeUrl, markReady } from "../utils/dom.js";
+import { sortMovies, searchMovies, filterMovies, streamingSearchUrl, DEFAULT_SORT, titleKind, genresOf } from "../logic/movies-logic.js";
+import { readCastData, splitNames } from "../logic/cast-logic.js";
+import { releaseLabel, imdbScore, ownScore, countriesDe, languagesDe, joinParts } from "../logic/detail-logic.js";
+import { runtimeOf, runtimeLabel } from "../logic/tonight-logic.js";
+import { formatDay } from "../utils/format.js";
+import { faviconUrl } from "../bookmarks.js";
 import { icon } from "../utils/icons.js";
 import { showToast } from "../utils/toast.js";
 import { rememberDeletedMovie } from "../ui/deleted-movie.js";
@@ -47,62 +52,105 @@ function displayOrder() {
   return order.some(item => item.id === movie.id) ? order : sortMovies(state.movies, sortKey, browse.sortDirection);
 }
 
-const field = (label, value) =>
-  value ? `<div class="detail-field"><dt>${label}</dt><dd>${escapeHtml(value)}</dd></div>` : "";
+const field = (label, value, { wide = false, html = false } = {}) =>
+  value ? `<div class="detail-field${wide ? " is-wide" : ""}"><dt>${label}</dt><dd>${html ? value : escapeHtml(value)}</dd></div>` : "";
+
+/** Unter Entertainment bzw. auf der Website: Sammlung mit einem Filter (Genre, Person). */
+const collectionLink = (key, value) => `${own("movies.html", "index.html")}?${key}=${encodeURIComponent(value)}`;
+
+/** Namen als Links zu „ihren" Titeln unter Entertainment. */
+const peopleHtml = names => names.map(name =>
+  `<a class="detail-person" href="${escapeHtml(collectionLink("person", name))}" title="${escapeHtml(`Alle Titel mit ${name}`)}">${escapeHtml(name)}</a>`).join(", ");
+
+/** Seiten-Icon: im Dashboard aus Chromes Favicon-Speicher (wie bei den Lesezeichen), auf der Website von der Seite selbst. */
+const iconOf = url => (SITE ? new URL("/favicon.ico", url).href : faviconUrl(url));
+
+/** Knopf zu einer anderen Seite (IMDb, WerStreamt.es) mit deren Icon. */
+const siteButton = (url, label) => url
+  ? `<a class="small-button detail-link" href="${escapeHtml(safeUrl(url))}" target="_blank" rel="noreferrer">
+      <img class="detail-favicon" src="${escapeHtml(iconOf(url))}" alt="" width="16" height="16" decoding="async">${label}</a>`
+  : "";
+
+/**
+ * „Meine Bewertung" als Leuchtreklame: die Zahl leuchtet, darunter zehn
+ * Birnen - so viele brennen, wie Punkte vergeben sind (beim Öffnen
+ * nacheinander, css/detail.css). Noch nicht bewertet: „?" und alle aus.
+ */
+function ratingHtml() {
+  const score = ownScore(movie);
+  const label = own("Deine Bewertung", "Meine Bewertung");
+  const bulbs = Array.from({ length: 10 }, (_, i) =>
+    `<i class="rating-bulb${score && i < score ? " is-on" : ""}" style="--i:${i}"></i>`).join("");
+  return `
+    <div class="rating-marquee${score ? "" : " is-empty"}" role="img" aria-label="${escapeHtml(`${label}: ${score ? `${score} von 10` : "noch nicht bewertet"}`)}">
+      <span class="rating-number" aria-hidden="true"><b>${score ?? "?"}</b><small>/10</small></span>
+      <span class="rating-side" aria-hidden="true"><span class="rating-kicker">${label}</span><span class="rating-bulbs">${bulbs}</span></span>
+    </div>`;
+}
 
 /** Zeichnet alle Angaben des aktuellen Eintrags und verdrahtet die Knöpfe. */
 function render() {
   document.title = `${movie.title} · ${own("Dashboard", SITE_TITLE)}`;
   $("#movie-title").textContent = movie.title;
 
-
-  const imdbLink = movie.imdbUrl
-    ? `<div class="detail-field"><dt>IMDb</dt><dd><a class="external-link" href="${escapeHtml(safeUrl(movie.imdbUrl))}" target="_blank" rel="noreferrer">Seite öffnen</a></dd></div>`
-    : "";
-  // Wo der Titel im Stream läuft (Link aus der IMDb-Kennung, siehe movies-logic.js)
-  const streaming = streamingSearchUrl(movie);
-  const streamingLink = streaming
-    ? `<div class="detail-field"><dt>Streaming</dt><dd><a class="external-link" href="${escapeHtml(streaming)}" target="_blank" rel="noreferrer">Bei WerStreamt.es ansehen</a></dd></div>`
-    : "";
-
   renderCover();
   const actions = $("#detail-cover-actions");
   if (actions) actions.innerHTML = SITE ? "" : `
     <button class="small-button" id="change-cover">Cover ändern</button>
     ${movie.imdbId ? `<button class="small-button" id="refetch-cover">Cover neu laden</button>` : ""}`;
+
+  // Oben: Kinoticket und Medium; darunter hervorgehoben die Bewertung und alle Knöpfe auf einer Höhe
   const summary = [
     has("seen") ? seenTicketHtml(movie) : "",
-    has("medium") && movie.medium ? `<span class="meta">${escapeHtml(movie.medium)}</span>` : "",
-    SITE ? "" : `<div class="detail-actions">
-            <button class="small-button" id="edit-movie">Bearbeiten</button>
-            <button class="small-button danger" id="delete-movie">Löschen</button>
-          </div>`,
+    has("medium") && movie.medium ? `<span class="detail-medium">${escapeHtml(movie.medium)}</span>` : "",
+  ].join("");
+  const links = [siteButton(movie.imdbUrl, "IMDb"), siteButton(streamingSearchUrl(movie), "WerStreamt.es")].join("");
+  const edit = SITE ? "" : `
+    <button class="small-button" id="edit-movie">Bearbeiten</button>
+    <button class="small-button danger" id="delete-movie">Löschen</button>`;
+
+  // Angaben (Besetzung und OMDb-Angaben aus castData, js/logic/cast-logic.js)
+  const entry = readCastData(state.castData)[String(movie.imdbId || "").trim()] || null;
+  const directors = splitNames(movie.directors);
+  const runtime = runtimeOf(movie);
+  const imdb = imdbScore(movie);
+  const genres = genresOf(movie);
+  const extraScores = entry ? joinParts([entry.rt && `Rotten Tomatoes ${entry.rt.replace("%", " %")}`, entry.mc && `Metascore ${entry.mc}`]) : "";
+  const place = entry ? joinParts([countriesDe(entry.c).join(", "), languagesDe(entry.l).join(", ")]) : "";
+  const facts = [
+    field("Originaltitel", movie.originalTitle),
+    field("Erschienen", releaseLabel(movie)),
+    field("Laufzeit", runtime ? `${runtimeLabel(runtime)}${titleKind(movie) === "series" ? " je Folge" : ""}` : ""),
+    field("Art", movie.titleType),
+    field("IMDb-Wertung", imdb ? `<b>${imdb.score}</b>${imdb.votes ? ` · ${escapeHtml(imdb.votes)}` : ""}` : "", { html: true }),
+    field("Weitere Wertungen", extraScores),
+    field("Staffeln", entry?.s || ""),
+    field("Genre", genres.length ? `<span class="detail-chips">${genres.map(name =>
+      `<a class="detail-chip" href="${escapeHtml(collectionLink("genre", name))}" title="${escapeHtml(`Alle Titel im Genre ${name}`)}">${escapeHtml(name)}</a>`).join("")}</span>` : "", { wide: true, html: true }),
+    field("Regie", peopleHtml(directors.length ? directors : entry?.d || []), { html: true }),
+    field("Drehbuch", peopleHtml(entry?.w || []), { html: true }),
+    field("Darsteller", peopleHtml(entry?.a || []), { wide: true, html: true }),
+    field("Altersfreigabe", entry?.r ? `${entry.r} (USA)` : ""),
+    field("Land · Sprache", place),
+    has("lists") ? field("IMDb-Listen", movie.imdbLists.join(", "), { wide: true }) : "",
+  ].join("");
+  // Selten gebraucht: eingeklappt
+  const more = [
+    field("In IMDb aufgenommen", formatDay(movie.imdbCreated) || movie.imdbCreated),
+    field("In IMDb geändert", formatDay(movie.imdbModified) || movie.imdbModified),
+    field("Beschreibung", movie.imdbDescription),
+    has("notes") ? field("Notizen", movie.notes) : "",
   ].join("");
 
   $("#movie-details").innerHTML = `
         ${summary ? `<div class="detail-summary">${summary}</div>` : ""}
-        <dl class="details-grid">
-          ${has("lists") ? field("IMDb-Listen", movie.imdbLists.join(", ")) : ""}
-          ${field("Originaltitel", movie.originalTitle)}
-          ${field("Jahr", movie.year)}
-          ${field("Genre", movie.genre)}
-          ${field("Laufzeit", movie.runtimeMinutes ? `${movie.runtimeMinutes} Minuten` : "")}
-          ${field("Regie", movie.directors)}
-          ${field("Veröffentlichung", movie.releaseDate)}
-          ${has("rating") ? field(own("Deine Bewertung", "Meine Bewertung"), movie.yourRating) : ""}
-          ${field("IMDb-Bewertung", movie.imdbRating)}
-          ${field("IMDb-Stimmen", movie.numVotes)}
-          ${field("IMDb-Kennung", movie.imdbId)}
-          ${field("Art", movie.titleType)}
-          ${field("In IMDb aufgenommen", movie.imdbCreated)}
-          ${field("In IMDb geändert", movie.imdbModified)}
-          ${has("rating") ? field("Bewertet am", movie.dateRated) : ""}
-          ${field("Position in der Liste", movie.position)}
-          ${has("notes") ? field("Notizen", movie.notes) : ""}
-          ${field("Beschreibung", movie.imdbDescription)}
-          ${imdbLink}
-          ${streamingLink}
-        </dl>`;
+        <div class="detail-bar">
+          ${has("rating") ? ratingHtml() : ""}
+          <div class="detail-buttons">${links}${links && edit ? `<span class="detail-sep" aria-hidden="true"></span>` : ""}${edit}</div>
+        </div>
+        <dl class="details-grid">${facts}</dl>
+        ${more ? `<details class="detail-more"><summary>Mehr Details</summary><dl class="details-grid">${more}</dl></details>` : ""}`;
+  for (const img of $$(".detail-favicon")) img.addEventListener("error", () => img.remove(), { once: true });
 
   renderSimilar();
   if (SITE) renderPager(); else bindActions();
@@ -138,7 +186,7 @@ function renderSimilar() {
   if (!similar.length) { section.innerHTML = ""; return; }
   const shared = similar[0].shared;
   section.innerHTML = `
-    <div class="section-head"><h2 id="similar-title">Ähnlich in ${own("deiner", "der")} Sammlung</h2>
+    <div class="section-head"><h2 id="similar-title">Ähnlich in ${own("deiner", "der")} Kinothek</h2>
       <p class="meta">Gleiche Genres wie ${escapeHtml(shared.join(", "))}${similar.some(entry => entry.shared.length < shared.length) ? " – oder die meisten davon" : ""}, ${has("rating") ? own("deine", "meine") : "die"} besten zuerst</p></div>
     <div class="movie-grid similar-row">${movieGridHtml(similar.map(entry => entry.movie), "movie.html", "")}</div>`;
   settleCachedCovers(section);
@@ -249,7 +297,7 @@ function showMissing(text = "Dieser Eintrag ist nicht mehr vorhanden.") {
     <div class="empty-state">
       <span aria-hidden="true">·</span>
       <p>${escapeHtml(text)}</p>
-      <a class="small-button" href="${own("movies.html", "index.html")}">${own("Zurück zu Entertainment", "Zur Sammlung")}</a>
+      <a class="small-button" href="${own("movies.html", "index.html")}">${own("Zurück zu Entertainment", "Zur Kinothek")}</a>
     </div>`;
 }
 
@@ -263,7 +311,7 @@ async function initSite() {
   try {
     state = await loadState();
   } catch (error) {
-    showMissing(`Die Sammlung konnte nicht geladen werden. ${error.message || ""}`.trim());
+    showMissing(`Die Kinothek konnte nicht geladen werden. ${error.message || ""}`.trim());
     startSiteDetail({ access: null }, () => {});
     return;
   }
@@ -272,7 +320,7 @@ async function initSite() {
   // Erst nach dem Einlass zeigen (auch nicht im Fenstertitel) und blättern lassen
   startSiteDetail(state, () => {
     initShortcuts({ previousMovie: () => goToNeighbour(-1), nextMovie: () => goToNeighbour(1) });
-    if (!movie) { showMissing("Diesen Titel gibt es in der Sammlung nicht (mehr)."); return; }
+    if (!movie) { showMissing("Diesen Titel gibt es in der Kinothek nicht (mehr)."); return; }
     render();
   });
 }

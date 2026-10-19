@@ -54,7 +54,7 @@ export function startSiteDetail(state, show) {
 
 /** Die Datendatei fehlt oder ist kaputt: Meldung zeigen, Einlass und Vorhang freigeben. */
 export function siteLoadFailed(error, target) {
-  if (target) target.innerHTML = emptyState(`Die Sammlung konnte nicht geladen werden. ${error?.message || ""}`.trim());
+  if (target) target.innerHTML = emptyState(`Die Kinothek konnte nicht geladen werden. ${error?.message || ""}`.trim());
   releaseGate();
   releaseCurtain();
   renderCornerDecoration({ curtainIcon: CORNER_ICON });

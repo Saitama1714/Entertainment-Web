@@ -26,7 +26,7 @@ import { initTimeline } from "../ui/timeline.js";
 import { initConstellation } from "../ui/constellation.js";
 import { initCast } from "../ui/cast.js";
 import { runCastFetch, readCastFetch, enableCastFetch, castFetchActive } from "../cast-fetch.js";
-import { readCastData, castStatus } from "../logic/cast-logic.js";
+import { readCastData, castStatus, creditsOf, personKey } from "../logic/cast-logic.js";
 import { readEntertainmentView } from "../logic/view-logic.js";
 import { SITE } from "../utils/host.js";
 import { startSitePage, startSiteCollection, siteLoadFailed } from "../site/site-page.js";
@@ -333,6 +333,29 @@ function showPersonInGrid(ids, name) {
   $("#entertainment-controls").scrollIntoView({ block: "start", behavior: reducedMotion() ? "auto" : "smooth" });
 }
 
+/**
+ * Von der Detailseite: ?genre=… oder ?person=… zeigt diese Titel im Raster
+ * (Genre-Filter bzw. „Mit …"). Der Parameter verschwindet danach aus der
+ * Adresse, damit Neuladen wieder die normale Ansicht zeigt.
+ */
+function applyLinkFilter() {
+  const params = new URLSearchParams(location.search);
+  const genre = params.get("genre");
+  const person = params.get("person");
+  if (!genre && !person) return;
+  if (genre) filters = { ...emptyFilters(), genres: [genre] };
+  else {
+    const key = personKey(person);
+    const ids = state.movies.filter(movie => creditsOf(movie, state.castData).some(credit => credit.key === key)).map(movie => movie.id);
+    filters = { ...emptyFilters(), person: ids, personName: person };
+  }
+  $("#movie-search").value = "";
+  params.delete("genre");
+  params.delete("person");
+  history.replaceState(null, "", location.pathname + (params.toString() ? `?${params}` : ""));
+  selectTab("titles");
+}
+
 /** Sucht nach dem Neu-Rendern denselben Chip wieder, um den Tastaturfokus zu halten. */
 function refocusChip(category, value) {
   $$(".filter-chip", $("#filter-chips")).find(chip => chip.dataset.category === category && chip.dataset.value === value)?.focus();
@@ -449,7 +472,7 @@ function scheduleCastFetch() {
 function renderCastStatus() {
   if (!cast) return;
   if (SITE) { // Website: nichts abzurufen - höchstens der Hinweis, dass die Besetzung noch fehlt
-    cast.setStatus(Object.keys(state.castData).length ? "" : "Darsteller und Drehbuch kommen mit der nächsten Aktualisierung der Sammlung dazu – bis dahin nur die Regie.");
+    cast.setStatus(Object.keys(state.castData).length ? "" : "Darsteller und Drehbuch kommen mit der nächsten Aktualisierung der Kinothek dazu – bis dahin nur die Regie.");
     return;
   }
   const { total, done, remaining } = castStatus(state.movies, state.castData);
@@ -522,6 +545,7 @@ async function init() {
   });
   bindEvents();
   initTabs(view.tab);
+  applyLinkFilter();
   renderMovies();
   renderStats(state);
   renderCastStatus();

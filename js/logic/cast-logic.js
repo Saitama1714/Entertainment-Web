@@ -9,8 +9,12 @@ import { ownRating, constellationMovies } from "./constellation-logic.js";
  * - Regie: aus dem IMDb-Export (movie.directors), sonst aus OMDb.
  * - Darsteller und Drehbuch: nur aus OMDb (die ersten drei bis vier
  *   Darsteller je Titel). Gespeichert getrennt von den Titeln unter
- *   `castData` (IMDb-Kennung → {a, w, d, t}), damit der Abruf im Hintergrund
+ *   `castData` (IMDb-Kennung → {a, w, d, t, v, …}), damit der Abruf im Hintergrund
  *   nie mit dem Speichern der Titel kollidiert (js/cast-fetch.js).
+ * - Seit Stand 2 (CAST_VERSION, Dashboard 2.35) bringt derselbe Abruf auch
+ *   Angaben für die Detailseite mit: Altersfreigabe (r), Länder (c),
+ *   Sprachen (l), Rotten Tomatoes (rt), Metascore (mc), Staffeln (s).
+ *   Ältere Einträge werden einmal neu abgefragt.
  *
  * Das Netz: jede Person ein Punkt (Größe = Titel in der Ansicht), eine Linie
  * je Paar mit gemeinsamen Titeln (Stärke = Anzahl). Im Netz liegen nur
@@ -69,18 +73,42 @@ export function splitWriters(text) {
   return splitNames(kept.join(","));
 }
 
+/** Stand der gespeicherten Einträge; ältere werden einmal neu abgefragt. */
+export const CAST_VERSION = 2;
+
+/** OMDb-Text ohne „N/A". */
+const clean = value => {
+  const text = String(value ?? "").trim();
+  return !text || NA.test(text) ? "" : text;
+};
+
+/** Liste aus einem OMDb-Feld („United States, Canada"), ohne „N/A". */
+const splitList = value => clean(value).split(",").map(part => part.trim()).filter(part => part && !NA.test(part));
+
 /**
- * Besetzung aus einem OMDb-Datensatz.
- * @param {{Actors?: string, Writer?: string, Director?: string}} data
+ * Besetzung und Angaben für die Detailseite aus einem OMDb-Datensatz.
+ * @param {object} data - Antwort von OMDb.
  * @param {string} [today] - Datum des Abrufs (ISO), Standard: jetzt.
- * @returns {{a: string[], w: string[], d: string[], t: string}}
+ * @returns {{a: string[], w: string[], d: string[], t: string, v: number,
+ *   r: string, c: string[], l: string[], rt: string, mc: string, s: string}}
  */
 export function parseOmdbCast(data, today = new Date().toISOString()) {
+  const rating = source => clean((Array.isArray(data?.Ratings) ? data.Ratings : []).find(item => item?.Source === source)?.Value);
+  const rated = clean(data?.Rated);
+  const meta = clean(data?.Metascore) || rating("Metacritic").replace(/\/100$/, "");
+  const seasons = clean(data?.totalSeasons);
   return {
     a: splitNames(data?.Actors),
     w: splitWriters(data?.Writer),
     d: splitNames(data?.Director),
     t: today.slice(0, 10),
+    v: CAST_VERSION,
+    r: /^(not rated|unrated|approved|passed)$/i.test(rated) ? "" : rated,
+    c: splitList(data?.Country),
+    l: splitList(data?.Language).filter(name => !/^none$/i.test(name)),
+    rt: rating("Rotten Tomatoes"),
+    mc: /^\d+$/.test(meta) ? meta : "",
+    s: /^\d+$/.test(seasons) && Number(seasons) > 0 ? seasons : "",
   };
 }
 
@@ -91,7 +119,12 @@ export function readCastData(value) {
   const out = {};
   for (const [id, entry] of Object.entries(value)) {
     if (!/^tt\d+$/i.test(id) || !entry || typeof entry !== "object") continue;
-    out[id] = { a: list(entry.a), w: list(entry.w), d: list(entry.d), t: typeof entry.t === "string" ? entry.t : "" };
+    const text = v => (typeof v === "string" ? v : "");
+    out[id] = {
+      a: list(entry.a), w: list(entry.w), d: list(entry.d), t: text(entry.t),
+      v: Number.isInteger(entry.v) ? entry.v : 1,
+      r: text(entry.r), c: list(entry.c), l: list(entry.l), rt: text(entry.rt), mc: text(entry.mc), s: text(entry.s),
+    };
   }
   return out;
 }
@@ -99,11 +132,14 @@ export function readCastData(value) {
 /** Hat der Eintrag irgendeine Angabe (oder kannte OMDb den Titel ohne Besetzung)? */
 const hasCast = entry => entry && (entry.a.length || entry.w.length);
 
+/** Ist der Eintrag auf dem neuesten Stand (CAST_VERSION)? */
+export const castCurrent = entry => Boolean(entry) && (entry.v || 1) >= CAST_VERSION;
+
 /**
- * Titel, deren Besetzung noch fehlt - in der Reihenfolge des Abrufs:
- * zuerst Titel ohne Cover (dieselbe Anfrage bringt das Cover mit, Cover
- * gehen vor), dann bewertete (die Standard-Ansicht füllt sich zuerst), dann
- * nach eigener Bewertung.
+ * Titel, deren Besetzung noch fehlt oder veraltet ist - in der Reihenfolge
+ * des Abrufs: erst fehlende, dann veraltete; jeweils zuerst Titel ohne Cover
+ * (dieselbe Anfrage bringt das Cover mit, Cover gehen vor), dann bewertete
+ * (die Standard-Ansicht füllt sich zuerst), dann nach eigener Bewertung.
  * @param {Array} movies
  * @param {Object} castData
  * @returns {Array} Titel (je IMDb-Kennung nur einmal).
@@ -113,24 +149,26 @@ export function castTargets(movies, castData) {
   const out = [];
   for (const movie of movies) {
     const id = String(movie.imdbId || "").trim();
-    if (!id || seen.has(id) || castData[id]) continue;
+    if (!id || seen.has(id) || castCurrent(castData[id])) continue;
     seen.add(id);
     out.push(movie);
   }
+  const outdated = movie => (castData[String(movie.imdbId).trim()] ? 1 : 0);
   const noCover = movie => (String(movie.cover || "").trim() ? 1 : 0);
-  return out.sort((a, b) => noCover(a) - noCover(b) || (ownRating(b) ?? 0) - (ownRating(a) ?? 0));
+  return out.sort((a, b) => outdated(a) - outdated(b) || noCover(a) - noCover(b) || (ownRating(b) ?? 0) - (ownRating(a) ?? 0));
 }
 
 /**
  * Stand des Abrufs: wie viele Titel (mit IMDb-Kennung) es gibt, wie viele
- * schon abgefragt sind und bei wie vielen OMDb keine Besetzung kennt.
+ * auf dem neuesten Stand abgefragt sind und bei wie vielen OMDb keine
+ * Besetzung kennt.
  * @returns {{total: number, done: number, empty: number, remaining: number}}
  */
 export function castStatus(movies, castData) {
   const ids = new Set(movies.map(movie => String(movie.imdbId || "").trim()).filter(Boolean));
   let done = 0, empty = 0;
   for (const id of ids) {
-    if (!castData[id]) continue;
+    if (!castCurrent(castData[id])) continue;
     done++;
     if (!hasCast(castData[id])) empty++;
   }

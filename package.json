@@ -1,6 +1,6 @@
 {
   "name": "entertainment-web",
-  "version": "1.16.1",
+  "version": "1.17.0",
   "private": true,
   "description": "Filmsammlung als Website - nur lesen, gebaut aus dem Dashboard (npm run build:site), Daten aus einer Dashboard-Sicherung"
 }

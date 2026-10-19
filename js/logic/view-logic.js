@@ -12,7 +12,7 @@
  */
 import { emptyFilters } from "./movies-logic.js";
 
-export const VIEW_TABS = ["titles", "timeline", "constellation", "cast", "stats"];
+export const VIEW_TABS = ["titles", "timeline", "constellation", "cast", "stats", "year"];
 const TIMELINE = ["release", "rated"];
 const CONSTELLATION = ["rated", "all"];
 

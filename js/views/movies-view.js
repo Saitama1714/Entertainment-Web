@@ -25,21 +25,23 @@ import { initCurtain } from "../ui/curtain.js";
 import { initTimeline } from "../ui/timeline.js";
 import { initConstellation } from "../ui/constellation.js";
 import { initCast } from "../ui/cast.js";
+import { initFilmYear } from "../ui/film-year.js";
 import { runCastFetch, readCastFetch, enableCastFetch, castFetchActive } from "../cast-fetch.js";
 import { readCastData, castStatus, creditsOf, personKey } from "../logic/cast-logic.js";
 import { readEntertainmentView } from "../logic/view-logic.js";
-import { SITE } from "../utils/host.js";
+import { SITE, has } from "../utils/host.js";
 import { startSitePage, startSiteCollection, siteLoadFailed } from "../site/site-page.js";
 import { siteSortOptions, SITE_DEFAULT_SORT } from "../site/site-logic.js";
 
 /*
- * Seite „Entertainment" (views/movies.html): fünf Registerkarten - "Titel"
+ * Seite „Entertainment" (views/movies.html): sechs Registerkarten - "Titel"
  * (Raster mit Suche, Filter-Chips, Sortierung, IMDb-Import, Cover-Nachladen),
  * "Zeitleiste" (Cover Flow + Zeitleiste, js/ui/timeline.js), "Sternbild"
  * (Genres als zoombare Karte, js/ui/constellation.js), "Besetzung" (Netz der
  * Menschen hinter den Titeln, js/ui/cast.js) - alle mit derselben
- * Suche und denselben Filtern, ohne Sortierung - und "Auf einen Blick"
- * (Statistik-Kachel, js/ui/stats.js). Filter und Sortierung gelten nur für
+ * Suche und denselben Filtern, ohne Sortierung -, "Heute" (Zahlen und
+ * Roulette, js/ui/stats.js) und "Filmjahr" (Jahresrückblick in Karten,
+ * js/ui/film-year.js; ohne Suche und Filter). Filter und Sortierung gelten nur für
  * die laufende Sitzung. Der Kinovorhang steht hier
  * wie auf der Übersicht an den Rändern, aber immer schon geöffnet.
  *
@@ -85,6 +87,10 @@ function syncCast(query, searchedFiltered) {
 
 // Sternbild: dieselbe gesuchte und gefilterte Liste
 let constellation = null;
+
+// Filmjahr: immer die ganze Kinothek (ohne Suche und Filter)
+let filmYear = null;
+const syncFilmYear = () => filmYear?.update(state.movies, state.castData);
 
 // Gemerkte Ansicht (Registerkarte, Ansichten, Ausschnitt des Sternbilds) -
 // nur auf diesem Rechner, Suche und Filter bleiben bewusst Sitzungssache
@@ -158,6 +164,7 @@ function startImdbImport() {
     onImported: async (result, summary) => {
       renderMovies();
       renderStats(state);
+      syncFilmYear();
       renderImportReminder(state);
       statusPrefix = "";
       setStatus(summary);
@@ -251,10 +258,10 @@ function closeToolsMenu() {
 }
 
 /**
- * Registerkarten „Titel" / „Zeitleiste" / „Sternbild" / „Besetzung" / „Auf einen Blick": Klick oder
+ * Registerkarten „Titel" / „Zeitleiste" / „Genres" / „Besetzung" / „Heute" / „Filmjahr": Klick oder
  * Pfeiltasten (ARIA-Tablist-Muster, direkte Aktivierung) wechseln Reiter und
  * zugehöriges Panel. Suche und Filter stehen über den Panels und gelten für
- * „Titel", „Zeitleiste", „Sternbild" und „Besetzung"; bei „Auf einen Blick" sind sie ausgeblendet.
+ * „Titel", „Zeitleiste", „Genres" und „Besetzung"; bei „Heute" und „Filmjahr" sind sie ausgeblendet.
  */
 function initTabs(initial) {
   const tabs = $$(".view-tab");
@@ -272,7 +279,7 @@ function initTabs(initial) {
     const bar = target.parentElement;
     if (bar.scrollWidth > bar.clientWidth) bar.scrollLeft = Math.max(0, target.offsetLeft - (bar.clientWidth - target.offsetWidth) / 2);
     const controls = $("#entertainment-controls");
-    controls.hidden = tabName === "stats";
+    controls.hidden = tabName === "stats" || tabName === "year";
     controls.dataset.view = tabName;
     if (tabName === "timeline") {
       if (timelineStale) { timeline.update(timelineList); timelineStale = false; }
@@ -280,6 +287,7 @@ function initTabs(initial) {
     }
     if (tabName === "constellation") constellation.show();
     if (tabName === "cast") cast.show();
+    if (tabName === "year") filmYear.show();
     rememberView({ tab: tabName });
   };
 
@@ -377,11 +385,11 @@ function bindEvents() {
   $("#fetch-covers-button").onclick = () => { closeToolsMenu(); runCoverFetch(); };
   $("#seen-cleanup-button").onclick = () => {
     closeToolsMenu();
-    openSeenCleanup(state, () => { renderMovies(); renderStats(state); });
+    openSeenCleanup(state, () => { renderMovies(); renderStats(state); syncFilmYear(); });
   };
   $("#orphan-cleanup-button").onclick = () => {
     closeToolsMenu();
-    openOrphanCleanup(state, () => { renderMovies(); renderStats(state); });
+    openOrphanCleanup(state, () => { renderMovies(); renderStats(state); syncFilmYear(); });
   };
   document.addEventListener("click", event => {
     const menu = $("#tools-menu");
@@ -508,7 +516,7 @@ async function init() {
   } else {
     state = await loadState();
     initAppShell(state, {
-      onImported: () => { state.movies = normalizeMovies(state.movies); renderMovies(); renderStats(state); renderImportReminder(state); scheduleCoverStore(); },
+      onImported: () => { state.movies = normalizeMovies(state.movies); renderMovies(); renderStats(state); syncFilmYear(); renderImportReminder(state); scheduleCoverStore(); },
     });
   }
   setImportWindowDays(state.importWindowDays);
@@ -543,6 +551,11 @@ async function init() {
     onCameraChange: camera => rememberView({ camera }),
     onShowTitles: showGenresInGrid,
   });
+  if (SITE && !has("rating")) { $("#tab-year").remove(); $("#year-panel").remove(); } // Website ohne Bewertungen: kein Filmjahr
+  else {
+    filmYear = initFilmYear($("#year-panel"));
+    syncFilmYear();
+  }
   bindEvents();
   initTabs(view.tab);
   applyLinkFilter();
@@ -569,6 +582,7 @@ async function init() {
     if (changes.castData) {
       state.castData = readCastData(changes.castData.newValue);
       cast.setCastData(state.castData);
+      syncFilmYear();
       if ($("#movie-search").value.trim()) renderMovies(); // Suche findet jetzt auch die neuen Darsteller
       renderCastStatus();
     }

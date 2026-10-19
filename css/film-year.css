@@ -1,0 +1,316 @@
+/* =========================================================================
+   Registerkarte „Filmjahr" (js/ui/film-year.js): „Dein Filmjahr" als Karten.
+   Die Seite drumherum folgt Hell/Dunkel, die Karte selbst ist ein Stück Kino
+   und bleibt immer dunkel - wie Leuchtreklame und Ticket der Detailseite.
+   ========================================================================= */
+
+.fy-panel { display: grid; gap: var(--s-5); padding-top: var(--s-2); }
+.fy-panel[hidden] { display: none; }
+
+/* Jahre */
+.fy-years { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-2); }
+.fy-year {
+  display: inline-flex; align-items: center; gap: 5px; min-height: 36px; padding: 0 14px;
+  border: 1px solid var(--line-strong); border-radius: var(--r-chip); background: var(--surface);
+  color: var(--text-muted); font-size: .86rem; font-weight: 500; font-variant-numeric: tabular-nums; cursor: pointer;
+}
+.fy-year small { font-size: .74rem; font-weight: 500; opacity: .8; }
+.fy-year:hover { border-color: var(--brass); color: var(--text); }
+.fy-year[aria-pressed="true"] { background: var(--brass); border-color: var(--brass); color: var(--bg); font-weight: 650; }
+
+/* Aufbau: Akte · Bühne · Zahlen */
+.fy-layout { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr) minmax(150px, 210px); gap: var(--s-6); align-items: center; }
+.fy-main { display: grid; justify-items: center; gap: var(--s-4); min-width: 0; }
+
+.fy-acts { display: grid; gap: 2px; }
+.fy-act {
+  display: grid; gap: 2px; justify-items: start; padding: 9px 0 9px 16px; border: 0; border-left: 2px solid var(--line);
+  background: none; color: var(--text-muted); text-align: left; cursor: pointer;
+}
+.fy-act b { font-family: "Cinzel", var(--font-display); font-weight: 500; font-size: .7rem; letter-spacing: .2em; color: var(--text-faint); text-transform: uppercase; }
+.fy-act span { font-size: .92rem; }
+.fy-act:hover span { color: var(--text); }
+.fy-act[aria-current="step"] { border-left-color: var(--brass); }
+.fy-act[aria-current="step"] b { color: var(--brass); }
+.fy-act[aria-current="step"] span { color: var(--text); }
+
+.fy-aside { display: grid; gap: 0; align-content: center; }
+.fy-aside-kicker { margin: 0 0 var(--s-2); font-family: "Cinzel", var(--font-display); font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: var(--text-faint); }
+.fy-aside .fy-stat { border-top-color: var(--line); }
+.fy-aside .fy-stat b { color: var(--text); }
+.fy-aside .fy-stat span { color: var(--text-faint); }
+
+/* Filmstreifen als Fortschritt */
+.fy-strip {
+  position: relative; display: flex; gap: 3px; width: min(440px, 100%); box-sizing: border-box;
+  padding: 7px 8px; border-radius: 4px; background: #0c0807;
+}
+.fy-strip::before, .fy-strip::after {
+  content: ""; position: absolute; left: 6px; right: 6px; height: 3px;
+  background: repeating-linear-gradient(90deg, #3a2a24 0 5px, transparent 5px 10px);
+}
+.fy-strip::before { top: 1px; }
+.fy-strip::after { bottom: 1px; }
+.fy-seg { flex: 1; height: 9px; min-width: 0; padding: 0; border: 0; border-radius: 1px; background: #33241f; cursor: pointer; transition: background .3s; }
+.fy-seg:hover { background: #5a4433; }
+.fy-seg.is-done { background: #7a6238; }
+.fy-seg.is-now { background: #e6c98a; box-shadow: 0 0 8px rgb(230 201 138 / .6); }
+.fy-seg:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+
+.fy-stage-row { display: flex; align-items: center; gap: var(--s-5); max-width: 100%; }
+.fy-nav {
+  flex: none; display: grid; place-items: center; width: 52px; height: 52px; padding: 0; border-radius: 50%;
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); cursor: pointer;
+}
+.fy-nav:hover:not(:disabled) { border-color: var(--brass); color: var(--brass); }
+.fy-nav:disabled { opacity: .3; cursor: default; }
+.fy-stage { width: 440px; max-width: 100%; height: 680px; border-radius: 14px; touch-action: pan-y; }
+.fy-stage:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+.fy-panel.is-empty .fy-stage { height: auto; width: 100%; }
+.fy-panel.is-empty .fy-nav, .fy-panel.is-empty .fy-foot, .fy-panel.is-empty .fy-strip { display: none; }
+
+.fy-foot { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--s-2) var(--s-5); font-size: .82rem; color: var(--text-faint); }
+.fy-auto { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--text-muted); font-size: .84rem; cursor: pointer; }
+.fy-auto i { position: relative; width: 34px; height: 20px; border-radius: 999px; background: var(--surface-sunken); border: 1px solid var(--line-strong); }
+.fy-auto i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--text-faint); transition: transform .2s, background .2s; }
+.fy-auto[aria-pressed="true"] i { border-color: var(--brass); background: var(--brass-line); }
+.fy-auto[aria-pressed="true"] i::after { transform: translateX(14px); background: var(--brass); }
+
+/* ---------------------------------------------------------------- Karte */
+.fy-card {
+  --c-text: #efe6d8; --c-muted: #b9ab9c; --c-faint: #9a8b7e; --c-line: #33251f; --c-brass: #c9a45c; --c-brass-hi: #e6c98a; --c-glow: #ffe8c2;
+  position: relative; display: flex; flex-direction: column; gap: 14px; height: 100%; box-sizing: border-box; overflow: hidden;
+  padding: 30px 34px 32px; border-radius: 14px; color: var(--c-text); color-scheme: dark;
+  background: radial-gradient(ellipse 120% 70% at 50% 0%, #2c1714, #170e0d 62%, #110a09);
+  box-shadow: 0 30px 70px rgb(0 0 0 / .45), inset 0 0 0 1px #3a2620, inset 0 0 0 7px #140c0b, inset 0 0 0 8px rgb(201 164 92 / .28);
+}
+.fy-card a { color: inherit; text-decoration: none; }
+.fy-link { border-bottom: 1px solid rgb(201 164 92 / .35); }
+.fy-link:hover { border-bottom-color: var(--c-brass); color: #fff; }
+.fy-card :focus-visible { outline: 2px solid var(--c-brass-hi); outline-offset: 2px; border-radius: 2px; }
+.fy-kick { display: flex; justify-content: space-between; gap: 12px; margin: 0 0 18px; font-family: "Cinzel", var(--font-display); font-size: .66rem; letter-spacing: .22em; text-transform: uppercase; color: var(--c-brass); }
+.fy-kick i { font-style: normal; color: var(--c-faint); font-variant-numeric: tabular-nums; }
+.fy-title { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 2.65rem; line-height: 1.03; letter-spacing: -.005em; overflow-wrap: anywhere; }
+.fy-title em { font-style: italic; color: var(--c-brass-hi); }
+.fy-title em .fy-link { border-bottom-color: rgb(230 201 138 / .3); }
+.fy-title small { font-family: var(--font-text); font-size: .9rem; color: var(--c-muted); }
+.fy-title--m { font-size: 2.15rem; }
+.fy-title--l { font-size: 3.4rem; }
+.fy-title--xl { font-size: 4.4rem; line-height: .98; }
+.fy-lead { margin: 0; font-size: .95rem; line-height: 1.55; color: var(--c-muted); }
+.fy-lead b { color: var(--c-text); font-weight: 600; }
+.fy-wink { margin: 0; font-size: .82rem; line-height: 1.5; color: var(--c-faint); font-style: italic; }
+.fy-big { font-family: var(--font-display); font-size: 9rem; line-height: .8; color: var(--c-glow); text-shadow: 0 0 30px rgb(255 190 110 / .35); font-variant-numeric: tabular-nums; }
+.fy-big--m { font-size: 7rem; }
+.fy-big.is-low { color: #e8807a; text-shadow: 0 0 26px rgb(232 128 122 / .3); }
+
+/* Zahlenreihen */
+.fy-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; margin-top: auto; }
+.fy-stats--rows { grid-template-columns: minmax(0, 1fr); }
+.fy-stat { display: grid; gap: 3px; margin: 0; padding: 14px 0; border-top: 1px solid var(--c-line); }
+.fy-stat b { font-family: var(--font-display); font-weight: 400; font-size: 2.1rem; line-height: 1.05; color: var(--c-text); font-variant-numeric: tabular-nums; }
+.fy-stat span { font-size: .8rem; color: var(--c-faint); }
+
+/* Säulen */
+.fy-bars { display: flex; align-items: flex-end; gap: 8px; margin-top: auto; }
+.fy-bars--tall { height: 250px; }
+.fy-bars--months { gap: 5px; height: 220px; }
+.fy-bars--mini { height: 42px; gap: 3px; margin-top: 0; }
+.fy-bar { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 7px; }
+.fy-bar i { display: block; width: 100%; height: var(--h); border-radius: 3px 3px 0 0; background: #4a3529; transform-origin: bottom; }
+.fy-bar.is-hi i { background: linear-gradient(#f0d49a, #b98d43); box-shadow: 0 0 16px rgb(230 190 110 / .35); }
+.fy-bar.is-future i { height: 2px; background: #2c201b; }
+.fy-bar small { font-size: .7rem; color: var(--c-faint); white-space: nowrap; }
+.fy-bar.is-hi small { color: var(--c-brass-hi); font-weight: 650; }
+.fy-bars--mini .fy-bar { gap: 0; }
+.fy-bars--mini small { display: none; }
+
+/* Balken waagerecht */
+.fy-hbars { display: grid; gap: 12px; margin-top: auto; }
+.fy-hbar { display: grid; grid-template-columns: 104px minmax(0, 1fr) 30px; align-items: center; gap: 10px; font-size: .86rem; }
+.fy-hbar > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fy-hbar i { display: block; width: var(--w); height: 12px; border-radius: 2px; background: #4a3529; transform-origin: left; }
+.fy-hbar.is-hi i { background: linear-gradient(90deg, #b98d43, #f0d49a); }
+.fy-hbar b { font-weight: 500; color: var(--c-muted); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Längster Abend */
+.fy-duel { display: grid; gap: 22px; margin-top: auto; }
+.fy-duel-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; font-size: .86rem; }
+.fy-duel-row b { font-weight: 500; color: var(--c-muted); }
+.fy-duel-row.is-hi b { color: var(--c-brass-hi); }
+.fy-duel-row i { grid-column: 1 / -1; display: block; width: var(--w); height: 18px; border-radius: 2px; background: #4a3529; transform-origin: left; }
+.fy-duel-row.is-hi i { background: linear-gradient(90deg, #b98d43, #f0d49a); }
+
+/* Vergleich du / IMDb */
+.fy-versus { display: grid; grid-template-columns: 124px auto minmax(0, 1fr); gap: 22px; align-items: end; margin-top: auto; }
+.fy-versus p { display: grid; gap: 4px; margin: 0; }
+.fy-versus span { font-size: .78rem; color: var(--c-faint); }
+.fy-versus-other { font-family: var(--font-display); font-weight: 400; font-size: 4rem; line-height: .8; color: var(--c-muted); }
+
+.fy-pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.fy-pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; border: 1px solid #4a362f; font-size: .78rem; color: var(--c-muted); }
+a.fy-pill:hover { border-color: var(--c-brass); color: var(--c-text); }
+.fy-pill.is-brass { border-color: var(--c-brass); color: var(--c-brass-hi); }
+
+/* Ticket und Abrisse (wie das Kinoticket der Detailseite) */
+.fy-ticket, .fy-stub {
+  display: grid; gap: 3px; padding: 12px 18px; background: #f4ead6; border: 1px solid #c9a45c; border-radius: 6px;
+  color: #3a2a10; box-shadow: 0 8px 18px rgb(0 0 0 / .4);
+}
+.fy-ticket small, .fy-stub small { font-family: "Cinzel", var(--font-display); font-size: .6rem; letter-spacing: .22em; text-transform: uppercase; color: #7a5a28; }
+.fy-ticket b { font-family: "Cinzel", var(--font-display); font-weight: 600; font-size: 1.6rem; letter-spacing: .06em; line-height: 1.1;
+  background: linear-gradient(#5a3b0a, #2e1f08 60%, #5a3b0a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.fy-ticket { justify-self: start; align-self: flex-start; margin-top: auto; rotate: -4deg; }
+.fy-stubs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: auto; padding-bottom: 4px; }
+.fy-stub { rotate: var(--r); margin-left: var(--x); max-width: calc(100% - var(--x)); box-sizing: border-box; }
+.fy-card .fy-stub { color: #3a2a10; }
+.fy-stub span { font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fy-stub:hover { border-color: #8a6a2c; }
+
+/* Vorhang der ersten Karte */
+.fy-curtain {
+  position: absolute; inset: 0 0 auto; height: 150px; pointer-events: none;
+  background: repeating-linear-gradient(90deg, #5c0103 0 22px, #8a0204 22px 34px, #5c0103 34px 46px);
+  -webkit-mask-image: linear-gradient(#000 40%, transparent); mask-image: linear-gradient(#000 40%, transparent);
+  opacity: .85; transform: translateY(-55%);
+}
+
+/* Geheimtipp: die Menge und du */
+.fy-crowd { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; }
+.fy-crowd i { width: 10px; height: 10px; border-radius: 50%; background: #3a2a24; }
+.fy-crowd i.is-you { background: var(--c-brass-hi); box-shadow: 0 0 8px rgb(230 201 138 / .7); }
+
+/* Regal */
+.fy-shelf { margin-top: auto; display: grid; }
+.fy-spines { display: flex; align-items: flex-end; gap: 4px; height: 210px; padding: 0 6px; }
+.fy-spine {
+  flex: 0 1 26px; min-width: 14px; height: var(--hgt); display: flex; align-items: center; justify-content: center; overflow: hidden;
+  writing-mode: vertical-rl; transform: rotate(180deg); border-radius: 2px; font-size: .62rem; letter-spacing: .04em; white-space: nowrap; text-overflow: ellipsis;
+  color: #dfe8f2; background: linear-gradient(90deg, #0d3a6e, #1d5aa0 45%, #0d3a6e); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .12);
+}
+.fy-spine--dvd { color: #eee; background: linear-gradient(90deg, #2a2a2e, #4a4a52 45%, #2a2a2e); }
+.fy-spine--4k { color: #f3dca8; background: linear-gradient(90deg, #0b0b0c, #26262a 45%, #0b0b0c); box-shadow: inset 0 0 0 1px rgb(201 164 92 / .5); }
+.fy-spine--digital { color: #e6c98a; background: linear-gradient(90deg, #2a1d10, #4a3520 45%, #2a1d10); }
+.fy-spine:hover { filter: brightness(1.25); }
+.fy-board { height: 10px; border-radius: 2px; background: linear-gradient(#5a3b22, #3a2414); box-shadow: 0 6px 12px rgb(0 0 0 / .5); }
+
+/* Rangliste Serien */
+.fy-ranks { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr); margin: auto 0 0; padding: 0; }
+.fy-ranks li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 11px 0; border-top: 1px solid var(--c-line); font-family: var(--font-display); font-size: 1.45rem; line-height: 1.15; }
+.fy-ranks li a { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-bottom: 0; }
+.fy-ranks li b { flex: none; }
+.fy-ranks li b { font-family: var(--font-text); font-size: .95rem; font-weight: 500; color: var(--c-muted); }
+.fy-ranks li.is-hi b { color: var(--c-brass-hi); }
+
+/* Leuchtreklame (wie auf der Detailseite) */
+.fy-marquee {
+  display: flex; align-items: center; gap: 20px; align-self: flex-start; padding: 16px 22px 16px 20px; border-radius: 12px;
+  background: linear-gradient(180deg, #24120f, #190d0b); border: 1px solid #5a3b1a;
+  box-shadow: inset 0 0 0 3px #1a0e0c, inset 0 0 0 4px rgb(201 164 92 / .35);
+}
+.fy-marquee-num { font-family: var(--font-display); font-size: 4rem; line-height: .85; color: var(--c-glow); text-shadow: 0 0 18px rgb(255 190 110 / .55), 0 0 2px #fff3dc; }
+.fy-marquee-side { display: grid; gap: 9px; }
+.fy-marquee-side small { font-size: .66rem; font-weight: 650; letter-spacing: .16em; text-transform: uppercase; color: var(--c-brass); }
+.fy-bulbs { display: flex; gap: 6px; }
+.fy-bulbs i { width: 12px; height: 12px; border-radius: 50%; background: #3a2620; box-shadow: inset 0 1px 2px rgb(0 0 0 / .6); }
+.fy-bulbs i.is-on { background: radial-gradient(circle at 40% 35%, #fffbe9, #f7d58f 45%, #d9a24a); box-shadow: 0 0 8px 2px rgb(255 196 110 / .55), 0 0 18px 4px rgb(255 170 80 / .18); }
+.fy-runners { display: grid; gap: 8px; margin-top: auto; }
+
+/* Filmtyp */
+.fy-card--type { align-items: center; justify-content: center; text-align: center; }
+.fy-card--type .fy-kick { position: absolute; top: 30px; left: 34px; right: 34px; }
+.fy-card--type .fy-pills { justify-content: center; }
+.fy-card--type .fy-lead { max-width: 330px; }
+.fy-medal {
+  display: grid; place-items: center; width: 120px; height: 120px; border-radius: 50%; color: var(--c-brass-hi);
+  background: radial-gradient(circle at 40% 35%, #3a2318, #1a0f0c);
+  box-shadow: inset 0 0 0 2px var(--c-brass), inset 0 0 0 7px #1a0f0c, inset 0 0 0 8px rgb(201 164 92 / .5), 0 0 40px rgb(201 164 92 / .15);
+}
+
+/* Cover eines einzelnen Titels (Höchstnote, Überraschung, Enttäuschung, Geheimtipp) */
+.fy-cover { width: 124px; height: 186px; }
+.fy-cover .fy-poster-name { font-size: .9rem; }
+.fy-gem { display: grid; grid-template-columns: 124px minmax(0, 1fr); gap: 20px; align-items: end; margin-top: auto; }
+.fy-gem .fy-crowd { margin-top: 0; }
+
+/* Erste Karte */
+.fy-card--opening { justify-content: flex-end; gap: 18px; }
+.fy-card--opening .fy-kick { position: absolute; top: 30px; left: 34px; right: 34px; z-index: 1; }
+.fy-card--numbers .fy-big { margin-top: 12px; }
+
+/* Plakat */
+.fy-card--poster { padding: 26px; gap: 14px; }
+.fy-card--poster .fy-kick { margin-bottom: 4px; }
+.fy-collage { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, 150px); gap: 8px; }
+.fy-poster {
+  position: relative; display: flex; align-items: flex-end; overflow: hidden; padding: 9px; border-radius: 5px; box-sizing: border-box;
+  background: linear-gradient(165deg, var(--p1), var(--p2) 75%); box-shadow: 0 10px 24px rgb(0 0 0 / .5);
+}
+.fy-poster.is-lead { grid-row: span 2; }
+.fy-poster-name { font-family: var(--font-display); font-size: 1rem; line-height: 1.05; color: #f3ead9; }
+.fy-poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.fy-poster:hover img { filter: brightness(1.08); }
+.fy-credits-head { display: grid; justify-items: center; gap: 6px; text-align: center; }
+.fy-credits-head small { font-family: "Cinzel", var(--font-display); font-size: .64rem; letter-spacing: .3em; text-transform: uppercase; color: var(--c-brass); }
+.fy-credits { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; margin: 0; font-size: .78rem; }
+.fy-credits dt { font-family: "Cinzel", var(--font-display); font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; color: var(--c-faint); text-align: right; padding-top: 2px; }
+.fy-credits dd { margin: 0; }
+.fy-again {
+  align-self: center; margin-top: auto; min-height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid #4a362f;
+  background: none; color: var(--c-text); font: inherit; font-size: .84rem; cursor: pointer;
+}
+.fy-again:hover { border-color: var(--c-brass); }
+
+/* ------------------------------------------------------------- Bewegung */
+@media (prefers-reduced-motion: no-preference) {
+  .fy-card { animation: fy-card-in .55s cubic-bezier(.2, .7, .2, 1) both; }
+  .fy-card.is-back { animation-name: fy-card-back; }
+  .fy-rise { animation: fy-rise .7s cubic-bezier(.2, .7, .2, 1) both; animation-delay: var(--d, 0s); }
+  .fy-bar i { animation: fy-grow .8s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(.3s + var(--i, 0) * 50ms); }
+  .fy-hbar i, .fy-duel-row i { animation: fy-grow-x .8s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(.3s + var(--i, 0) * 60ms); }
+  .fy-curtain { animation: fy-curtain 1.2s cubic-bezier(.6, 0, .2, 1) .2s both; }
+  .fy-bulbs i.is-on { animation: fy-bulb .45s ease-out both; animation-delay: calc(500ms + var(--i) * 110ms); }
+  .fy-crowd i.is-you { animation: fy-blink 1.6s ease-in-out .9s 2 both; }
+}
+@keyframes fy-card-in { from { opacity: 0; transform: translateX(26px) scale(.98); } }
+@keyframes fy-card-back { from { opacity: 0; transform: translateX(-26px) scale(.98); } }
+@keyframes fy-rise { from { opacity: 0; transform: translateY(14px); } }
+@keyframes fy-grow { from { transform: scaleY(0); } }
+@keyframes fy-grow-x { from { transform: scaleX(0); } }
+@keyframes fy-curtain { from { transform: translateY(0); } }
+@keyframes fy-bulb { from { background: #3a2620; box-shadow: inset 0 1px 2px rgb(0 0 0 / .6); } }
+@keyframes fy-blink { 50% { transform: scale(1.6); } }
+
+/* --------------------------------------------------------------- Schmal */
+@media (max-width: 1100px) {
+  .fy-layout { grid-template-columns: minmax(0, 1fr); }
+  .fy-acts { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; order: -1; }
+  .fy-act { border-left: 0; border-bottom: 2px solid transparent; padding: 6px 2px; justify-items: center; }
+  .fy-act span { font-size: .84rem; }
+  .fy-act[aria-current="step"] { border-bottom-color: var(--brass); }
+  .fy-aside { display: none; }
+}
+@media (max-width: 640px) {
+  .fy-acts .fy-act b { display: none; }
+  .fy-stage-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); width: 100%; }
+  .fy-stage { grid-column: 1 / -1; grid-row: 1; width: 100%; height: 640px; }
+  .fy-nav { justify-self: center; }
+  .fy-card { padding: 24px 22px 26px; }
+  .fy-card--opening .fy-kick, .fy-card--type .fy-kick { left: 22px; right: 22px; top: 24px; }
+  .fy-title { font-size: 2.2rem; }
+  .fy-title--m { font-size: 1.85rem; }
+  .fy-title--l { font-size: 2.7rem; }
+  .fy-title--xl { font-size: 3.5rem; }
+  .fy-big { font-size: 7rem; }
+  .fy-big--m { font-size: 5.6rem; }
+  .fy-bars--tall { height: 200px; }
+  .fy-bars { gap: 5px; }
+  .fy-hbar { grid-template-columns: 88px minmax(0, 1fr) 26px; }
+  .fy-collage { grid-template-rows: repeat(2, 128px); }
+  .fy-cover { width: 96px; height: 144px; }
+  .fy-versus { grid-template-columns: 96px auto minmax(0, 1fr); gap: 16px; }
+  .fy-gem { grid-template-columns: 96px minmax(0, 1fr); gap: 14px; }
+  .fy-stubs { gap: 10px; }
+  .fy-stub { padding: 9px 14px; }
+  .fy-help { display: none; }
+}

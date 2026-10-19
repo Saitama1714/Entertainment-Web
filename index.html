@@ -2,7 +2,7 @@
 <html lang="de" data-site>
   <head>
     <meta charset="utf-8">
-    <meta name="generator" content="Dashboard 2.35.2 (npm run build:site)">
+    <meta name="generator" content="Dashboard 2.36.0 (npm run build:site)">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="Meine Kinothek">
@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="css/constellation.css">
     <link rel="stylesheet" href="css/cast.css">
     <link rel="stylesheet" href="css/tonight.css">
+    <link rel="stylesheet" href="css/film-year.css">
     <link rel="stylesheet" href="css/site.css">
   </head>
   <body>
@@ -66,6 +67,8 @@
                 aria-selected="false" tabindex="-1" aria-controls="cast-panel">Besetzung</button>
         <button class="view-tab" type="button" id="tab-stats" role="tab"
                 aria-selected="false" tabindex="-1" aria-controls="stats-panel">Heute</button>
+        <button class="view-tab" type="button" id="tab-year" role="tab"
+                aria-selected="false" tabindex="-1" aria-controls="year-panel">Filmjahr</button>
       </div>
 
       <!-- Suche, Filter und Sortierung gelten für „Titel", „Zeitleiste", „Genres" und „Besetzung" (dort ohne Sortierung) -->
@@ -167,6 +170,9 @@
           </section>
         </div>
       </section>
+
+      <!-- „Dein Filmjahr": Jahresrückblick in Karten (js/ui/film-year.js) -->
+      <section id="year-panel" class="fy-panel" role="tabpanel" aria-labelledby="tab-year" hidden tabindex="-1"></section>
     </main>
 
     <div id="modal-root"></div>

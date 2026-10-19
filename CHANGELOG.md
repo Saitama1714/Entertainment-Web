@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.18.0 – Mein Filmjahr (Dashboard 2.36)
+- Neue Registerkarte „Filmjahr“: „Mein Filmjahr“ als Jahresrückblick in bis
+  zu 18 Karten (Zahlen, Gewohnheiten, Geschmack, Höhepunkte, Filmtyp,
+  Abspann-Plakat) – jedes Jahr wählbar, zum Durchblättern per Pfeil, Taste,
+  Wischen oder automatisch.
+- Weltreise und Darsteller erscheinen, sobald die `sammlung.json` die
+  Besetzung und OMDb-Angaben enthält.
+
 ## 1.17.0 – Meine Kinothek (Dashboard 2.35.2)
 - Die Website heißt jetzt „Meine Kinothek“; „Sammlung“ wird überall zu
   „Kinothek“ („Ganze Kinothek“, „Zur Kinothek“ …).

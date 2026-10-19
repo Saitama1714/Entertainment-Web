@@ -36,6 +36,12 @@ Website mit dem Dashboard gleichziehen soll. Von Hand gepflegt werden hier nur
   Drehbuch), Rangliste „Meine Stammbesetzung" und Personenkarten.
 - **Heute**: Gesamt/Gesehen/Offen und „Was schaue ich heute?" – eingrenzen
   (Laufzeit, Art, Medium, Genre), ziehen, Cover-Roulette.
+- **Filmjahr**: „Mein Filmjahr" – Jahresrückblick in Karten zum
+  Durchblättern (nach dem Tag meiner Bewertung, jedes Jahr wählbar):
+  Zahlen, Kinotag, Monat, Abende am Stück, Top-Genre, Jahrzehnte,
+  Weltreise, Stammbesetzung, Überraschung und Enttäuschung gegenüber IMDb,
+  Geheimtipp, Regal, Höchstnote, Filmtyp, Abspann-Plakat. Nur, wenn meine
+  Bewertungen veröffentlicht sind.
 - **Detailseite** je Titel: „Meine Bewertung" als Leuchtreklame, Knöpfe zu
   IMDb und WerStreamt.es (zeigt, wo der Titel im Stream läuft), die
   wichtigsten Angaben samt Besetzung, Wertungen, Freigabe, Land und Sprache;
@@ -102,7 +108,7 @@ der Link).
 
 ```
 Gebaut aus dem Dashboard (npm run build:site):
-  index.html             Kinothek (Titel, Zeitleiste, Genres, Besetzung, Heute), Kinovorhang
+  index.html             Kinothek (Titel, Zeitleiste, Genres, Besetzung, Heute, Filmjahr), Kinovorhang
   movie.html             Detailseite eines Titels (?id=…)
   titel.html             Weiterleitung alter Links auf movie.html
   werkzeug.html          Daten vorbereiten: Sicherung → sammlung.json

@@ -2,6 +2,7 @@ import { normalizeMovies } from "../collection.js";
 import { setImportWindowDays } from "../logic/movies-logic.js";
 import { readAccess } from "../logic/access-logic.js";
 import { readCastData } from "../logic/cast-logic.js";
+import { readThreshold } from "../logic/duel-logic.js";
 import { setIncluded } from "../utils/host.js";
 
 /*
@@ -42,6 +43,7 @@ export function parseCollection(data) {
     decor: typeof data.decor === "string" ? data.decor : "", // "" = Standard der Website
     access: readAccess(data.access), // Prüfwert für den Einlass, null = ohne Passwort
     castData: readCastData(data.cast), // Besetzung je IMDb-Kennung (ältere Dateien: keine)
+    duelThreshold: readThreshold(data.duelThreshold), // Schwelle „Ich gegen IMDb" wie im Dashboard (ältere Dateien: 1,5)
   };
 }
 

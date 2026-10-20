@@ -42,6 +42,12 @@ Website mit dem Dashboard gleichziehen soll. Von Hand gepflegt werden hier nur
   Weltreise, Stammbesetzung, Überraschung und Enttäuschung gegenüber IMDb,
   Geheimtipp, Regal, Höchstnote, Filmtyp, Abspann-Plakat. Nur, wenn meine
   Bewertungen veröffentlicht sind.
+- **Ich gegen IMDb**: meine Note gegen die IMDb-Wertung – Schwarm je Note
+  (umschaltbar auf Cover, zoombar, Darüberfahren zeigt den Titel),
+  „Einig mit der Welt", „Nach Genre" (Klick setzt den Filter), „Meine
+  Geheimtipps" und „Von mir unterschätzt". Die Schwelle kommt aus dem
+  Dashboard; der Schieber gilt nur für den Besuch. Nur, wenn meine
+  Bewertungen veröffentlicht sind.
 - **Detailseite** je Titel: „Meine Bewertung" als Leuchtreklame, Knöpfe zu
   IMDb und WerStreamt.es (zeigt, wo der Titel im Stream läuft), die
   wichtigsten Angaben samt Besetzung, Wertungen, Freigabe, Land und Sprache;
@@ -108,7 +114,7 @@ der Link).
 
 ```
 Gebaut aus dem Dashboard (npm run build:site):
-  index.html             Kinothek (Titel, Zeitleiste, Genres, Besetzung, Heute, Filmjahr), Kinovorhang
+  index.html             Kinothek (Titel, Zeitleiste, Genres, Besetzung, Heute, Filmjahr, Ich gegen IMDb), Kinovorhang
   movie.html             Detailseite eines Titels (?id=…)
   titel.html             Weiterleitung alter Links auf movie.html
   werkzeug.html          Daten vorbereiten: Sicherung → sammlung.json

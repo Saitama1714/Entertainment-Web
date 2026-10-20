@@ -26,6 +26,7 @@ import { initTimeline } from "../ui/timeline.js";
 import { initConstellation } from "../ui/constellation.js";
 import { initCast } from "../ui/cast.js";
 import { initFilmYear } from "../ui/film-year.js";
+import { initDuel } from "../ui/duel.js";
 import { runCastFetch, readCastFetch, enableCastFetch, castFetchActive } from "../cast-fetch.js";
 import { readCastData, castStatus, creditsOf, personKey } from "../logic/cast-logic.js";
 import { readEntertainmentView } from "../logic/view-logic.js";
@@ -34,14 +35,15 @@ import { startSitePage, startSiteCollection, siteLoadFailed } from "../site/site
 import { siteSortOptions, SITE_DEFAULT_SORT } from "../site/site-logic.js";
 
 /*
- * Seite „Entertainment" (views/movies.html): sechs Registerkarten - "Titel"
+ * Seite „Entertainment" (views/movies.html): sieben Registerkarten - "Titel"
  * (Raster mit Suche, Filter-Chips, Sortierung, IMDb-Import, Cover-Nachladen),
  * "Zeitleiste" (Cover Flow + Zeitleiste, js/ui/timeline.js), "Sternbild"
  * (Genres als zoombare Karte, js/ui/constellation.js), "Besetzung" (Netz der
  * Menschen hinter den Titeln, js/ui/cast.js) - alle mit derselben
  * Suche und denselben Filtern, ohne Sortierung -, "Heute" (Zahlen und
- * Roulette, js/ui/stats.js) und "Filmjahr" (Jahresrückblick in Karten,
- * js/ui/film-year.js; ohne Suche und Filter). Filter und Sortierung gelten nur für
+ * Roulette, js/ui/stats.js), "Filmjahr" (Jahresrückblick in Karten,
+ * js/ui/film-year.js; ohne Suche und Filter) und "Du gegen IMDb" (eigene
+ * Note gegen IMDb, js/ui/duel.js; mit Suche und Filtern, ohne Sortierung). Filter und Sortierung gelten nur für
  * die laufende Sitzung. Der Kinovorhang steht hier
  * wie auf der Übersicht an den Rändern, aber immer schon geöffnet.
  *
@@ -92,6 +94,10 @@ let constellation = null;
 let filmYear = null;
 const syncFilmYear = () => filmYear?.update(state.movies, state.castData);
 
+// Du gegen IMDb: dieselbe gesuchte und gefilterte Liste wie das Raster
+let duel = null;
+let thresholdTimer = 0;
+
 // Gemerkte Ansicht (Registerkarte, Ansichten, Ausschnitt des Sternbilds) -
 // nur auf diesem Rechner, Suche und Filter bleiben bewusst Sitzungssache
 let view = {};
@@ -124,6 +130,7 @@ function renderMovies({ animate = false } = {}) {
   const sorted = sortMovies(filtered, sortKey, sortDirection);
   timelineList = filtered;
   syncTimeline();
+  duel?.update(filtered, { filtered: Boolean(query.trim()) || hasActiveFilters(filters) });
   syncCast(query, filtered);
 
   const empty = state.movies.length === 0
@@ -258,7 +265,7 @@ function closeToolsMenu() {
 }
 
 /**
- * Registerkarten „Titel" / „Zeitleiste" / „Genres" / „Besetzung" / „Heute" / „Filmjahr": Klick oder
+ * Registerkarten „Titel" / „Zeitleiste" / „Genres" / „Besetzung" / „Heute" / „Filmjahr" / „Du gegen IMDb": Klick oder
  * Pfeiltasten (ARIA-Tablist-Muster, direkte Aktivierung) wechseln Reiter und
  * zugehöriges Panel. Suche und Filter stehen über den Panels und gelten für
  * „Titel", „Zeitleiste", „Genres" und „Besetzung"; bei „Heute" und „Filmjahr" sind sie ausgeblendet.
@@ -288,6 +295,7 @@ function initTabs(initial) {
     if (tabName === "constellation") constellation.show();
     if (tabName === "cast") cast.show();
     if (tabName === "year") filmYear.show();
+    if (tabName === "duel") duel.show();
     rememberView({ tab: tabName });
   };
 
@@ -551,10 +559,26 @@ async function init() {
     onCameraChange: camera => rememberView({ camera }),
     onShowTitles: showGenresInGrid,
   });
-  if (SITE && !has("rating")) { $("#tab-year").remove(); $("#year-panel").remove(); } // Website ohne Bewertungen: kein Filmjahr
+  if (SITE && !has("rating")) { // Website ohne Bewertungen: kein Filmjahr, kein „Ich gegen IMDb"
+    for (const id of ["#tab-year", "#year-panel", "#tab-duel", "#duel-panel"]) $(id).remove();
+  }
   else {
     filmYear = initFilmYear($("#year-panel"));
     syncFilmYear();
+    duel = initDuel($("#duel-panel"), {
+      threshold: state.duelThreshold,
+      onThreshold: value => {
+        state.duelThreshold = value;
+        if (SITE) return; // Website: nur für diesen Besuch
+        clearTimeout(thresholdTimer);
+        thresholdTimer = setTimeout(() => saveDashboardData({ duelThreshold: value }), 300);
+      },
+      onGenre: name => {
+        filters = { ...filters, genres: [name], genresAll: [] };
+        renderMovies({ animate: false });
+        $("#entertainment-controls").scrollIntoView({ block: "start", behavior: reducedMotion() ? "auto" : "smooth" });
+      },
+    });
   }
   bindEvents();
   initTabs(view.tab);

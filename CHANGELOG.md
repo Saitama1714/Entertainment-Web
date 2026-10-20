@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.19.0 – Ich gegen IMDb (Dashboard 2.37)
+- Neue Registerkarte „Ich gegen IMDb“: meine Note gegen die IMDb-Wertung als
+  Schwarm (umschaltbar auf Cover, zoombar), „Einig mit der Welt“, „Nach
+  Genre“ und die Listen „Meine Geheimtipps“ / „Von mir unterschätzt“.
+- Die Schwelle für die Listen kommt mit der `sammlung.json` aus dem Dashboard
+  (`duelThreshold`, ältere Dateien: 1,5); Besucher können sie für ihren
+  Besuch verschieben.
+
 ## 1.18.0 – Mein Filmjahr (Dashboard 2.36)
 - Neue Registerkarte „Filmjahr“: „Mein Filmjahr“ als Jahresrückblick in bis
   zu 18 Karten (Zahlen, Gewohnheiten, Geschmack, Höhepunkte, Filmtyp,

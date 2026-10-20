@@ -44,6 +44,7 @@ const DEFAULTS = {
   autoBackupPending: false,      // intern: Titel geändert, Sicherung steht noch aus
   entertainmentView: null,       // gemerkte Ansicht unter Entertainment (js/logic/view-logic.js), nur dieser Rechner
   castData: {},                  // Besetzung von OMDb je IMDb-Kennung (js/logic/cast-logic.js) - Teil der Sicherung
+  duelThreshold: 1.5,            // „Du gegen IMDb": ab diesem Abstand Geheimtipp/unterschätzt (js/logic/duel-logic.js) - kommt auf die Website
   castFetch: null,               // Abruf der Besetzung: {enabled, pausedUntil, lastError, activeAt} (js/cast-fetch.js)
 };
 const KEYS = Object.keys(DEFAULTS);

@@ -25,6 +25,7 @@
  */
 import { newMovie } from "../collection.js";
 import { readCastData } from "./cast-logic.js";
+import { readThreshold } from "./duel-logic.js";
 
 /** Diese Felder sind immer dabei (öffentliche Angaben von IMDb plus Cover). */
 export const BASE_FIELDS = [
@@ -133,7 +134,7 @@ function publicCast(movies, castData) {
  * @param {Object<string, boolean>} [options] - Häkchen je OPTIONAL_GROUPS-Schlüssel.
  * @param {{now?: Date, access?: {salt: string, hash: string}|null}} [context] - access:
  *   Prüfwert des Passworts (js/logic/access-logic.js), null = ohne Passwort.
- * @returns {{version: 1, generatedAt: string, exportedAt: string, include: string[], importWindowDays: number, decor: string, movies: object[], cast: object, access?: object}}
+ * @returns {{version: 1, generatedAt: string, exportedAt: string, include: string[], importWindowDays: number, decor: string, movies: object[], cast: object, duelThreshold: number, access?: object}}
  */
 export function buildPublicData(backup, options = defaultOptions(), { now = new Date(), access = null } = {}) {
   const movies = readBackup(backup);
@@ -150,6 +151,8 @@ export function buildPublicData(backup, options = defaultOptions(), { now = new 
     decor: typeof backup.data.curtainIcon === "string" ? backup.data.curtainIcon : "",
     movies: movies.map(movie => publicMovie(movie, fields)),
     cast: publicCast(movies, backup.data.castData),
+    // Schwelle unter „Du gegen IMDb" wie im Dashboard eingestellt (seit 2.37)
+    duelThreshold: readThreshold(backup.data.duelThreshold),
     // Nur der Prüfwert, nie das Passwort selbst
     ...(access ? { access: { salt: access.salt, hash: access.hash } } : {}),
   };

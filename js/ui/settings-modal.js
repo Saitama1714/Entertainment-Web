@@ -20,6 +20,7 @@ import { AUTO_BACKUP_FOLDER, AUTO_BACKUP_KEEP } from "../logic/auto-backup-logic
 import { readCastData, castStatus, dropEmptyCast } from "../logic/cast-logic.js";
 import { readCastFetch, enableCastFetch, disableCastFetch, castFetchActive } from "../cast-fetch.js";
 import { logoMotionSettingsHtml, bindLogoMotionSettings } from "./logo-motion-settings.js";
+import { UNIVERSE_INTRO_OPTIONS, DEFAULT_UNIVERSE_INTRO } from "../logic/universe-logic.js";
 import { setLogoMotion } from "./brand-medallion.js";
 
 /** "Datenstand: 22.09.2026 (vor 3 Tagen)" oder Hinweis, dass noch nichts importiert wurde. */
@@ -108,6 +109,14 @@ export function openSettingsModal(state, onImported) {
         <input type="checkbox" id="projector-dust-check" ${state.projectorDust === false ? "" : "checked"}>
         Lichtkegel mit Staub im Kopf der Übersicht
       </label>
+      <label class="field intro-field">Urknall im Filmuniversum
+        <select id="universe-intro-select">
+          ${UNIVERSE_INTRO_OPTIONS.map(option =>
+            `<option value="${option.value}" ${(state.universeIntro || DEFAULT_UNIVERSE_INTRO) === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`
+          ).join("")}
+        </select>
+      </label>
+      <p class="meta">Beim Öffnen von Entertainment → Filmuniversum fliegen die Sterne aus der Mitte an ihren Platz. Mit „Bewegung reduzieren“ im System nie.</p>
       ${logoMotionSettingsHtml(state.logoMotion)}
     </section>
 
@@ -258,6 +267,12 @@ export function openSettingsModal(state, onImported) {
     }
     setLogoMotion(motion, { preview });
   });
+  $("#universe-intro-select").onchange = async event => {
+    state.universeIntro = event.target.value;
+    await saveDashboardData({ universeIntro: state.universeIntro });
+    showToast("Gespeichert.", "success");
+  };
+
   $("#projector-dust-check").onchange = async event => {
     state.projectorDust = event.target.checked;
     await saveDashboardData({ projectorDust: state.projectorDust });

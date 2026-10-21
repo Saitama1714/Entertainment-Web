@@ -23,8 +23,7 @@ import { openOrphanCleanup } from "../ui/orphan-cleanup.js";
 import { renderImportReminder } from "../ui/import-reminder.js";
 import { initCurtain } from "../ui/curtain.js";
 import { initTimeline } from "../ui/timeline.js";
-import { initConstellation } from "../ui/constellation.js";
-import { initCast } from "../ui/cast.js";
+import { initUniverse } from "../ui/universe.js";
 import { initFilmYear } from "../ui/film-year.js";
 import { initDuel } from "../ui/duel.js";
 import { runCastFetch, readCastFetch, enableCastFetch, castFetchActive } from "../cast-fetch.js";
@@ -35,11 +34,10 @@ import { startSitePage, startSiteCollection, siteLoadFailed } from "../site/site
 import { siteSortOptions, SITE_DEFAULT_SORT } from "../site/site-logic.js";
 
 /*
- * Seite „Entertainment" (views/movies.html): sieben Registerkarten - "Titel"
+ * Seite „Entertainment" (views/movies.html): sechs Registerkarten - "Titel"
  * (Raster mit Suche, Filter-Chips, Sortierung, IMDb-Import, Cover-Nachladen),
- * "Zeitleiste" (Cover Flow + Zeitleiste, js/ui/timeline.js), "Sternbild"
- * (Genres als zoombare Karte, js/ui/constellation.js), "Besetzung" (Netz der
- * Menschen hinter den Titeln, js/ui/cast.js) - alle mit derselben
+ * "Zeitleiste" (Cover Flow + Zeitleiste, js/ui/timeline.js), "Filmuniversum"
+ * (Genres und Besetzung in einem All, js/ui/universe.js) - beide mit derselben
  * Suche und denselben Filtern, ohne Sortierung -, "Heute" (Zahlen und
  * Roulette, js/ui/stats.js), "Filmjahr" (Jahresrückblick in Karten,
  * js/ui/film-year.js; ohne Suche und Filter) und "Du gegen IMDb" (eigene
@@ -75,20 +73,12 @@ function syncTimeline() {
   if (!timeline) return;
   if (timelineVisible()) { timeline.update(timelineList); timelineStale = false; }
   else timelineStale = true;
-  constellation?.update(timelineList); // zeichnet selbst erst, wenn sichtbar
 }
 
-// Besetzung: gefilterte Titel ohne Suche - die Suche hebt dort Personen hervor
-// (nach Namen oder weil sie an einem gefundenen Titel mitgewirkt haben)
-let cast = null;
-function syncCast(query, searchedFiltered) {
-  if (!cast) return;
-  const unsearched = filterMovies(state.movies, filters);
-  cast.update(unsearched, query, new Set(query.trim() ? searchedFiltered.map(movie => movie.id) : []));
-}
-
-// Sternbild: dieselbe gesuchte und gefilterte Liste
-let constellation = null;
+// Filmuniversum: dieselbe gesuchte und gefilterte Liste; die Lage im All
+// kommt aus der ganzen Kinothek (alles bleibt an seinem Platz)
+let universe = null;
+const syncUniverse = (query, filtered) => universe?.update({ all: state.movies, filtered, query, castData: state.castData });
 
 // Filmjahr: immer die ganze Kinothek (ohne Suche und Filter)
 let filmYear = null;
@@ -98,7 +88,7 @@ const syncFilmYear = () => filmYear?.update(state.movies, state.castData);
 let duel = null;
 let thresholdTimer = 0;
 
-// Gemerkte Ansicht (Registerkarte, Ansichten, Ausschnitt des Sternbilds) -
+// Gemerkte Ansicht (Registerkarte, Ansichten) -
 // nur auf diesem Rechner, Suche und Filter bleiben bewusst Sitzungssache
 let view = {};
 let viewTimer = 0;
@@ -131,7 +121,7 @@ function renderMovies({ animate = false } = {}) {
   timelineList = filtered;
   syncTimeline();
   duel?.update(filtered, { filtered: Boolean(query.trim()) || hasActiveFilters(filters) });
-  syncCast(query, filtered);
+  syncUniverse(query, filtered);
 
   const empty = state.movies.length === 0
     ? emptyState(SITE ? "Hier sind noch keine Titel veröffentlicht." : "Noch nichts importiert. Deine IMDb-Listen holst du über „Mehr“ → „IMDb-Listen importieren“.")
@@ -265,10 +255,10 @@ function closeToolsMenu() {
 }
 
 /**
- * Registerkarten „Titel" / „Zeitleiste" / „Genres" / „Besetzung" / „Heute" / „Filmjahr" / „Du gegen IMDb": Klick oder
+ * Registerkarten „Titel" / „Zeitleiste" / „Filmuniversum" / „Heute" / „Filmjahr" / „Du gegen IMDb": Klick oder
  * Pfeiltasten (ARIA-Tablist-Muster, direkte Aktivierung) wechseln Reiter und
  * zugehöriges Panel. Suche und Filter stehen über den Panels und gelten für
- * „Titel", „Zeitleiste", „Genres" und „Besetzung"; bei „Heute" und „Filmjahr" sind sie ausgeblendet.
+ * „Titel", „Zeitleiste", „Filmuniversum" und „Du gegen IMDb"; bei „Heute" und „Filmjahr" sind sie ausgeblendet.
  */
 function initTabs(initial) {
   const tabs = $$(".view-tab");
@@ -292,8 +282,7 @@ function initTabs(initial) {
       if (timelineStale) { timeline.update(timelineList); timelineStale = false; }
       timeline.show();
     }
-    if (tabName === "constellation") constellation.show();
-    if (tabName === "cast") cast.show();
+    if (tabName === "universe") universe.show();
     if (tabName === "year") filmYear.show();
     if (tabName === "duel") duel.show();
     rememberView({ tab: tabName });
@@ -322,7 +311,7 @@ function initTabs(initial) {
 let selectTab = () => {};
 
 /**
- * Aus dem Sternbild: „Im Raster zeigen" - ein Genre als normaler Genre-Filter,
+ * Aus dem Filmuniversum (Galaxie): „Im Raster zeigen" - ein Genre als normaler Genre-Filter,
  * eine Schnittmenge als eigener Filter (alle Genres zugleich). Suche und
  * übrige Filter weichen, damit genau diese Titel zu sehen sind.
  * @param {string[]} genres
@@ -336,7 +325,7 @@ function showGenresInGrid(genres) {
 }
 
 /**
- * Aus „Besetzung": „Im Raster zeigen" - die Titel einer Person als eigener
+ * Aus dem Filmuniversum (Dossier eines Menschen): „Im Raster zeigen" - die Titel einer Person als eigener
  * Filter (Knopf „Mit …"). Suche und übrige Filter weichen.
  * @param {string[]} ids
  * @param {string} name
@@ -381,6 +370,13 @@ function refocusChip(category, value) {
 function bindEvents() {
   // Debounce: verhindert, dass bei jedem Tastendruck das Raster neu entsteht.
   $("#movie-search").oninput = debounce(() => renderMovies({ animate: true }), CONFIG.SEARCH_DEBOUNCE_MS);
+  // Filmuniversum: Enter in der Suche fliegt zum ersten Treffer
+  $("#movie-search").addEventListener("keydown", event => {
+    if (event.key !== "Enter" || $("#universe-panel")?.hidden !== false) return;
+    event.preventDefault();
+    renderMovies();
+    universe?.flyToMatch();
+  });
   initShortcuts({ search: $("#movie-search"), onSearchCleared: () => renderMovies({ animate: true }) });
   initSortControl({
     select: $("#movie-sort"), button: $("#movie-sort-dir"), options: sortOptions,
@@ -486,28 +482,28 @@ function scheduleCastFetch() {
 
 /** Zeile unter dem Netz: Stand des Abrufs, ggf. mit Knopf zum Starten. */
 function renderCastStatus() {
-  if (!cast) return;
+  if (!universe) return;
   if (SITE) { // Website: nichts abzurufen - höchstens der Hinweis, dass die Besetzung noch fehlt
-    cast.setStatus(Object.keys(state.castData).length ? "" : "Darsteller und Drehbuch kommen mit der nächsten Aktualisierung der Kinothek dazu – bis dahin nur die Regie.");
+    universe.setStatus(Object.keys(state.castData).length ? "" : "Darsteller und Drehbuch kommen mit der nächsten Aktualisierung der Kinothek dazu – bis dahin nur die Regie.");
     return;
   }
   const { total, done, remaining } = castStatus(state.movies, state.castData);
   const n = value => value.toLocaleString("de-DE");
   const fetch = state.castFetch;
   const progress = total ? done / total : null;
-  if (!total) { cast.setStatus(""); return; }
-  if (!state.omdbApiKey) { cast.setStatus("Darsteller und Drehbuch brauchen den OMDb-Schlüssel (Einstellungen → Entertainment)."); return; }
+  if (!total) { universe.setStatus(""); return; }
+  if (!state.omdbApiKey) { universe.setStatus("Darsteller und Drehbuch brauchen den OMDb-Schlüssel (Einstellungen → Entertainment)."); return; }
   if (!fetch.enabled) {
-    cast.setStatus(remaining ? `Bisher nur Regie${done ? ` und Besetzung für ${n(done)} von ${n(total)} Titeln` : ""}.` : "Besetzung vollständig.",
+    universe.setStatus(remaining ? `Bisher nur Regie${done ? ` und Besetzung für ${n(done)} von ${n(total)} Titeln` : ""}.` : "Besetzung vollständig.",
       { action: remaining ? `Besetzung laden (${n(remaining)} Titel)` : "", progress: done ? progress : null });
     return;
   }
-  if (fetch.lastError) { cast.setStatus(`Besetzung: angehalten – ${fetch.lastError}`, { progress }); return; }
-  if (!remaining) { cast.setStatus("Besetzung vollständig – neue Titel kommen von selbst dazu."); return; }
+  if (fetch.lastError) { universe.setStatus(`Besetzung: angehalten – ${fetch.lastError}`, { progress }); return; }
+  if (!remaining) { universe.setStatus("Besetzung vollständig – neue Titel kommen von selbst dazu."); return; }
   const paused = fetch.pausedUntil && Date.parse(fetch.pausedUntil) > Date.now();
-  if (paused) { cast.setStatus(`Besetzung: ${n(done)} von ${n(total)} Titeln geladen · OMDb-Tageslimit erreicht, morgen geht es von selbst weiter`, { progress }); return; }
-  if (castFetchRunning || castFetchActive(fetch)) { cast.setStatus(`Besetzung wird geladen: ${n(done)} von ${n(total)} Titeln`, { progress }); return; }
-  cast.setStatus(`Besetzung: ${n(done)} von ${n(total)} Titeln geladen · geht beim nächsten Öffnen weiter`, { progress });
+  if (paused) { universe.setStatus(`Besetzung: ${n(done)} von ${n(total)} Titeln geladen · OMDb-Tageslimit erreicht, morgen geht es von selbst weiter`, { progress }); return; }
+  if (castFetchRunning || castFetchActive(fetch)) { universe.setStatus(`Besetzung wird geladen: ${n(done)} von ${n(total)} Titeln`, { progress }); return; }
+  universe.setStatus(`Besetzung: ${n(done)} von ${n(total)} Titeln geladen · geht beim nächsten Öffnen weiter`, { progress });
 }
 
 /** Lädt den Zustand, zeichnet die Seite, spielt ggf. die Lösch-Animation und öffnet ggf. den Import. */
@@ -542,22 +538,17 @@ async function init() {
   });
   state.castData = readCastData(state.castData);
   state.castFetch = readCastFetch(state.castFetch);
-  cast = initCast($("#cast-panel"), {
-    mode: view.constellationMode || "rated",
-    onShowTitles: showPersonInGrid,
+  universe = initUniverse($("#universe-panel"), {
+    mode: view.universeMode,
+    onModeChange: mode => rememberView({ universeMode: mode }),
+    onShowGenre: genre => showGenresInGrid([genre]),
+    onShowPerson: showPersonInGrid,
     onStartFetch: async () => {
       if (!state.omdbApiKey) { showToast("Dafür fehlt der OMDb-Schlüssel (Einstellungen).", "warning"); return; }
       state.castFetch = await enableCastFetch();
       startCastFetch();
     },
-  });
-  cast.setCastData(state.castData);
-  constellation = initConstellation($("#constellation-panel"), {
-    mode: view.constellationMode,
-    onModeChange: mode => { rememberView({ constellationMode: mode }); cast.setMode(mode); },
-    camera: view.camera,
-    onCameraChange: camera => rememberView({ camera }),
-    onShowTitles: showGenresInGrid,
+    introMode: () => state.universeIntro,
   });
   if (SITE && !has("rating")) { // Website ohne Bewertungen: kein Filmjahr, kein „Ich gegen IMDb"
     for (const id of ["#tab-year", "#year-panel", "#tab-duel", "#duel-panel"]) $(id).remove();
@@ -605,9 +596,9 @@ async function init() {
     if (area !== "local") return;
     if (changes.castData) {
       state.castData = readCastData(changes.castData.newValue);
-      cast.setCastData(state.castData);
       syncFilmYear();
       if ($("#movie-search").value.trim()) renderMovies(); // Suche findet jetzt auch die neuen Darsteller
+      else syncUniverse("", timelineList); // das Filmuniversum bekommt die neue Besetzung
       renderCastStatus();
     }
     if (changes.castFetch) {

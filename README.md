@@ -30,10 +30,11 @@ Website mit dem Dashboard gleichziehen soll. Von Hand gepflegt werden hier nur
   nach Erscheinen oder (wenn veröffentlicht) nach dem Tag meiner Bewertung;
   Klick aufs mittlere Cover zeigt den Abstand dazwischen. Suche und Filter
   wirken mit.
-- **Genres**: die Genres als zoombare Karte – Sterne, Galaxien, Cover.
-  Ein Genre antippen umrandet alle seine Titel; Cover führen zur Detailseite.
-- **Besetzung**: das Netz der Menschen hinter den Titeln (Regie, Darsteller,
-  Drehbuch), Rangliste „Meine Stammbesetzung" und Personenkarten.
+- **Filmuniversum**: die Kinothek als All – jedes Genre eine Galaxie, jeder
+  Titel ein Stern, dazwischen die Menschen (Regie, Darsteller, Drehbuch).
+  Stufenlos zoombar bis zu den Covern; Galaxien und Menschen öffnen ein
+  Dossier, „Meine Stammbesetzung" als Rangliste, Titel führen zur
+  Detailseite. Beim ersten Öffnen im Besuch der „Urknall"; am Handy hochkant.
 - **Heute**: Gesamt/Gesehen/Offen und „Was schaue ich heute?" – eingrenzen
   (Laufzeit, Art, Medium, Genre), ziehen, Cover-Roulette.
 - **Filmjahr**: „Mein Filmjahr" – Jahresrückblick in Karten zum
@@ -114,7 +115,7 @@ der Link).
 
 ```
 Gebaut aus dem Dashboard (npm run build:site):
-  index.html             Kinothek (Titel, Zeitleiste, Genres, Besetzung, Heute, Filmjahr, Ich gegen IMDb), Kinovorhang
+  index.html             Kinothek (Titel, Zeitleiste, Filmuniversum, Heute, Filmjahr, Ich gegen IMDb), Kinovorhang
   movie.html             Detailseite eines Titels (?id=…)
   titel.html             Weiterleitung alter Links auf movie.html
   werkzeug.html          Daten vorbereiten: Sicherung → sammlung.json

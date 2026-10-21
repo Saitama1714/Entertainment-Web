@@ -23,6 +23,7 @@ const DEFAULTS = {
   clickEffect: "zoom",           // Klick-Animation für Links: "zoom" | "off"
   clickDuration: 450,            // Dauer der Klick-Animation in ms: 250 | 450 | 800
   projectorDust: true,           // Lichtkegel mit Staub im Kopf der Übersicht (js/ui/projector-dust.js)
+  universeIntro: "session",      // Urknall im Filmuniversum: "session" | "always" | "hourly" | "every2h" | "daily" | "off" (js/logic/universe-logic.js)
   logoMotion: null,              // Logo-Animation {mode, effects, tempo} (js/logic/logo-motion-logic.js); null = Standard
   lastImdbImportAt: "",          // Datenstand des letzten IMDb-Imports (ISO)
   importReminderDays: 30,        // Erinnerung nach so vielen Tagen, 0 = nie

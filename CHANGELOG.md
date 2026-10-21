@@ -1,5 +1,15 @@
 # Änderungen
 
+## 1.20.0 – Filmuniversum (Dashboard 2.38)
+- „Genres“ und „Besetzung“ sind jetzt eine Registerkarte: das
+  „Filmuniversum“. Genres als Galaxien, Titel als Sterne, die Menschen
+  dahinter dazwischen – stufenlos zoombar bis zu den Covern.
+- Dossiers für Galaxien und Menschen (Titel kreisen um die Person,
+  Weggefährten außen), „Meine Stammbesetzung“ als Rangliste im Dossier,
+  Suche lässt passende Menschen pulsieren.
+- „Urknall“ beim ersten Öffnen im Besuch; „Weniger Bewegung“ lässt ihn weg.
+- Am Handy liegt das All hochkant. Schneller als vorher (Canvas).
+
 ## 1.19.0 – Ich gegen IMDb (Dashboard 2.37)
 - Neue Registerkarte „Ich gegen IMDb“: meine Note gegen die IMDb-Wertung als
   Schwarm (umschaltbar auf Cover, zoombar), „Einig mit der Welt“, „Nach

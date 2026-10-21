@@ -1,8 +1,7 @@
 /*
  * Gemerkte Ansicht unter Entertainment (gespeichert als `entertainmentView`
  * in chrome.storage.local, nur auf diesem Rechner - nicht in Sicherungen):
- * offene Registerkarte, Ansicht der Zeitleiste und des Sternbilds und der
- * Ausschnitt des Sternbilds. Suche und Filter bleiben bewusst nur für die
+ * offene Registerkarte und die Ansicht von Zeitleiste und Filmuniversum. Suche und Filter bleiben bewusst nur für die
  * Sitzung (beim nächsten Öffnen ist die Sammlung wieder ungefiltert).
  * Getestet in tests/view.test.mjs.
  *
@@ -12,44 +11,31 @@
  */
 import { emptyFilters } from "./movies-logic.js";
 
-export const VIEW_TABS = ["titles", "timeline", "constellation", "cast", "stats", "year", "duel"];
+export const VIEW_TABS = ["titles", "timeline", "universe", "stats", "year", "duel"];
+/** Früher eigene Registerkarten, heute im Filmuniversum (2.38). */
+const MERGED_TABS = { constellation: "universe", cast: "universe" };
 const TIMELINE = ["release", "rated"];
-const CONSTELLATION = ["rated", "all"];
+const UNIVERSE = ["rated", "all"];
 
 /**
  * Liest einen gespeicherten Wert; alles Unbekannte oder Kaputte fällt weg.
+ * Ältere Werte („constellation", „cast", constellationMode) führen ins
+ * Filmuniversum.
  * @param {*} value
- * @returns {{tab?: string, timelineMode?: string, constellationMode?: string,
- *   camera?: {sig: string, cx: number, cy: number, w: number},
+ * @returns {{tab?: string, timelineMode?: string, universeMode?: string,
  *   browse?: {query: string, filters: object, sortKey: string, sortDirection: string}}}
  */
 export function readEntertainmentView(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   const view = {};
-  if (VIEW_TABS.includes(value.tab)) view.tab = value.tab;
+  const tab = MERGED_TABS[value.tab] || value.tab;
+  if (VIEW_TABS.includes(tab)) view.tab = tab;
   if (TIMELINE.includes(value.timelineMode)) view.timelineMode = value.timelineMode;
-  if (CONSTELLATION.includes(value.constellationMode)) view.constellationMode = value.constellationMode;
-  const cam = value.camera;
-  if (cam && typeof cam.sig === "string" && [cam.cx, cam.cy, cam.w].every(Number.isFinite) && cam.w > 0) {
-    view.camera = { sig: cam.sig, cx: cam.cx, cy: cam.cy, w: cam.w };
-  }
+  const universeMode = value.universeMode ?? value.constellationMode;
+  if (UNIVERSE.includes(universeMode)) view.universeMode = universeMode;
   const browse = readBrowse(value.browse);
   if (browse) view.browse = browse;
   return view;
-}
-
-/**
- * Kurzer Fingerabdruck eines Sternbilds: Ein gemerkter Ausschnitt gilt nur,
- * solange die Karte gleich aussieht (gleiche Ansicht, Titel und Sterne).
- * @param {string} mode
- * @param {Array<{id: string}>} items
- * @param {Array<{name: string}>} genres
- */
-export function constellationSignature(mode, items, genres) {
-  const text = `${mode}|${items.length}|${genres.map(g => g.name).join(",")}|${items.map(i => i.id).join(",")}`;
-  let h = 2166136261;
-  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
-  return `${items.length}-${(h >>> 0).toString(36)}`;
 }
 
 /** Suche, Filter und Sortierung der Website (nur bekannte Werte). */

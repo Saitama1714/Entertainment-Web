@@ -558,6 +558,7 @@ async function init() {
     syncFilmYear();
     duel = initDuel($("#duel-panel"), {
       threshold: state.duelThreshold,
+      introMode: () => state.duelIntro,
       onThreshold: value => {
         state.duelThreshold = value;
         if (SITE) return; // Website: nur für diesen Besuch

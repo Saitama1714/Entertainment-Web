@@ -34,7 +34,7 @@ Website mit dem Dashboard gleichziehen soll. Von Hand gepflegt werden hier nur
   Titel ein Stern, dazwischen die Menschen (Regie, Darsteller, Drehbuch).
   Stufenlos zoombar bis zu den Covern; Galaxien und Menschen öffnen ein
   Dossier, „Meine Stammbesetzung" als Rangliste, Titel führen zur
-  Detailseite. Beim ersten Öffnen im Besuch der „Urknall"; am Handy hochkant.
+  Detailseite. Beim Öffnen der „Urknall" (höchstens einmal pro Stunde); am Handy hochkant.
 - **Heute**: Gesamt/Gesehen/Offen und „Was schaue ich heute?" – eingrenzen
   (Laufzeit, Art, Medium, Genre), ziehen, Cover-Roulette.
 - **Filmjahr**: „Mein Filmjahr" – Jahresrückblick in Karten zum
@@ -43,12 +43,16 @@ Website mit dem Dashboard gleichziehen soll. Von Hand gepflegt werden hier nur
   Weltreise, Stammbesetzung, Überraschung und Enttäuschung gegenüber IMDb,
   Geheimtipp, Regal, Höchstnote, Filmtyp, Abspann-Plakat. Nur, wenn meine
   Bewertungen veröffentlicht sind.
-- **Ich gegen IMDb**: meine Note gegen die IMDb-Wertung – Schwarm je Note
-  (umschaltbar auf Cover, zoombar, Darüberfahren zeigt den Titel),
-  „Einig mit der Welt", „Nach Genre" (Klick setzt den Filter), „Meine
-  Geheimtipps" und „Von mir unterschätzt". Die Schwelle kommt aus dem
-  Dashboard; der Schieber gilt nur für den Besuch. Nur, wenn meine
-  Bewertungen veröffentlicht sind.
+- **Ich gegen IMDb – „Das Duell"**: meine Note gegen die IMDb-Wertung als
+  Showdown auf dunkler Bühne – ich in der goldenen Ecke, die Welt in der
+  silbernen, Ring „einig mit der Welt" und Urteil-Stempel; Kampfwerte
+  (Filme, Serien, Jahrzehnte, meine Zehner), das Feld (jeder Titel ein
+  Punkt, waagerecht der Abstand, Zoom bis zu den Covern), „Zwölf Runden"
+  (Genres, Klick setzt den Filter) und die Plädoyers „Meine Geheimtipps" /
+  „Von mir unterschätzt". Die Schwelle kommt aus dem Dashboard; Knöpfe und
+  Markierungen gelten nur für den Besuch. Beim Öffnen der Auftritt
+  (höchstens einmal pro Stunde). Nur, wenn meine Bewertungen veröffentlicht
+  sind.
 - **Detailseite** je Titel: „Meine Bewertung" als Leuchtreklame, Knöpfe zu
   IMDb und WerStreamt.es (zeigt, wo der Titel im Stream läuft), die
   wichtigsten Angaben samt Besetzung, Wertungen, Freigabe, Land und Sprache;

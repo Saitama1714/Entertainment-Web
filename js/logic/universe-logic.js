@@ -272,8 +272,9 @@ export function matchPeople(u, query, visible) {
 }
 
 /*
- * Urknall beim Öffnen: Einstellung wie beim Kinovorhang plus „einmal pro
- * Sitzung" (Standard). Gibt zurück, ob er spielt, und was zu merken ist.
+ * Urknall beim Öffnen (auch der Auftritt in „Du gegen IMDb"): Einstellung wie
+ * beim Kinovorhang plus „einmal pro Sitzung"; Standard jede Stunde. Gibt
+ * zurück, ob er spielt, und was zu merken ist.
  */
 export const UNIVERSE_INTRO_OPTIONS = [
   { value: "session", label: "Einmal pro Sitzung" },
@@ -283,7 +284,7 @@ export const UNIVERSE_INTRO_OPTIONS = [
   { value: "daily", label: "Einmal am Tag" },
   { value: "off", label: "Nie" },
 ];
-export const DEFAULT_UNIVERSE_INTRO = "session";
+export const DEFAULT_UNIVERSE_INTRO = "hourly";
 
 /**
  * @param {string} mode

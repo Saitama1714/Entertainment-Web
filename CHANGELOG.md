@@ -1,5 +1,16 @@
 # Änderungen
 
+## 1.21.0 – Das Duell (Dashboard 2.39)
+- „Ich gegen IMDb“ neu gestaltet: Plakat mit goldener und silberner Ecke,
+  Ring „einig mit der Welt“ und Urteil-Stempel; Kampfwerte; das Feld statt
+  des Schwarms (Abstand als Achse, Zoom bis zu den Covern, Schwelle auch
+  an den Markierungen ziehbar); „Zwölf Runden“ nach Genre; Plädoyers mit den
+  drei deutlichsten Titeln als Plakat.
+- Auftritt beim Öffnen (Titel fliegen ins Feld, Stempel fällt); „Bewegung
+  reduzieren“ lässt ihn weg.
+- Urknall im Filmuniversum und der Auftritt spielen höchstens einmal pro
+  Stunde.
+
 ## 1.20.0 – Filmuniversum (Dashboard 2.38)
 - „Genres“ und „Besetzung“ sind jetzt eine Registerkarte: das
   „Filmuniversum“. Genres als Galaxien, Titel als Sterne, die Menschen

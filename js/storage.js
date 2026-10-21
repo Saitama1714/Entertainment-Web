@@ -19,11 +19,12 @@ const DEFAULTS = {
   movies: [],                    // Einträge unter Entertainment (Aufbau: collection.js/newMovie)
   omdbApiKey: "",
   curtainIcon: "popcorn",        // Deko unten links, siehe CURTAIN_ICONS
-  introMode: "always",           // Kinovorhang: "always" | "hourly" | "every2h" | "daily" | "off"
+  introMode: "hourly",           // Kinovorhang: "always" | "hourly" | "every2h" | "daily" | "off"
   clickEffect: "zoom",           // Klick-Animation für Links: "zoom" | "off"
   clickDuration: 450,            // Dauer der Klick-Animation in ms: 250 | 450 | 800
   projectorDust: true,           // Lichtkegel mit Staub im Kopf der Übersicht (js/ui/projector-dust.js)
-  universeIntro: "session",      // Urknall im Filmuniversum: "session" | "always" | "hourly" | "every2h" | "daily" | "off" (js/logic/universe-logic.js)
+  universeIntro: "hourly",       // Urknall im Filmuniversum: "session" | "always" | "hourly" | "every2h" | "daily" | "off" (js/logic/universe-logic.js)
+  duelIntro: "hourly",           // Auftritt in „Du gegen IMDb": Werte wie universeIntro (js/logic/duel-logic.js)
   logoMotion: null,              // Logo-Animation {mode, effects, tempo} (js/logic/logo-motion-logic.js); null = Standard
   lastImdbImportAt: "",          // Datenstand des letzten IMDb-Imports (ISO)
   importReminderDays: 30,        // Erinnerung nach so vielen Tagen, 0 = nie
@@ -89,7 +90,7 @@ export async function loadState() {
 export function syncBootMirror(state) {
   try {
     localStorage.setItem("dashboard:theme", state.theme || "dark");
-    localStorage.setItem("dashboard:intro-mode", state.introMode || "always");
+    localStorage.setItem("dashboard:intro-mode", state.introMode || "hourly");
   } catch {
     // localStorage nicht verfügbar - nur der Start ist dann nicht optimiert
   }

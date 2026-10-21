@@ -21,6 +21,7 @@ import { readCastData, castStatus, dropEmptyCast } from "../logic/cast-logic.js"
 import { readCastFetch, enableCastFetch, disableCastFetch, castFetchActive } from "../cast-fetch.js";
 import { logoMotionSettingsHtml, bindLogoMotionSettings } from "./logo-motion-settings.js";
 import { UNIVERSE_INTRO_OPTIONS, DEFAULT_UNIVERSE_INTRO } from "../logic/universe-logic.js";
+import { DEFAULT_DUEL_INTRO } from "../logic/duel-logic.js";
 import { setLogoMotion } from "./brand-medallion.js";
 
 /** "Datenstand: 22.09.2026 (vor 3 Tagen)" oder Hinweis, dass noch nichts importiert wurde. */
@@ -117,6 +118,14 @@ export function openSettingsModal(state, onImported) {
         </select>
       </label>
       <p class="meta">Beim Öffnen von Entertainment → Filmuniversum fliegen die Sterne aus der Mitte an ihren Platz. Mit „Bewegung reduzieren“ im System nie.</p>
+      <label class="field intro-field">Auftritt in „Du gegen IMDb“
+        <select id="duel-intro-select">
+          ${UNIVERSE_INTRO_OPTIONS.map(option =>
+            `<option value="${option.value}" ${(state.duelIntro || DEFAULT_DUEL_INTRO) === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`
+          ).join("")}
+        </select>
+      </label>
+      <p class="meta">Die Titel fliegen aus beiden Ecken ins Feld, der Ring füllt sich, der Stempel fällt. Mit „Bewegung reduzieren“ im System nie.</p>
       ${logoMotionSettingsHtml(state.logoMotion)}
     </section>
 
@@ -270,6 +279,11 @@ export function openSettingsModal(state, onImported) {
   $("#universe-intro-select").onchange = async event => {
     state.universeIntro = event.target.value;
     await saveDashboardData({ universeIntro: state.universeIntro });
+    showToast("Gespeichert.", "success");
+  };
+  $("#duel-intro-select").onchange = async event => {
+    state.duelIntro = event.target.value;
+    await saveDashboardData({ duelIntro: state.duelIntro });
     showToast("Gespeichert.", "success");
   };
 

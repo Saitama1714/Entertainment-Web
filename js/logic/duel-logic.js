@@ -1,11 +1,11 @@
 /*
- * „Du gegen IMDb" (Registerkarte unter Entertainment): eigene Note gegen
- * IMDb-Wertung - wie einig, wo deutlich anders, in welchen Genres milder
- * oder strenger als sonst. Dazu die Anordnung der Punkte als Schwarm (je
- * Note eine Säule, nach IMDb-Wertung aufgefächert). Reine Funktionen,
- * getestet in tests/duel.test.mjs; Oberfläche in js/ui/duel.js.
+ * „Du gegen IMDb" – „Das Duell" (Registerkarte unter Entertainment): eigene
+ * Note gegen IMDb-Wertung - wie einig, wo deutlich anders, in welchen Genres
+ * milder oder strenger als sonst, die Kampfwerte je Bereich und die Lage
+ * der Titel im Feld (Abstand als Achse). Reine Funktionen, getestet in
+ * tests/duel.test.mjs; Oberfläche in js/ui/duel.js.
  */
-import { genresOf } from "./movies-logic.js";
+import { genresOf, titleKind } from "./movies-logic.js";
 import { ownScore } from "./detail-logic.js";
 
 /** Schwelle für „Geheimtipps" und „Unterschätzt": 0,5 bis 3 in halben Punkten. */
@@ -100,64 +100,116 @@ export function genreBias(entries) {
   return { mean, min, list };
 }
 
+/* ------------------------------------------------------------ Das Feld */
+
+/** Ein Abstand je Spalte im Feld (0,1 Punkte). */
+export const FIELD_STEP = 0.1;
+
+/** Ausschnitt der Abstandsachse: mindestens −2 bis +2, ganze Punkte, etwas Luft. */
+export function fieldDomain(entries) {
+  const diffs = entries.map(e => e.diff);
+  const min = diffs.length ? Math.min(...diffs) : 0, max = diffs.length ? Math.max(...diffs) : 0;
+  return { lo: Math.min(-2, Math.floor(min - 0.15)), hi: Math.max(2, Math.ceil(max + 0.15)) };
+}
+
 /*
- * Schwarm: je Note (1–10) eine Säule; senkrecht die IMDb-Wertung. Punkte,
- * die sich überdecken würden, weichen abwechselnd nach links und rechts aus
- * (Abstand `gap`). Passt einer nicht mehr in die Säule, landet er an einer
- * festen, aus der Kennung abgeleiteten Stelle in der Säule (überlappt dann
- * leicht, aber gleichmäßig verteilt statt als Wand am Rand). Koordinaten im
- * Diagramm-Raster.
+ * Lage im Feld: waagerecht der Abstand (links die Welt höher, rechts du),
+ * Titel mit gleichem Abstand stapeln sich von der Mittellinie aus - die
+ * bekanntesten (meiste Stimmen) innen. Jede Zelle hat Platz für ein Cover
+ * (2:3), Punkte sitzen in ihrer Mitte. Bei breiten Spalten zwei Titel
+ * nebeneinander, sonst einer. Koordinaten in Pixeln, y relativ zur Mitte.
  */
-export const CHART = { width: 760, height: 470, left: 46, top: 14, right: 14, bottom: 40, imdbMin: 1, imdbMax: 10.2 };
+export function fieldLayout(entries, { width = 1000, minCell = 12 } = {}) {
+  const { lo, hi } = fieldDomain(entries);
+  const bins = Math.max(1, Math.round((hi - lo) / FIELD_STEP));
+  const binW = width / bins;
+  const cols = binW >= minCell ? 2 : 1;
+  const cellW = binW / cols;
+  const coverW = cellW * 0.86, coverH = coverW * 1.5;
+  const cellH = coverH + Math.max(1, cellW * 0.16);
+  const xOf = diff => (diff - lo) / (hi - lo) * width;
+  const groups = new Map();
+  for (const entry of entries) {
+    const key = Math.round(entry.diff / FIELD_STEP);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(entry);
+  }
+  const points = [];
+  let maxRows = 0;
+  for (const [key, items] of [...groups].sort((a, b) => a[0] - b[0])) {
+    items.sort((a, b) => votesOf(b.movie) - votesOf(a.movie) || String(a.movie.id).localeCompare(String(b.movie.id)));
+    const rows = Math.ceil(items.length / cols), mid = (rows - 1) / 2;
+    maxRows = Math.max(maxRows, rows);
+    const order = Array.from({ length: rows }, (_, r) => r).sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid) || a - b);
+    const cx = xOf(key * FIELD_STEP);
+    items.forEach((entry, k) => {
+      const slot = Math.floor(k / cols), col = k % cols;
+      const inRow = Math.min(cols, items.length - slot * cols); // unvollständige Reihe mittig
+      points.push({ entry, x: Math.round((cx + (col - (inRow - 1) / 2) * cellW) * 10) / 10, y: Math.round((order[slot] - mid) * cellH * 10) / 10 });
+    });
+  }
+  return { lo, hi, width, cols, cellW, cellH, coverW, coverH, maxRows, height: maxRows * cellH, points, xOf };
+}
 
-/** Feste Zahl 0–1 je Kennung (FNV-1a) - gleiche Daten, gleiches Bild. */
-const spread = id => {
-  let h = 2166136261;
-  for (const c of String(id)) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
-  return (h >>> 0) / 4294967295;
-};
+/* ------------------------------------------------------- Die Kampfwerte */
 
-/** x-Mitte der Säule einer Note und y einer IMDb-Wertung. */
-export function chartScales(chart = CHART) {
-  const w = chart.width - chart.left - chart.right;
-  const h = chart.height - chart.top - chart.bottom;
-  return {
-    x: note => chart.left + (note - 0.5) / 10 * w,
-    y: imdb => chart.top + h - (Math.min(chart.imdbMax, Math.max(chart.imdbMin, imdb)) - chart.imdbMin) / (chart.imdbMax - chart.imdbMin) * h,
-    column: w / 10,
-  };
+const mean = list => list.reduce((s, v) => s + v, 0) / list.length;
+const side = rows => ({ count: rows.length, you: mean(rows.map(e => e.you)), imdb: mean(rows.map(e => e.imdb)) });
+
+/**
+ * Kampfwerte: Ø eigene Note und Ø IMDb je Bereich, aus den Daten gewählt -
+ * insgesamt, Filme und Serien (wenn es beide gibt), das mildeste und das
+ * strengste Jahrzehnt (genug Titel vorausgesetzt) und die eigenen Zehner.
+ * @returns {Array<{key: "all"|"films"|"series"|"mild-decade"|"strict-decade"|"tens", count, you, imdb, decade?: number}>}
+ */
+export function tapeRows(entries) {
+  if (!entries.length) return [];
+  const rows = [{ key: "all", ...side(entries) }];
+  const min = entries.length >= 200 ? 15 : 5;
+  const films = entries.filter(e => titleKind(e.movie) === "film"), series = entries.filter(e => titleKind(e.movie) === "series");
+  if (films.length >= min && series.length >= min) rows.push({ key: "films", ...side(films) }, { key: "series", ...side(series) });
+  const decades = new Map();
+  for (const e of entries) {
+    const year = Number.parseInt(e.movie.year, 10);
+    if (!(year > 1800)) continue;
+    const d = Math.floor(year / 10) * 10;
+    if (!decades.has(d)) decades.set(d, []);
+    decades.get(d).push(e);
+  }
+  const ranked = [...decades].filter(([, list]) => list.length >= min)
+    .map(([decade, list]) => ({ decade, ...side(list), diff: mean(list.map(e => e.diff)) }))
+    .sort((a, b) => b.diff - a.diff || b.decade - a.decade);
+  if (ranked.length >= 2) {
+    const { diff: _a, ...mild } = ranked[0], { diff: _b, ...strict } = ranked[ranked.length - 1];
+    rows.push({ key: "mild-decade", ...mild }, { key: "strict-decade", ...strict });
+  }
+  const tens = entries.filter(e => e.you === 10);
+  if (tens.length >= 3) rows.push({ key: "tens", ...side(tens) });
+  return rows;
 }
 
 /**
- * Lage aller Punkte.
- * @param {Array} entries - aus duelEntries
- * @param {{gapX?: number, gapY?: number, chart?: object}} [options]
- * @returns {Array<{entry, x: number, y: number}>} in der Reihenfolge der Säulen
+ * Was das Plakat erzählt: wie oft auf den Zehntel genau einig (mit dem
+ * bekanntesten Beispiel), die wildesten Ausreißer in beide Richtungen, die
+ * Zehner, das härteste eigene Urteil und die höchste IMDb-Wertung.
  */
-export function swarmLayout(entries, { gapX = 4.4, gapY = 4.4, chart = CHART } = {}) {
-  const { x: xOf, y: yOf, column } = chartScales(chart);
-  const half = column / 2 - 3;
-  const out = [];
-  for (let note = 1; note <= 10; note++) {
-    const cx = xOf(note);
-    const items = entries.filter(e => e.you === note)
-      .sort((a, b) => b.imdb - a.imdb || String(a.movie.id).localeCompare(String(b.movie.id)));
-    const placed = [];
-    for (const entry of items) {
-      const y = yOf(entry.imdb);
-      // nur Nachbarn in Reichweite prüfen (nach y sortiert)
-      const near = [];
-      for (let i = placed.length - 1; i >= 0 && Math.abs(placed[i].y - y) < gapY; i--) near.push(placed[i].x);
-      let x = cx;
-      for (let k = 0; ; k++) {
-        const offset = (k % 2 ? 1 : -1) * Math.ceil(k / 2) * gapX;
-        if (Math.abs(offset) > half) { x = cx + (spread(entry.movie.id) * 2 - 1) * half; break; }
-        x = cx + offset;
-        if (!near.some(px => Math.abs(px - x) < gapX - 0.01)) break;
-      }
-      placed.push({ entry, x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 });
-    }
-    out.push(...placed);
-  }
-  return out;
+export function duelHighlights(entries) {
+  const byVotes = (a, b) => votesOf(b.movie) - votesOf(a.movie) || String(a.movie.title).localeCompare(String(b.movie.title), "de");
+  const exact = entries.filter(e => e.diff === 0).sort(byVotes);
+  const pick = (cmp) => entries.length ? [...entries].sort((a, b) => cmp(a, b) || byVotes(a, b))[0] : null;
+  return {
+    exact: exact.length,
+    exactExample: exact[0] || null,
+    wildest: pick((a, b) => b.diff - a.diff),
+    harshest: pick((a, b) => a.diff - b.diff),
+    tens: entries.filter(e => e.you === 10).length,
+    lowest: entries.length ? Math.min(...entries.map(e => e.you)) : null,
+    imdbTop: pick((a, b) => b.imdb - a.imdb),
+  };
 }
+
+/** Der Stempel: „Der milde Richter" usw. (null bei zu wenig Titeln). */
+export const VERDICTS = { mild: "Der milde Richter", strict: "Der strenge Richter", fair: "Der faire Richter" };
+
+/** Auftritt beim Öffnen (Punkte fliegen ein, Ring, Stempel): Standard jede Stunde. */
+export const DEFAULT_DUEL_INTRO = "hourly";

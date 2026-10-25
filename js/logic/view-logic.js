@@ -1,7 +1,8 @@
 /*
  * Gemerkte Ansicht unter Entertainment (gespeichert als `entertainmentView`
  * in chrome.storage.local, nur auf diesem Rechner - nicht in Sicherungen):
- * offene Registerkarte und die Ansicht von Zeitleiste und Filmuniversum. Suche und Filter bleiben bewusst nur für die
+ * offene Registerkarte, die Ansicht von Zeitleiste und Filmuniversum sowie
+ * Ziel und Mindestnote im Reiter „Upgrade". Suche und Filter bleiben bewusst nur für die
  * Sitzung (beim nächsten Öffnen ist die Sammlung wieder ungefiltert).
  * Getestet in tests/view.test.mjs.
  *
@@ -11,7 +12,7 @@
  */
 import { emptyFilters } from "./movies-logic.js";
 
-export const VIEW_TABS = ["titles", "timeline", "universe", "stats", "year", "duel"];
+export const VIEW_TABS = ["titles", "timeline", "universe", "stats", "year", "duel", "upgrade"];
 /** Früher eigene Registerkarten, heute im Filmuniversum (2.38). */
 const MERGED_TABS = { constellation: "universe", cast: "universe" };
 const TIMELINE = ["release", "rated"];
@@ -22,7 +23,7 @@ const UNIVERSE = ["rated", "all"];
  * Ältere Werte („constellation", „cast", constellationMode) führen ins
  * Filmuniversum.
  * @param {*} value
- * @returns {{tab?: string, timelineMode?: string, universeMode?: string,
+ * @returns {{tab?: string, timelineMode?: string, universeMode?: string, upgradeTarget?: string, upgradeMin?: number,
  *   browse?: {query: string, filters: object, sortKey: string, sortDirection: string}}}
  */
 export function readEntertainmentView(value) {
@@ -33,6 +34,8 @@ export function readEntertainmentView(value) {
   if (TIMELINE.includes(value.timelineMode)) view.timelineMode = value.timelineMode;
   const universeMode = value.universeMode ?? value.constellationMode;
   if (UNIVERSE.includes(universeMode)) view.universeMode = universeMode;
+  if (["4k", "bd"].includes(value.upgradeTarget)) view.upgradeTarget = value.upgradeTarget;
+  if ([7, 8, 9].includes(value.upgradeMin)) view.upgradeMin = value.upgradeMin;
   const browse = readBrowse(value.browse);
   if (browse) view.browse = browse;
   return view;

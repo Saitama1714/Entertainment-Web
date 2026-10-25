@@ -24,6 +24,7 @@ import { startSitePage, startSiteDetail } from "../site/site-page.js";
 import { SITE_DEFAULT_SORT } from "../site/site-logic.js";
 import { siteView } from "../site/site-data.js";
 import { SITE_TITLE } from "../site/site-constants.js";
+import { skipOf, setUpgradeItem } from "../logic/upgrade-logic.js";
 
 /*
  * Detailseite eines Eintrags (views/movie.html?id=…): alle Angaben,
@@ -142,12 +143,20 @@ function render() {
     has("notes") ? field("Notizen", movie.notes) : "",
   ].join("");
 
+  // „Upgrade" (nur Dashboard): zurückgestellte Titel hier einzeln zurücksetzen
+  const skip = SITE ? null : skipOf(state.upgradeList, movie.id);
+  const skipDay = skip?.at ? new Date(skip.at).toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" }) : "";
+  const upgradeNote = skip ? `<p class="detail-upgrade" id="detail-upgrade">
+          <span><b>Upgrade:</b> zurückgestellt${skipDay && skipDay !== "Invalid Date" ? ` seit ${escapeHtml(skipDay)}` : ""} – erscheint unter „Upgrade“ nicht, weder für 4K noch für Blu-ray.</span>
+          <button class="small-button" id="upgrade-reset">Zurücksetzen</button></p>` : "";
+
   $("#movie-details").innerHTML = `
         ${summary ? `<div class="detail-summary">${summary}</div>` : ""}
         <div class="detail-bar">
           ${has("rating") ? ratingHtml() : ""}
           <div class="detail-buttons">${links}${links && edit ? `<span class="detail-sep" aria-hidden="true"></span>` : ""}${edit}</div>
         </div>
+        ${upgradeNote}
         <dl class="details-grid">${facts}</dl>
         ${more ? `<details class="detail-more"><summary>Mehr Details</summary><dl class="details-grid">${more}</dl></details>` : ""}`;
   for (const img of $$(".detail-favicon")) img.addEventListener("error", () => img.remove(), { once: true });
@@ -209,6 +218,13 @@ function renderCover() {
 
 /** Knöpfe der Detailseite: Bearbeiten, Löschen, Cover ändern, Cover neu laden. */
 function bindActions() {
+  const reset = $("#upgrade-reset");
+  if (reset) reset.onclick = async () => {
+    state.upgradeList = setUpgradeItem(state.upgradeList, movie.id);
+    await saveDashboardData({ upgradeList: state.upgradeList });
+    showToast("Zurückgesetzt – „Upgrade“ prüft den Titel wieder.", "success");
+    render();
+  };
   $("#edit-movie").onclick = () => {
     openMovieForm(state, movie, () => {
       movie = state.movies.find(item => item.id === movie.id);

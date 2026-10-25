@@ -26,6 +26,7 @@ import { initTimeline } from "../ui/timeline.js";
 import { initUniverse } from "../ui/universe.js";
 import { initFilmYear } from "../ui/film-year.js";
 import { initDuel } from "../ui/duel.js";
+import { initUpgrade } from "../ui/upgrade.js";
 import { runCastFetch, readCastFetch, enableCastFetch, castFetchActive } from "../cast-fetch.js";
 import { readCastData, castStatus, creditsOf, personKey } from "../logic/cast-logic.js";
 import { readEntertainmentView } from "../logic/view-logic.js";
@@ -80,9 +81,10 @@ function syncTimeline() {
 let universe = null;
 const syncUniverse = (query, filtered) => universe?.update({ all: state.movies, filtered, query, castData: state.castData });
 
-// Filmjahr: immer die ganze Kinothek (ohne Suche und Filter)
+// Filmjahr und Upgrade: immer die ganze Kinothek (ohne Suche und Filter)
 let filmYear = null;
-const syncFilmYear = () => filmYear?.update(state.movies, state.castData);
+let upgrade = null;
+const syncFilmYear = () => { filmYear?.update(state.movies, state.castData); upgrade?.update(state.movies); };
 
 // Du gegen IMDb: dieselbe gesuchte und gefilterte Liste wie das Raster
 let duel = null;
@@ -255,10 +257,10 @@ function closeToolsMenu() {
 }
 
 /**
- * Registerkarten „Titel" / „Zeitleiste" / „Filmuniversum" / „Heute" / „Filmjahr" / „Du gegen IMDb": Klick oder
+ * Registerkarten „Titel" / „Zeitleiste" / „Filmuniversum" / „Heute" / „Filmjahr" / „Du gegen IMDb" / „Upgrade": Klick oder
  * Pfeiltasten (ARIA-Tablist-Muster, direkte Aktivierung) wechseln Reiter und
  * zugehöriges Panel. Suche und Filter stehen über den Panels und gelten für
- * „Titel", „Zeitleiste", „Filmuniversum" und „Du gegen IMDb"; bei „Heute" und „Filmjahr" sind sie ausgeblendet.
+ * „Titel", „Zeitleiste", „Filmuniversum" und „Du gegen IMDb"; bei „Heute", „Filmjahr" und „Upgrade" sind sie ausgeblendet.
  */
 function initTabs(initial) {
   const tabs = $$(".view-tab");
@@ -276,7 +278,7 @@ function initTabs(initial) {
     const bar = target.parentElement;
     if (bar.scrollWidth > bar.clientWidth) bar.scrollLeft = Math.max(0, target.offsetLeft - (bar.clientWidth - target.offsetWidth) / 2);
     const controls = $("#entertainment-controls");
-    controls.hidden = tabName === "stats" || tabName === "year";
+    controls.hidden = tabName === "stats" || tabName === "year" || tabName === "upgrade";
     controls.dataset.view = tabName;
     if (tabName === "timeline") {
       if (timelineStale) { timeline.update(timelineList); timelineStale = false; }
@@ -285,6 +287,7 @@ function initTabs(initial) {
     if (tabName === "universe") universe.show();
     if (tabName === "year") filmYear.show();
     if (tabName === "duel") duel.show();
+    if (tabName === "upgrade") upgrade?.show();
     rememberView({ tab: tabName });
   };
 
@@ -571,6 +574,23 @@ async function init() {
         $("#entertainment-controls").scrollIntoView({ block: "start", behavior: reducedMotion() ? "auto" : "smooth" });
       },
     });
+  }
+  if (!SITE && $("#upgrade-panel")) { // nur Dashboard: Einkaufsliste bleibt privat
+    upgrade = initUpgrade($("#upgrade-panel"), {
+      target: view.upgradeTarget,
+      min: view.upgradeMin,
+      list: state.upgradeList,
+      onView: patch => rememberView(patch),
+      onList: (list, done) => {
+        state.upgradeList = list;
+        saveDashboardData({ upgradeList: list });
+        for (const item of done) {
+          const movie = state.movies.find(m => m.id === item.id);
+          if (movie) showToast(`„${movie.title}“ ist jetzt als ${item.target === "4k" ? "4K" : "Blu-ray"} da – vom Auftragsschein abgehakt.`, "success");
+        }
+      },
+    });
+    upgrade.update(state.movies);
   }
   bindEvents();
   initTabs(view.tab);

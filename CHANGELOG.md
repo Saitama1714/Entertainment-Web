@@ -1,5 +1,10 @@
 # Änderungen
 
+## 1.21.1 – Gleichstand mit Dashboard 2.40.1
+- Gebaut aus Dashboard 2.40.1. Keine sichtbaren Änderungen: Der neue Reiter
+  „Upgrade“ (mit Merkliste und „Nicht upgraden“) bleibt bewusst nur im
+  Dashboard; die Website enthält nur den gemeinsamen Code.
+
 ## 1.21.0 – Das Duell (Dashboard 2.39)
 - „Ich gegen IMDb“ neu gestaltet: Plakat mit goldener und silberner Ecke,
   Ring „einig mit der Welt“ und Urteil-Stempel; Kampfwerte; das Feld statt

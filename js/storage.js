@@ -46,6 +46,7 @@ const DEFAULTS = {
   autoBackupPending: false,      // intern: Titel geändert, Sicherung steht noch aus
   entertainmentView: null,       // gemerkte Ansicht unter Entertainment (js/logic/view-logic.js), nur dieser Rechner
   castData: {},                  // Besetzung von OMDb je IMDb-Kennung (js/logic/cast-logic.js) - Teil der Sicherung
+  upgradeList: [],               // „Upgrade": Merkliste [{id, target: "4k"|"bd", state: "wish"|"bought", at}] (js/logic/upgrade-logic.js) - nur Dashboard
   duelThreshold: 1.5,            // „Du gegen IMDb": ab diesem Abstand Geheimtipp/unterschätzt (js/logic/duel-logic.js) - kommt auf die Website
   castFetch: null,               // Abruf der Besetzung: {enabled, pausedUntil, lastError, activeAt} (js/cast-fetch.js)
 };

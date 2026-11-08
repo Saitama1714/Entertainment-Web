@@ -29,7 +29,8 @@ import { initDuel } from "../ui/duel.js";
 import { initUpgrade } from "../ui/upgrade.js";
 import { runCastFetch, readCastFetch, enableCastFetch, castFetchActive } from "../cast-fetch.js";
 import { readCastData, castStatus, creditsOf, personKey } from "../logic/cast-logic.js";
-import { readEntertainmentView } from "../logic/view-logic.js";
+import { readEntertainmentView, tabFromUrl } from "../logic/view-logic.js";
+import { refreshFoyer } from "../ui/foyer.js";
 import { SITE, has } from "../utils/host.js";
 import { startSitePage, startSiteCollection, siteLoadFailed } from "../site/site-page.js";
 import { siteSortOptions, SITE_DEFAULT_SORT } from "../site/site-logic.js";
@@ -116,6 +117,7 @@ function renderToolbar(searched) {
  *   geändert - die Cover gleiten an ihren neuen Platz (js/ui/grid-motion.js).
  */
 function renderMovies({ animate = false } = {}) {
+  refreshFoyer(state); // Saalschild im Foyer: Zahlen
   const query = $("#movie-search").value;
   const searched = searchMovies(state.movies, query, state.castData); // mit Darstellern und Drehbuch
   const filtered = filterMovies(searched, filters);
@@ -289,6 +291,7 @@ function initTabs(initial) {
     if (tabName === "duel") duel.show();
     if (tabName === "upgrade") upgrade?.show();
     rememberView({ tab: tabName });
+    window.dispatchEvent(new CustomEvent("dashboard:tab", { detail: { tab: tabName } })); // Foyer: Saalschild (js/ui/foyer.js)
   };
 
   tabs.forEach((tab, index) => {
@@ -307,7 +310,13 @@ function initTabs(initial) {
   });
   const start = tabs.find(tab => tab.id === `tab-${initial}`);
   if (start && start !== tabs[0]) select(start);
-  selectTab = name => select($(`#tab-${name}`));
+  else window.dispatchEvent(new CustomEvent("dashboard:tab", { detail: { tab: "titles" } }));
+  selectTab = name => { const tab = $(`#tab-${name}`); if (tab) select(tab); };
+  // Foyer: Spule und Saalschild wechseln den Saal (js/ui/foyer.js)
+  window.addEventListener("dashboard:select-tab", event => {
+    selectTab(event.detail?.tab);
+    window.scrollTo({ top: 0 }); // Saalschild oben im Blick
+  });
 }
 
 /** Wechselt die Registerkarte (gesetzt von initTabs). */
@@ -348,6 +357,10 @@ function showPersonInGrid(ids, name) {
  */
 function applyLinkFilter() {
   const params = new URLSearchParams(location.search);
+  if (params.has("view")) { // ?view=… (Spule im Foyer) - Reiter ist schon gewählt
+    params.delete("view");
+    history.replaceState(null, "", location.pathname + (params.toString() ? `?${params}` : ""));
+  }
   const genre = params.get("genre");
   const person = params.get("person");
   if (!genre && !person) return;
@@ -593,7 +606,7 @@ async function init() {
     upgrade.update(state.movies);
   }
   bindEvents();
-  initTabs(view.tab);
+  initTabs(tabFromUrl(location.search) || view.tab);
   applyLinkFilter();
   renderMovies();
   renderStats(state);

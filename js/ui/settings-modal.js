@@ -3,14 +3,13 @@ import { $, escapeHtml } from "../utils/dom.js";
 import { openModal, closeModal } from "../utils/modal.js";
 import { saveDashboardData, importDashboard, getDashboardData, syncBootMirror } from "../storage.js";
 import { showToast } from "../utils/toast.js";
-import { CURTAIN_ICONS, REMINDER_OPTIONS, INTRO_OPTIONS, CLICK_EFFECT_OPTIONS, CLICK_DURATION_OPTIONS } from "../utils/constants.js";
+import { REMINDER_OPTIONS, INTRO_OPTIONS, CLICK_EFFECT_OPTIONS, CLICK_DURATION_OPTIONS } from "../utils/constants.js";
 import { normalizeClickEffect, normalizeClickDuration } from "../logic/link-transition-logic.js";
 import { renderImportReminder } from "./import-reminder.js";
 import { formatDay, ageLabel } from "../utils/format.js";
 import { reminderStatus } from "../logic/imdb-import-logic.js";
 import { coverStoreStatus, requestCoverOrigins, storeMissingCovers } from "../cover-store.js";
-import { renderCornerDecoration, replayCurtain } from "./curtain.js";
-import { curtainIconSvg } from "./curtain-icons.js";
+import { replayCurtain } from "./curtain.js";
 import { openShortcutHelp } from "./shortcuts.js";
 import { downloadBackup, backupReminderStatus, renderBackupReminder } from "./backup.js";
 import { runAutoBackup } from "./auto-backup.js";
@@ -23,6 +22,58 @@ import { logoMotionSettingsHtml, bindLogoMotionSettings } from "./logo-motion-se
 import { UNIVERSE_INTRO_OPTIONS, DEFAULT_UNIVERSE_INTRO } from "../logic/universe-logic.js";
 import { DEFAULT_DUEL_INTRO } from "../logic/duel-logic.js";
 import { setLogoMotion } from "./brand-medallion.js";
+import { applyTheme } from "./app-shell.js";
+import { readDesign, FOYER_MIN_WIDTH } from "../logic/foyer-logic.js";
+
+/** Auswahl „Design": Kino-Noir oder Foyer (2.41), mit kleinem Vorschaubild. */
+function designPickerHtml(state) {
+  const design = readDesign(state.design);
+  const option = (value, name, desc) => `
+        <label class="design-option">
+          <input type="radio" name="design" value="${value}" ${design === value ? "checked" : ""}>
+          <span class="design-preview is-${value}" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="design-name">${name}</span>
+          <span class="design-desc">${desc}</span>
+        </label>`;
+  return `
+      <fieldset class="design-picker">
+        <legend>Design</legend>
+        <div class="design-options">
+          ${option("noir", "Kino-Noir", "Klassisch: Kopfleiste und Reiter")}
+          ${option("foyer", "Foyer", "Verspielt: Spule, Programmtafel, Säle")}
+        </div>
+      </fieldset>
+      <p class="meta">Am Handy und in schmalen Fenstern (unter ${FOYER_MIN_WIDTH} px) erscheint immer Kino-Noir; wer dort die Desktop-Ansicht wählt, sieht das Foyer. Das Foyer ist immer dunkel.</p>
+      <label class="field">Hell oder dunkel (Kino-Noir)
+        <select id="settings-theme-select">
+          ${[["dark", "Dunkel"], ["light", "Hell"], ["system", "Wie das System"]].map(([value, label]) =>
+            `<option value="${value}" ${state.theme === value ? "selected" : ""}>${label}</option>`).join("")}
+        </select>
+      </label>`;
+}
+
+/** Foyer: Einstellungen als „Vorführraum" mit Sprungleiste zu den Abschnitten. */
+function dressAsProjectionRoom() {
+  const modal = document.querySelector(".modal");
+  if (!modal || document.documentElement.dataset.skin !== "foyer") return;
+  modal.classList.add("modal--foyer");
+  const heading = modal.querySelector(".modal-header h2");
+  if (heading) heading.textContent = "Vorführraum";
+  modal.setAttribute("aria-label", "Vorführraum – Einstellungen");
+  const sections = [...modal.querySelectorAll(".form-section > h2[id]")];
+  const content = modal.querySelector(".modal-content");
+  content.insertAdjacentHTML("afterbegin", `<nav class="foyer-settings-nav" aria-label="Abschnitte">${sections.map(h2 =>
+    `<button type="button" class="foyer-settings-jump" data-jump="${h2.id}"><span class="foyer-lamp" aria-hidden="true"></span>${escapeHtml(h2.textContent)}</button>`).join("")}</nav>`);
+  const jumps = [...content.querySelectorAll(".foyer-settings-jump")];
+  const light = id => jumps.forEach(jump => jump.classList.toggle("is-current", jump.dataset.jump === id));
+  light(sections[0]?.id);
+  content.addEventListener("click", event => {
+    const jump = event.target.closest(".foyer-settings-jump");
+    if (!jump) return;
+    document.getElementById(jump.dataset.jump)?.closest(".form-section")?.scrollIntoView({ block: "start", behavior: "smooth" });
+    light(jump.dataset.jump);
+  });
+}
 
 /** "Datenstand: 22.09.2026 (vor 3 Tagen)" oder Hinweis, dass noch nichts importiert wurde. */
 function importStatusText(state) {
@@ -58,17 +109,7 @@ export function openSettingsModal(state, onImported) {
   openModal("Einstellungen", `
     <section class="form-section" aria-labelledby="settings-appearance">
       <h2 id="settings-appearance">Erscheinungsbild</h2>
-      <div class="decor-picker">
-        <label class="field">Dekoration am Bildschirmrand
-          <select id="curtain-icon-select">
-            ${CURTAIN_ICONS.map(option =>
-              `<option value="${option.value}" ${state.curtainIcon === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`
-            ).join("")}
-          </select>
-        </label>
-        <div class="decor-preview" id="decor-preview" aria-hidden="true"></div>
-      </div>
-      <p class="meta">Erscheint unten links, nachdem sich der Vorhang auf der Übersichtsseite geöffnet hat.</p>
+      ${designPickerHtml(state)}
       <div class="intro-picker">
         <label class="field intro-field">Kinovorhang
           <select id="intro-mode-select">
@@ -226,6 +267,7 @@ export function openSettingsModal(state, onImported) {
         <button class="small-button" type="button" id="auto-backup-now">Jetzt automatisch sichern</button>
       </div>
     </section>`);
+  dressAsProjectionRoom();
 
   $("#cancel-settings").onclick = closeModal;
 
@@ -238,19 +280,21 @@ export function openSettingsModal(state, onImported) {
     closeModal();
   };
 
-  // Vorschau neben dem Auswahlfeld: zeigt das gewählte Symbol und lässt es
-  // bei jedem Wechsel kurz aufspringen.
-  const preview = $("#decor-preview");
-  const showPreview = (name, animate) => {
-    const svg = curtainIconSvg(name, "-preview");
-    preview.classList.toggle("is-empty", !svg);
-    preview.innerHTML = svg || "<span>Aus</span>";
-    if (!animate) return;
-    preview.classList.remove("is-popping");
-    void preview.offsetWidth; // Reflow: Animation neu starten
-    preview.classList.add("is-popping");
+  // Design (Kino-Noir/Foyer) und Hell/Dunkel - gelten sofort
+  for (const radio of document.querySelectorAll('.modal input[name="design"]')) {
+    radio.onchange = async () => {
+      state.design = readDesign(radio.value);
+      await saveDashboardData({ design: state.design });
+      applyTheme(state); // setzt data-skin, das Foyer baut auf bzw. ab
+      const narrow = state.design === "foyer" && window.innerWidth < FOYER_MIN_WIDTH;
+      showToast(narrow ? "Foyer gewählt – erscheint in breiten Fenstern." : state.design === "foyer" ? "Willkommen im Foyer." : "Zurück in Kino-Noir.", "success");
+    };
+  }
+  $("#settings-theme-select").onchange = async event => {
+    state.theme = event.target.value;
+    await saveDashboardData({ theme: state.theme });
+    applyTheme(state);
   };
-  showPreview(state.curtainIcon, false);
 
   $("#intro-mode-select").onchange = async event => {
     state.introMode = event.target.value;
@@ -308,14 +352,6 @@ export function openSettingsModal(state, onImported) {
       replayCurtain();
     };
   }
-
-  $("#curtain-icon-select").onchange = async event => {
-    showPreview(event.target.value, true);
-    state.curtainIcon = event.target.value;
-    await saveDashboardData({ curtainIcon: state.curtainIcon });
-    renderCornerDecoration(state, { instant: true });
-    showToast("Dekoration aktualisiert.", "success");
-  };
 
   $("#reminder-select").onchange = async event => {
     state.importReminderDays = Number(event.target.value);

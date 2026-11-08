@@ -58,14 +58,3 @@ export const REMINDER_OPTIONS = [
   { value: 90, label: "Nach 3 Monaten" },
 ];
 
-/**
- * Wählbare Dekoration unten links auf der Startseite (siehe ui/curtain.js).
- * "none" zeigt keine Dekoration. Reihenfolge = Reihenfolge im Dropdown.
- */
-export const CURTAIN_ICONS = [
-  { value: "none", label: "Kein Symbol" },
-  { value: "popcorn", label: "Popcornbox" },
-  { value: "clapperboard", label: "Filmklappe" },
-  { value: "ticket", label: "Kinoticket" },
-  { value: "watermelon", label: "Wassermelone" },
-];

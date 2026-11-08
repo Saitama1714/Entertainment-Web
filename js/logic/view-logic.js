@@ -41,6 +41,18 @@ export function readEntertainmentView(value) {
   return view;
 }
 
+/**
+ * Reiter aus der Adresse (?view=…, z. B. aus der Spule im Foyer); unbekannte
+ * Werte und ältere Namen wie bei readEntertainmentView.
+ * @param {string} search - location.search
+ * @returns {string} Reitername oder ""
+ */
+export function tabFromUrl(search) {
+  const value = new URLSearchParams(search || "").get("view") || "";
+  const tab = MERGED_TABS[value] || value;
+  return VIEW_TABS.includes(tab) ? tab : "";
+}
+
 /** Suche, Filter und Sortierung der Website (nur bekannte Werte). */
 function readBrowse(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;

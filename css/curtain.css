@@ -1,9 +1,8 @@
 /* =========================================================================
    Kino-Intro der Startseite
    Zwei Vorhanghälften bedecken beim Laden den ganzen Bildschirm, öffnen sich
-   und bleiben am Rand stehen - genau bis zur Kante des Inhaltsbereichs.
-   Danach erscheint unten links die gewählte Dekoration. Beides ist reine
-   Dekoration: nicht klickbar, für Screenreader unsichtbar.
+   und bleiben als schmaler Streifen am Rand stehen. Reine Dekoration:
+   nicht klickbar, für Screenreader unsichtbar.
 
    „Lebendiger Stoff" wird mit WebGL gezeichnet (js/ui/curtain.js,
    js/ui/curtain-gl.js; js/boot.js setzt dafür <html data-curtain="fabric">).
@@ -15,7 +14,8 @@
    ========================================================================= */
 
 :root {
-  /* Sichtbare Breite je Hälfte im Ruhezustand: der freie Rand neben dem Inhalt */
+  /* Sichtbare Breite je Hälfte im Ruhezustand: der freie Rand neben dem Inhalt,
+     = (Fensterbreite − 1440) / 8, siehe --container-max in tokens.css */
   --curtain-rest: max(0px, calc((var(--viewport-w, 100vw) - var(--container-max)) / 2));
   /* Geschlossen: je eine Hälfte des Fensters, 2px Überlappung gegen einen Spalt */
   --curtain-closed: calc(var(--viewport-w, 100vw) / 2 + 2px);
@@ -185,97 +185,19 @@
 }
 
 /* =========================================================================
-   Ecken-Dekoration (Popcornbox, Filmklappe, Kinoticket, Wassermelone, ...)
-   Auswahl über Einstellungen -> Erscheinungsbild. Wird von js/ui/curtain.js
-   befüllt (render(CornerDecoration), Icon-Markup in curtain-icons.js).
-   ========================================================================= */
-
-.corner-decor {
-  position: fixed;
-  bottom: 18px;
-  left: calc(var(--curtain-rest) + 14px);
-  z-index: 39;
-  width: 64px;
-  pointer-events: none;
-  animation: corner-decor-in .55s cubic-bezier(.3, 1.45, .5, 1) 1.75s both;
-}
-
-.corner-decor svg { display: block; width: 100%; height: auto; overflow: visible; }
-
-/* Kleinteile, die zusätzlich nachträglich einzeln einpoppen (z. B. die
-   Popcorn-Kerne oder die Kerne der Wassermelone) - optional je Icon. */
-.corner-decor .pop-parts > * {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: kernel-pop .38s cubic-bezier(.3, 1.7, .5, 1) both;
-}
-
-.corner-decor .pop-parts > :nth-child(1) { animation-delay: 2.05s; }
-.corner-decor .pop-parts > :nth-child(2) { animation-delay: 2.12s; }
-.corner-decor .pop-parts > :nth-child(3) { animation-delay: 2.19s; }
-.corner-decor .pop-parts > :nth-child(4) { animation-delay: 2.26s; }
-.corner-decor .pop-parts > :nth-child(5) { animation-delay: 2.33s; }
-.corner-decor .pop-parts > :nth-child(6) { animation-delay: 2.40s; }
-.corner-decor .pop-parts > :nth-child(7) { animation-delay: 2.47s; }
-.corner-decor .pop-parts > :nth-child(8) { animation-delay: 2.54s; }
-
-@keyframes corner-decor-in {
-  from { opacity: 0; transform: translateY(28px) scale(.9); }
-  to   { opacity: 1; transform: none; }
-}
-
-@keyframes kernel-pop {
-  from { transform: scale(0); }
-  to   { transform: scale(1); }
-}
-
-/* WebGL-Abläufe und Vorschau (data-curtain-playing): Die Deko wartet, bis
-   js/ui/curtain.js sie freigibt (.is-cued) - die Abläufe sind unterschiedlich
-   lang. Danach springt sie wie gewohnt ein. */
-:root[data-curtain-playing] .corner-decor:not(.is-cued) { animation: none; opacity: 0; }
-:root[data-curtain-playing] .corner-decor:not(.is-cued) .pop-parts > * { animation: none; transform: scale(0); }
-.corner-decor.is-cued { animation-delay: 0s; }
-.corner-decor.is-cued .pop-parts > :nth-child(1) { animation-delay: .30s; }
-.corner-decor.is-cued .pop-parts > :nth-child(2) { animation-delay: .37s; }
-.corner-decor.is-cued .pop-parts > :nth-child(3) { animation-delay: .44s; }
-.corner-decor.is-cued .pop-parts > :nth-child(4) { animation-delay: .51s; }
-.corner-decor.is-cued .pop-parts > :nth-child(5) { animation-delay: .58s; }
-.corner-decor.is-cued .pop-parts > :nth-child(6) { animation-delay: .65s; }
-.corner-decor.is-cued .pop-parts > :nth-child(7) { animation-delay: .72s; }
-.corner-decor.is-cued .pop-parts > :nth-child(8) { animation-delay: .79s; }
-
-/* "Kein Symbol" gewählt: nichts anzeigen, auch nicht die leere Fläche */
-.corner-decor--empty { display: none; }
-
-/* Nachträgliche Änderung in den Einstellungen: sofort zeigen/verstecken,
-   ohne die Eintritts-Animation erneut abzuspielen (die ist an den
-   Seitenaufruf gebunden, nicht an diese Auswahl). */
-.corner-decor--instant { animation: none; opacity: 1; transform: none; }
-.corner-decor--instant .pop-parts > * { animation: none; transform: none; }
-
-/* In sehr schmalen Fenstern (angedockt, hoher Zoom) wäre die Box nur im Weg */
-@media (max-width: 680px) {
-  .corner-decor { display: none; }
-}
-
-/* =========================================================================
    Bewegung reduzieren: sofort der Endzustand, keine Animation
    ========================================================================= */
 
 /* Vorhang übersprungen (Einstellung "Einmal am Tag"/"Nie", und immer auf
    Entertainment; gesetzt von js/boot.js vor dem ersten Zeichnen): derselbe
    Endzustand wie bei reduzierter Bewegung. */
-:root[data-intro="skip"] .curtain,
-:root[data-intro="skip"] .corner-decor,
-:root[data-intro="skip"] .corner-decor .pop-parts > * {
+:root[data-intro="skip"] .curtain {
   animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root,
-  .curtain,
-  .corner-decor,
-  .corner-decor .pop-parts > * {
+  .curtain {
     animation: none;
   }
 }

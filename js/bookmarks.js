@@ -53,9 +53,9 @@ export async function loadBookmarks(state) {
  * Chrome-interne Adresse des Favicons zu einer Seite (Berechtigung "favicon").
  * @param {string} pageUrl
  */
-export function faviconUrl(pageUrl) {
+export function faviconUrl(pageUrl, size = 32) {
   const url = new URL(chrome.runtime.getURL("/_favicon/"));
   url.searchParams.set("pageUrl", pageUrl);
-  url.searchParams.set("size", "32");
+  url.searchParams.set("size", String(size));
   return url.toString();
 }

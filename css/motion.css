@@ -43,14 +43,6 @@
 
   .movie-card-cover.is-loading::before { animation: skeleton-shine 1.4s ease-in-out infinite; }
 
-  .decor-preview.is-popping svg { animation: decor-pop .42s cubic-bezier(.3, 1.6, .5, 1) both; }
-  .decor-preview.is-popping .pop-parts > * {
-    transform-box: fill-box; transform-origin: center;
-    animation: decor-part-pop .3s cubic-bezier(.3, 1.7, .5, 1) both;
-  }
-  .decor-preview.is-popping .pop-parts > :nth-child(2n) { animation-delay: .12s; }
-  .decor-preview.is-popping .pop-parts > :nth-child(3n) { animation-delay: .2s; }
-
   /* Cover Flow: Cover gleiten und drehen sich an ihren Platz */
   .coverflow-item { transition: transform .45s cubic-bezier(.2, .7, .3, 1), opacity .35s ease, filter .35s ease; }
 
@@ -62,6 +54,4 @@
 @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
 @keyframes modal-in { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
 @keyframes menu-in { from { opacity: 0; transform: translateY(-4px) } to { opacity: 1; transform: none } }
-@keyframes decor-pop { from { opacity: 0; transform: translateY(10px) scale(.7) } to { opacity: 1; transform: none } }
-@keyframes decor-part-pop { from { transform: scale(0) } to { transform: scale(1) } }
 @keyframes skeleton-shine { from { transform: translateX(-60%) } to { transform: translateX(90%) } }

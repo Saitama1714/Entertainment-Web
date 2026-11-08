@@ -195,7 +195,7 @@ function renderSimilar() {
   if (!similar.length) { section.innerHTML = ""; return; }
   const shared = similar[0].shared;
   section.innerHTML = `
-    <div class="section-head"><h2 id="similar-title">Ähnlich in ${own("deiner", "der")} Kinothek</h2>
+    <div class="section-head"><h2 id="similar-title">${document.documentElement.dataset.skin === "foyer" ? "Ebenfalls im Programm" : `Ähnlich in ${own("deiner", "der")} Kinothek`}</h2>
       <p class="meta">Gleiche Genres wie ${escapeHtml(shared.join(", "))}${similar.some(entry => entry.shared.length < shared.length) ? " – oder die meisten davon" : ""}, ${has("rating") ? own("deine", "meine") : "die"} besten zuerst</p></div>
     <div class="movie-grid similar-row">${movieGridHtml(similar.map(entry => entry.movie), "movie.html", "")}</div>`;
   settleCachedCovers(section);
@@ -361,6 +361,7 @@ async function init() {
 
   if (!movie) { showMissing(); return; }
   render();
+  window.addEventListener("dashboard:skin", () => { if (movie) renderSimilar(); }); // Foyer: „Ebenfalls im Programm"
 }
 
 init().finally(markReady); // <html data-ready> für die Browser-Tests

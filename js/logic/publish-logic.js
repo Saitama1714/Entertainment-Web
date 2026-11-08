@@ -147,8 +147,9 @@ export function buildPublicData(backup, options = defaultOptions(), { now = new 
     include,
     // Zeitraum des Filters "Import" wie im Dashboard eingestellt (Standard 28 Tage)
     importWindowDays: Number(backup.data.importWindowDays) > 0 ? Number(backup.data.importWindowDays) : 28,
-    // Dekoration unten links wie im Dashboard gewählt (Name aus CURTAIN_ICONS, "none" = keine)
-    decor: typeof backup.data.curtainIcon === "string" ? backup.data.curtainIcon : "",
+    // Die Ecken-Deko gibt es seit 2.41.3 nicht mehr; "none" schaltet sie auch auf
+    // einer Website ab, die noch mit älterem Code läuft (Format wächst nur)
+    decor: "none",
     movies: movies.map(movie => publicMovie(movie, fields)),
     cast: publicCast(movies, backup.data.castData),
     // Schwelle unter „Du gegen IMDb" wie im Dashboard eingestellt (seit 2.37)

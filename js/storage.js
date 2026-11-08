@@ -15,10 +15,10 @@ import { loadSiteState, saveSiteData } from "./site/site-data.js";
 /** Alle gespeicherten Werte mit ihren Standardwerten. Neue Einstellungen hier ergänzen. */
 const DEFAULTS = {
   theme: "dark",                 // "dark" (Standard) | "light" | "system"
+  design: "noir",                // Design: "noir" (Kino-Noir, Standard) | "foyer" (js/logic/foyer-logic.js; am Handy immer Kino-Noir)
   pinnedBookmarkIds: [],         // IDs der angehefteten Chrome-Lesezeichen (Reihenfolge = Anzeige)
   movies: [],                    // Einträge unter Entertainment (Aufbau: collection.js/newMovie)
   omdbApiKey: "",
-  curtainIcon: "popcorn",        // Deko unten links, siehe CURTAIN_ICONS
   introMode: "hourly",           // Kinovorhang: "always" | "hourly" | "every2h" | "daily" | "off"
   clickEffect: "zoom",           // Klick-Animation für Links: "zoom" | "off"
   clickDuration: 450,            // Dauer der Klick-Animation in ms: 250 | 450 | 800
@@ -92,6 +92,7 @@ export function syncBootMirror(state) {
   try {
     localStorage.setItem("dashboard:theme", state.theme || "dark");
     localStorage.setItem("dashboard:intro-mode", state.introMode || "hourly");
+    localStorage.setItem("dashboard:design", state.design || "noir");
   } catch {
     // localStorage nicht verfügbar - nur der Start ist dann nicht optimiert
   }

@@ -62,8 +62,8 @@ Website mit dem Dashboard gleichziehen soll. Von Hand gepflegt werden hier nur
   `titel.html?id=…` leiten weiter.
 - **Passwort** (wahlweise, im Werkzeug): Besucher sehen die Kinothek erst
   nach Eingabe; ihr Browser merkt sich das. Nur ein Sichtschutz, siehe unten.
-- **Filmzitat des Tages** über der Kinothek, **Ecken-Deko** wie im
-  Dashboard gewählt.
+- **Filmzitat des Tages** über der Kinothek. Der Kinovorhang bleibt als
+  schmaler Streifen am Rand stehen, die Kinothek nutzt die volle Breite.
 - **Ansicht** (oben rechts): Kinovorhang („Lebendiger Stoff") bei jedem
   Besuch / einmal am Tag / nie, Vorschau, Kachel-Zoom beim Klick (an/aus,
   Tempo), Logo-Animation (wann, welche Bewegungen, Tempo), Tastenkürzel. Design hell/dunkel/System. Gilt nur im

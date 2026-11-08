@@ -1,27 +1,6 @@
 import { $ } from "../utils/dom.js";
-import { CURTAIN_ICON_MARKUP } from "./curtain-icons.js";
 import { createCurtainTimeline, restFrame, restWidth } from "../logic/curtain-motion.js";
 import { createCurtainRenderer } from "./curtain-gl.js";
-
-/**
- * Zeigt die in den Einstellungen gewählte Dekoration unten links an (oder
- * blendet sie aus, wenn "Kein Symbol" gewählt ist).
- * @param {object} state - Dashboard-Zustand mit state.curtainIcon.
- * @param {object} [options]
- * @param {boolean} [options.instant=false] - true bei einer nachträglichen
- *   Änderung in den Einstellungen: zeigt/versteckt sofort, ohne die
- *   Eintritts-Animation erneut abzuspielen (die läuft nur beim ersten Laden
- *   der Seite ab, gesteuert allein über CSS).
- */
-export function renderCornerDecoration(state, { instant = false } = {}) {
-  const el = $("#corner-decor");
-  if (!el) return;
-
-  const markup = CURTAIN_ICON_MARKUP[state.curtainIcon];
-  el.classList.toggle("corner-decor--empty", !markup);
-  el.classList.toggle("corner-decor--instant", instant);
-  el.innerHTML = markup || "";
-}
 
 /*
  * Kino-Intro „Lebendiger Stoff" (Stile in css/curtain.css).
@@ -41,21 +20,18 @@ export function renderCornerDecoration(state, { instant = false } = {}) {
  * releaseCurtain() aufgerufen wird - erst dann öffnet er sich.
  *
  * Zustand für Tests und CSS: <html data-curtain-phase="playing|rest">,
- * während eine WebGL-Animation läuft zusätzlich data-curtain-playing (hält
- * die Ecken-Deko zurück, bis der Vorhang offen ist).
+ * während eine Animation läuft zusätzlich data-curtain-playing.
  */
 
 const root = document.documentElement;
 const CROSSFADE_MS = 200;       // CSS-Vorhang -> WebGL-Vorhang
 const REPLAY_FADE_MS = 260;     // Vorschau: geschlossener Vorhang blendet ein
-const CLASSIC_DECOR_MS = 1800;  // CSS-Vorhang: Deko nach dem Öffnen
 
 let gl = null;         // laufende/ruhende WebGL-Vorhänge (siehe startGl)
 let renderer = null;   // einmal angelegt, auch nach einem Wechsel auf "Klassisch" wiederverwendet
-let decorTimer = 0;
 let releaseTimer = 0;
 let resizeQueued = false;
-let containerMax = 0;  // Breite des Inhaltsbereichs (--container-max), einmal gelesen
+let containerBase = 0;  // Basisbreite des Inhaltsbereichs (--container-base), einmal gelesen
 
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const curtainEls = () => [...document.querySelectorAll(".curtain")];
@@ -65,23 +41,13 @@ function geometry() {
   const viewW = root.clientWidth;
   const viewH = root.clientHeight;
   const narrow = window.matchMedia("(max-width: 1535px)").matches;
-  if (!containerMax) containerMax = parseFloat(getComputedStyle(root).getPropertyValue("--container-max")) || 1440;
-  return { viewW, viewH, W: viewW / 2 + 2, H: viewH, R: restWidth(viewW, narrow, containerMax) };
+  if (!containerBase) containerBase = parseFloat(getComputedStyle(root).getPropertyValue("--container-base")) || 1440;
+  return { viewW, viewH, W: viewW / 2 + 2, H: viewH, R: restWidth(viewW, narrow, containerBase) };
 }
 
-/* ---------------------------------------------------------------------------
- * Ecken-Deko: erscheint, sobald der Vorhang (fast) offen ist
- * ------------------------------------------------------------------------ */
-
-function holdDecor() {
-  clearTimeout(decorTimer);
-  $("#corner-decor")?.classList.remove("is-cued");
+/** Merker für Tests und CSS: eine Vorhang-Animation läuft. */
+function markPlaying() {
   root.dataset.curtainPlaying = "";
-}
-
-function cueDecor() {
-  clearTimeout(decorTimer);
-  $("#corner-decor")?.classList.add("is-cued");
 }
 
 /* ---------------------------------------------------------------------------
@@ -98,14 +64,13 @@ function playClassic({ replay }) {
     root.dataset.curtainPhase = root.dataset.intro === "skip" || reducedMotion() ? "rest" : "playing";
     return;
   }
-  holdDecor();
+  markPlaying();
   root.dataset.curtainPhase = "playing";
   for (const curtain of curtainEls()) {
     curtain.classList.remove("curtain--rest", "curtain--replay");
     void curtain.offsetWidth; // Reflow: Animation neu starten
     curtain.classList.add("curtain--replay");
   }
-  decorTimer = setTimeout(cueDecor, CLASSIC_DECOR_MS);
 }
 
 /** Zurück zum einfachen CSS-Vorhang (Rückfallebene ohne WebGL). */
@@ -125,7 +90,7 @@ function dropGl({ atRest }) {
     curtain.querySelector(".curtain-fabric")?.getAnimations().forEach(animation => animation.cancel());
     if (atRest) curtain.classList.add("curtain--rest");
   }
-  if (atRest) { markRest(); cueDecor(); }
+  if (atRest) markRest();
 }
 
 /* ---------------------------------------------------------------------------
@@ -217,7 +182,6 @@ function settle() {
     curtain.style.removeProperty("width");
     curtain.classList.add("curtain--gl", "curtain--rest", "curtain--baked");
   }
-  if (root.dataset.curtainPlaying !== undefined) cueDecor();
   markRest();
 }
 
@@ -230,7 +194,6 @@ function tick(now) {
   gl.renderer.render(frame, geom, t);
   // Schabracke oben wandert mit der Oberkante des Stoffs
   for (const curtain of curtainEls()) curtain.style.width = `${Math.max(0, frame.rod)}px`;
-  if (t >= gl.timeline.decorCue) cueDecor();
   if (frame.done) { settle(); return; }
   gl.raf = requestAnimationFrame(tick);
 }
@@ -266,7 +229,7 @@ function startGl({ replay, hold = false }) {
     return true;
   }
 
-  holdDecor();
+  markPlaying();
   root.dataset.curtainPhase = hold ? "holding" : "playing";
   const now = performance.now();
   const curtains = curtainEls();

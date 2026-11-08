@@ -1,0 +1,400 @@
+/* =========================================================================
+   Design „Foyer" (2.41) - zweites Design neben Kino-Noir
+   Gilt nur unter <html data-skin="foyer"> (js/ui/app-shell.js, applyDesign):
+   gewählt in den Einstellungen und Fenster ab 681 px (am Handy immer
+   Kino-Noir). Immer dunkel. Bausteine: Spule (Navigation, js/ui/foyer.js),
+   Ortsschild, Programmtafel, Schaukästen, Eintrittskarte, Saalschild.
+   Farben, Schriften, Abstände und Bewegung bleiben die von Kino-Noir;
+   Regeln für wachsende Elemente und Text über Überlagerungen:
+   Projekt-Notiz „styleguide-ergaenzungen.md".
+   ========================================================================= */
+
+:root[data-skin="foyer"] {
+  --medal: 96px;
+  --medal-top: 14px;
+  --foyer-caps: "Cinzel", var(--font-display);
+  --foyer-gold: #e3c27a;
+  --foyer-gold-hi: #f4dca0;
+  --foyer-paper: #ecdfc6;
+  --foyer-ink: #2a1c18;
+  --foyer-ink-red: #8a1a14;
+  --foyer-frame: linear-gradient(145deg, #e0bd72, #7a5a26 55%, #c9a45c);
+  --foyer-bulb: radial-gradient(circle at 40% 35%, #fff8e0, #ffd27a 45%, #a8742a 80%);
+}
+
+:root[data-skin="foyer"] body {
+  background:
+    radial-gradient(70% 520px at 50% 0, rgb(156 2 5 / .2), transparent 70%) no-repeat,
+    var(--bg);
+}
+
+/* Kleine Großbuchstaben-Zeile (Saal, Abschnitt) */
+.foyer-eyebrow {
+  font-family: var(--foyer-caps);
+  font-size: .72rem; font-weight: 600; letter-spacing: .3em; text-transform: uppercase;
+  color: var(--brass);
+}
+
+/* Pillen-Knopf mit Messingrand */
+.foyer-pill {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  min-height: 44px; padding: 0 var(--s-4);
+  border-radius: var(--r-chip); border: 1px solid rgb(201 164 92 / .4);
+  background: rgb(20 13 12 / .7); color: var(--text);
+  font: 500 .84rem/1 var(--font-text); cursor: pointer; text-decoration: none;
+  transition: border-color .18s ease, background .18s ease;
+}
+.foyer-pill:hover { border-color: var(--brass); background: var(--surface-hover); }
+.foyer-pill:focus-visible, .foyer-button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.foyer-button {
+  display: inline-flex; align-items: center; min-height: 46px; padding: 0 var(--s-5);
+  border-radius: var(--r-chip); background: var(--brass); color: #140d0c;
+  font: 600 .88rem/1 var(--font-text); text-decoration: none;
+}
+.foyer-button:hover { background: var(--foyer-gold); color: #140d0c; }
+
+/* Glühbirnen-Reihe (oben bzw. unten an Tafel und Schildern) */
+.foyer-bulbs {
+  position: absolute; left: 22px; right: 22px; top: 9px; height: 10px; pointer-events: none;
+  background: radial-gradient(circle, #fff6d8 0 1.5px, #ffd27a 2.5px, #a8742a 4px, transparent 5px) 0 50% / 38px 10px repeat-x;
+  filter: drop-shadow(0 0 5px rgb(255 210 122 / .8));
+}
+.foyer-bulbs.is-bottom { top: auto; bottom: 9px; }
+
+/* ---- Kopfleiste: Brass-Schiene, Ortsschild statt Navigation --------------- */
+
+:root[data-skin="foyer"] .appbar {
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  border-bottom: 0;
+  box-shadow: inset 0 5px 0 #b8934e, inset 0 6px 0 #6e5022;
+}
+:root[data-skin="foyer"] .appbar .nav,
+:root[data-skin="foyer"] .appbar .appbar-actions,
+:root[data-skin="foyer"] .view-tabs,
+:root[data-skin="foyer"] #backup-reminder-slot { display: none; }
+:root[data-skin="foyer"] .appbar-inner { min-height: 64px; padding-top: var(--s-4); }
+.foyer-where { display: flex; flex-direction: column; line-height: 1.15; margin-right: auto; }
+.foyer-where-title { font-family: var(--font-display); font-size: 1.85rem; letter-spacing: -.01em; }
+.appbar--compact .foyer-where-title { font-size: 1.3rem; }
+.appbar--compact .foyer-where .foyer-eyebrow { font-size: .62rem; }
+
+/* Spulen-Knopf ganz rechts (2.41.3): kleine Messing-Spule mit Schild */
+.foyer-spool-button {
+  display: inline-flex; align-items: center; gap: 12px; margin-left: var(--s-4);
+  padding: 4px 4px 4px 18px; border: 1px solid rgb(201 164 92 / .45); border-radius: 999px;
+  background: linear-gradient(180deg, #2a1d1a, #160f0d); color: var(--foyer-gold); cursor: pointer;
+  box-shadow: 0 6px 16px rgb(0 0 0 / .45), inset 0 1px 0 rgb(255 220 150 / .08);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.foyer-spool-button-label { font-family: var(--foyer-caps); font-weight: 700; font-size: .72rem; letter-spacing: .28em; text-transform: uppercase; }
+.foyer-spool-button-reel {
+  display: block; width: 44px; height: 44px; border-radius: 50%;
+  filter: drop-shadow(0 2px 4px rgb(0 0 0 / .6));
+  transition: transform .9s cubic-bezier(.2, .7, .2, 1);
+}
+.foyer-spool-button-reel svg { display: block; width: 100%; height: 100%; }
+.foyer-spool-button:hover { border-color: var(--brass); box-shadow: 0 6px 16px rgb(0 0 0 / .45), 0 0 18px rgb(227 194 122 / .25); }
+.foyer-spool-button:hover .foyer-spool-button-reel { transform: rotate(-120deg); }
+.foyer-spool-button:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.appbar--compact .foyer-spool-button-reel { width: 34px; height: 34px; }
+:root.foyer-spool-open .foyer-spool-button { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) { .foyer-spool-button-reel { transition: none; } }
+
+/* Der Seitenkopf weicht dem Ortsschild (bleibt für Screenreader) */
+:root[data-skin="foyer"] body:not(.is-detail) .shell > .page-head:has(+ #foyer-stage, + #foyer-saal),
+:root[data-skin="foyer"] .shell > .page-head:has(~ .view-tabs) {
+  position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+:root[data-skin="foyer"] .shell { padding-top: var(--s-8); } /* Inhalt beginnt unter dem großen Medaillon (Nutzerhinweis 08.11.) */
+
+/* ---- Spule ------------------------------------------------------------------- */
+
+.foyer-spool { position: fixed; inset: 0; z-index: 90; }
+/* Gleichmäßiges Overlay über die ganze Seite, 90 % deckend (Styleguide-Ergänzung 2) */
+.foyer-spool-dim {
+  position: absolute; inset: 0;
+  background: rgb(10 6 5 / .9);
+  opacity: 0; transition: opacity .25s ease;
+}
+.foyer-spool-ring {
+  position: absolute; left: var(--cx); top: var(--cy); border-radius: 50%; pointer-events: none;
+  border: 1px solid rgb(201 164 92 / .22); transform: translate(-50%, -50%) scale(.6); opacity: 0;
+  transition: opacity .4s ease .1s, transform .6s cubic-bezier(.2, .7, .2, 1);
+}
+.foyer-spool-ring.is-inner { width: calc(2 * var(--r-inner)); height: calc(2 * var(--r-inner)); }
+.foyer-spool-ring.is-outer { width: calc(2 * var(--r-outer)); height: calc(2 * var(--r-outer)); border-style: dashed; border-color: rgb(201 164 92 / .18); }
+.foyer-spool-reel {
+  position: absolute; left: var(--cx); top: var(--cy); pointer-events: none;
+  transform: translate(-50%, -50%) scale(.2) rotate(0deg); opacity: 0;
+  filter: drop-shadow(0 30px 50px rgb(0 0 0 / .8));
+  transition: transform .7s cubic-bezier(.2, .8, .2, 1), opacity .35s ease;
+}
+.foyer-spool-reel svg { width: 100%; height: 100%; display: block; }
+.foyer-spool-hub {
+  position: absolute; left: calc(var(--cx) - 82px); top: calc(var(--cy) - 82px); pointer-events: none;
+  transform: var(--from); transition: transform .7s cubic-bezier(.2, .8, .2, 1), filter .5s ease;
+  filter: drop-shadow(0 12px 20px rgb(0 0 0 / .75));
+}
+.foyer-spool-hub .brand-logo { width: 100%; height: 100%; display: block; overflow: visible; }
+.foyer-spool-hub .brand-logo :is(.reel, .crank, .rays, .spark) { transform-box: fill-box; transform-origin: center; }
+
+.foyer-spool-item {
+  position: absolute; display: flex; align-items: center; gap: 14px;
+  min-height: calc(44px * var(--spool-scale, 1)); margin: calc(-22px * var(--spool-scale, 1)) 0 0 -18px; padding: 4px 16px 4px 12px;
+  border: 0; border-radius: var(--r-chip); background: none;
+  color: var(--text); text-decoration: none; text-align: left; cursor: pointer; white-space: nowrap;
+  opacity: 0; transform: translate(-36px, -18px) scale(.94);
+  transition: opacity .35s ease var(--delay), transform .45s cubic-bezier(.2, .7, .2, 1) var(--delay), color .18s ease;
+}
+.foyer-spool-dot { flex: none; width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 0 1px var(--brass); }
+.foyer-spool-item.is-outer .foyer-spool-dot { width: 8px; height: 8px; }
+.foyer-spool-label { display: flex; flex-direction: column; line-height: 1.15; }
+.foyer-spool-name { text-shadow: 0 1px 2px rgb(0 0 0 / .95), 0 0 10px rgb(0 0 0 / .9); }
+.foyer-spool-item.is-inner .foyer-spool-name { font-family: var(--foyer-caps); font-weight: 600; font-size: calc(1.15rem * var(--spool-scale, 1)); letter-spacing: .2em; text-transform: uppercase; }
+.foyer-spool-item.is-outer .foyer-spool-name { font-family: var(--font-display); font-size: calc(1.85rem * var(--spool-scale, 1)); line-height: 1; }
+.foyer-spool-sub { font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; color: #d2c6b7; }
+.foyer-spool-item:hover .foyer-spool-name, .foyer-spool-item:focus-visible .foyer-spool-name { color: var(--foyer-gold-hi); }
+.foyer-spool-item:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.foyer-spool-item.is-current .foyer-spool-name { color: var(--foyer-gold-hi); }
+.foyer-spool-item.is-current .foyer-spool-dot { background: var(--foyer-gold); box-shadow: 0 0 0 1px var(--brass), 0 0 14px rgb(227 194 122 / .8); }
+.foyer-spool-caption {
+  position: absolute; padding: 4px 10px; text-shadow: 0 1px 2px rgb(0 0 0 / .95);
+  font-family: var(--foyer-caps); font-size: .7rem; letter-spacing: .3em; text-transform: uppercase; color: var(--foyer-gold);
+  opacity: 0; transition: opacity .4s ease .3s;
+}
+.foyer-spool-close { position: absolute; right: var(--s-6); top: var(--s-5); opacity: 0; transition: opacity .3s ease .2s; font-family: var(--foyer-caps); letter-spacing: .2em; text-transform: uppercase; font-size: .72rem; }
+
+.foyer-spool.is-open .foyer-spool-dim,
+.foyer-spool.is-open .foyer-spool-close,
+.foyer-spool.is-open .foyer-spool-caption { opacity: 1; }
+.foyer-spool.is-open .foyer-spool-ring { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.foyer-spool.is-open .foyer-spool-reel { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(120deg); }
+.foyer-spool.is-open .foyer-spool-hub { transform: none; filter: drop-shadow(0 12px 20px rgb(0 0 0 / .75)) drop-shadow(0 0 14px rgb(250 203 141 / .5)); }
+.foyer-spool.is-open .foyer-spool-item { opacity: 1; transform: none; }
+.foyer-spool.is-closing { pointer-events: none; }
+.foyer-spool.is-closing > * { opacity: 0 !important; transition: opacity .25s ease !important; }
+/* Spule rechts (Knopf oben rechts): Punkt rechts, Schrift läuft nach links */
+.foyer-spool.is-right .foyer-spool-item { flex-direction: row-reverse; text-align: right; margin: calc(-22px * var(--spool-scale, 1)) -18px 0 0; padding: 4px 12px 4px 16px; transform: translate(36px, -18px) scale(.94); }
+.foyer-spool.is-right .foyer-spool-label { align-items: flex-end; }
+.foyer-spool.is-right.is-open .foyer-spool-item { transform: none; }
+.foyer-spool.is-right .foyer-spool-close { right: auto; left: var(--s-6); }
+@media (prefers-reduced-motion: reduce) {
+  .foyer-spool *, .foyer-spool-hub { transition: none !important; }
+}
+
+/* ---- Übersicht: Programmtafel, Uhr, Zitat ---------------------------------- */
+
+.foyer-stage { display: flex; flex-wrap: wrap; gap: var(--s-7); align-items: stretch; margin-bottom: var(--s-8); }
+.foyer-board {
+  position: relative; flex: 999 1 640px; min-width: 0; padding: 30px;
+  border-radius: var(--r-panel); background: linear-gradient(180deg, #2a1d1a, #1a1210);
+  border: 1px solid rgb(201 164 92 / .5); box-shadow: 0 40px 80px rgb(0 0 0 / .6);
+}
+.foyer-board-face {
+  --board-size: clamp(1.6rem, 3.1vw, 2.9rem);
+  padding: 22px 34px 26px; border-radius: 4px;
+  /* Rillen im Takt der Zeilenhöhe der Buchstaben */
+  --groove: calc(var(--board-size) * 1.4);
+  background: repeating-linear-gradient(180deg, #0d0a09 0 calc(var(--groove) - 2px), #1b1513 calc(var(--groove) - 2px) var(--groove));
+  background-position: 0 22px;
+  box-shadow: inset 0 0 40px rgb(0 0 0 / .9);
+}
+.foyer-board-face .foyer-eyebrow { margin: 0 0 6px; }
+.foyer-board-line {
+  /* Große Steckbuchstaben wie in 2.41.0; lange Titel brechen um und bleiben ganz lesbar */
+  margin: 0; font: 700 var(--board-size)/1.4 var(--font-text); letter-spacing: .14em; color: #f4efe6;
+  overflow-wrap: break-word; hyphens: manual;
+}
+.foyer-board-tag { color: #e0333a; margin-right: .35em; }
+.foyer-board-actions { position: relative; display: flex; flex-wrap: wrap; gap: var(--s-3); margin: var(--s-5) 0 var(--s-2); }
+.foyer-aside { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: var(--s-5); }
+.foyer-card { padding: 26px 28px; border-radius: var(--r-panel); background: var(--surface); border: 1px solid rgb(201 164 92 / .25); }
+.foyer-clock { display: flex; flex-direction: column; gap: 6px; }
+.foyer-clock .clock-widget { text-align: left; padding: 0; }
+.foyer-clock .clock-time { font-size: clamp(4rem, 7vw, 6.6rem); line-height: .9; color: var(--foyer-gold-hi); text-shadow: 0 0 40px rgb(227 194 122 / .25); }
+.foyer-clock .clock-date { font-size: .9rem; color: var(--text-muted); }
+.foyer-quote { flex: 1; display: flex; padding: 0; }
+.foyer-quote .quote-of-day { flex: 1; margin: 0; width: auto; max-width: none; }
+
+/* Abschnittsköpfe mit Eyebrow */
+:root[data-skin="foyer"] .section-head h2 { font-size: clamp(2rem, 3.2vw, 3rem); }
+.foyer-head-eyebrow { margin: 0 auto 0 var(--s-4); align-self: baseline; }
+
+/* ---- Schaukästen (Favoriten) ----------------------------------------------- */
+
+:root[data-skin="foyer"] .bookmark-grid { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: var(--s-4); }
+/* Kleine Schaukästen (Nutzerwunsch 08.11.: noch 25 % kleiner) - nur das Seiten-Logo,
+   der Name erscheint beim Darüberfahren als Leuchtschild darunter */
+:root[data-skin="foyer"] .bookmark-tile {
+  position: relative; display: grid; place-items: center;
+  min-height: 80px; padding: 10px 6px; border: 0; border-radius: 3px;
+  background: radial-gradient(80% 60% at 50% 45%, #3a2a22, #160f0d 75%);
+  box-shadow: 0 0 0 3px #b8934e, 0 0 0 4px #6e5022, inset 0 0 24px rgb(255 220 150 / .12), 0 12px 22px rgb(0 0 0 / .55);
+  margin: 4px; overflow: visible;
+}
+:root[data-skin="foyer"] .bookmark-tile .favicon {
+  width: 34px; height: 34px; border-radius: 6px;
+  filter: drop-shadow(0 0 12px rgb(255 220 150 / .35)) drop-shadow(0 2px 3px rgb(0 0 0 / .6));
+  transition: transform .2s ease;
+}
+:root[data-skin="foyer"] .bookmark-tile .tile-title {
+  position: absolute; z-index: 5; left: 50%; top: calc(100% + 14px);
+  padding: 9px 14px 7px; border: 1px solid var(--brass); border-radius: 2px;
+  background:
+    radial-gradient(circle, #f6d58a 0 1.3px, transparent 1.9px) 0 2px / 9px 5px repeat-x,
+    linear-gradient(180deg, #1d1412, #0d0a09);
+  box-shadow: 0 0 0 1px #3a2a1a, 0 10px 24px rgb(0 0 0 / .7), 0 0 18px rgb(227 194 122 / .18);
+  font-family: var(--foyer-caps); font-weight: 700; font-size: .7rem; letter-spacing: .22em; line-height: 1;
+  text-transform: uppercase; color: var(--foyer-gold-hi); text-shadow: 0 0 10px rgb(227 194 122 / .45);
+  white-space: nowrap; pointer-events: none;
+  opacity: 0; transform: translate(-50%, -6px); transition: opacity .18s ease, transform .22s cubic-bezier(.2, .7, .2, 1);
+}
+/* Kleiner Messing-Haken, an dem das Schild hängt */
+:root[data-skin="foyer"] .bookmark-tile .tile-title::before {
+  content: ""; position: absolute; left: 50%; top: -9px; width: 1px; height: 8px; background: var(--brass);
+}
+:root[data-skin="foyer"] .bookmark-tile:is(:hover, :focus-visible) .tile-title { opacity: 1; transform: translate(-50%, 0); }
+:root[data-skin="foyer"] .bookmark-tile:is(:hover, :focus-visible) .favicon { transform: scale(1.08); }
+:root[data-skin="foyer"] .bookmark-tile:is(:hover, :focus-visible) { z-index: 6; }
+@media (prefers-reduced-motion: reduce) {
+  :root[data-skin="foyer"] .bookmark-tile .tile-title { transition: opacity .1s linear; transform: translate(-50%, 0); }
+}
+:root[data-skin="foyer"] .bookmark-tile:hover { box-shadow: 0 0 0 3px var(--foyer-gold), 0 0 0 4px #6e5022, inset 0 0 28px rgb(255 220 150 / .2), 0 12px 22px rgb(0 0 0 / .55); background: radial-gradient(80% 60% at 50% 45%, #44312a, #160f0d 75%); }
+:root[data-skin="foyer"] .bookmark-grid.is-sorting .bookmark-tile { outline: 1px dashed var(--brass); outline-offset: 8px; }
+
+/* ---- Eintrittskarte (Kasse) -------------------------------------------- */
+
+.foyer-kasse {
+  /* So breit wie der Inhalt plus großzügige Innenabstände (Nutzerwunsch 08.11.: 20 % breiter als knapp) */
+  position: relative; display: flex; flex-wrap: wrap; width: fit-content; max-width: 100%; margin: var(--s-7) 0 var(--s-8);
+  background: var(--foyer-paper); color: var(--foyer-ink); border-radius: 10px; overflow: hidden;
+  box-shadow: 0 30px 60px rgb(0 0 0 / .55);
+}
+.foyer-kasse::before, .foyer-kasse::after {
+  content: ""; position: absolute; top: 50%; width: 22px; height: 22px; margin-top: -11px; border-radius: 50%; background: var(--bg);
+}
+.foyer-kasse::before { left: -11px; }
+.foyer-kasse::after { right: -11px; }
+.foyer-kasse-part, .foyer-kasse-stub { flex: none; padding: 26px 26px 24px; display: flex; flex-direction: column; gap: 6px; }
+.foyer-kasse-part:first-child { padding-left: 34px; }
+.foyer-kasse-stub { padding-right: 34px; }
+.foyer-kasse-part + .foyer-kasse-part { border-left: 1px solid rgb(42 28 24 / .18); }
+.foyer-kasse-stub { justify-content: center; border-left: 2px dashed rgb(42 28 24 / .35); }
+.foyer-kasse-label { font-family: var(--foyer-caps); font-weight: 700; font-size: .68rem; letter-spacing: .26em; text-transform: uppercase; color: var(--foyer-ink-red); }
+.foyer-kasse-value { font-family: var(--font-display); font-size: 3rem; line-height: 1; font-variant-numeric: lining-nums tabular-nums; }
+.foyer-kasse-note { font-size: .82rem; color: #5c4a40; }
+.foyer-kasse-backup { font-size: .92rem; }
+.foyer-kasse-button {
+  align-self: flex-start; margin-top: 4px; padding: 6px 0; border: 0; background: none; cursor: pointer;
+  color: var(--foyer-ink-red); font: 600 .88rem var(--font-text); text-decoration: underline; text-underline-offset: 3px;
+}
+.foyer-kasse-button:focus-visible { outline: 2px solid var(--foyer-ink-red); outline-offset: 2px; }
+
+/* ---- Saalschild (Entertainment, Lesezeichen) ------------------------------ */
+
+.foyer-saal {
+  position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-6);
+  margin-bottom: var(--s-6); padding: 34px 40px 30px;
+  border-radius: var(--r-panel); background: linear-gradient(180deg, #2a1d1a, #1a1210);
+  border: 1px solid rgb(201 164 92 / .5); box-shadow: 0 40px 80px rgb(0 0 0 / .55);
+}
+.foyer-saal-number {
+  flex: none; display: grid; place-items: center; width: 112px; height: 112px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #3a2a22, #140d0c 75%);
+  box-shadow: 0 0 0 3px var(--brass), 0 0 0 7px #2a1d1a, 0 0 0 8px rgb(201 164 92 / .5), 0 0 40px rgb(227 194 122 / .25);
+  font-family: var(--font-display); font-size: 5rem; line-height: 1; color: var(--foyer-gold-hi);
+}
+.foyer-saal-text { flex: 1 1 360px; min-width: 0; }
+.foyer-saal-name { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: clamp(3rem, 6vw, 5.6rem); line-height: .92; }
+.foyer-saal-line { margin: 8px 0 0; color: var(--text-muted); font-size: .95rem; }
+.foyer-saal-nav { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.foyer-saal-count { margin: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.foyer-saal-count-value { font-family: var(--font-display); font-size: 3.4rem; line-height: 1; color: var(--foyer-gold-hi); font-variant-numeric: tabular-nums; }
+.foyer-saal-count-value small { font-size: 1.8rem; color: var(--text-muted); }
+.foyer-saal.is-compact { padding: 24px 28px 20px; gap: var(--s-5); }
+.foyer-saal.is-compact .foyer-saal-number { width: 60px; height: 60px; font-size: 2.6rem; box-shadow: 0 0 0 2px var(--brass), 0 0 0 5px #2a1d1a, 0 0 0 6px rgb(201 164 92 / .5); }
+.foyer-saal.is-compact .foyer-saal-name { font-size: clamp(2.2rem, 3.6vw, 3rem); }
+.foyer-saal.is-compact .foyer-bulbs { top: 6px; height: 6px; background-size: 26px 6px; }
+
+/* Suche und Filter im Saal */
+:root[data-skin="foyer"] .search-row .search {
+  border: 0; border-bottom: 1px solid rgb(201 164 92 / .55); border-radius: 0; background: transparent;
+  padding: 10px 2px 12px 2px; font-family: var(--font-display); font-size: 1.9rem; color: var(--text);
+}
+:root[data-skin="foyer"] .search-row .search::placeholder { color: var(--text-faint); }
+:root[data-skin="foyer"] .search-row .search:focus { outline: none; border-bottom-color: var(--foyer-gold); box-shadow: 0 2px 0 -1px var(--foyer-gold); }
+:root[data-skin="foyer"] .filter-drop-button {
+  font-family: var(--foyer-caps); font-weight: 600; font-size: .72rem; letter-spacing: .16em; text-transform: uppercase;
+  border-radius: 6px; box-shadow: inset 0 0 0 1px rgb(201 164 92 / .4);
+}
+:root[data-skin="foyer"] .filter-drop.is-active .filter-drop-button { background: var(--foyer-paper); color: var(--foyer-ink); box-shadow: 0 8px 18px rgb(0 0 0 / .45); border-color: transparent; }
+
+/* ---- Lesezeichen ------------------------------------------------------------- */
+
+.foyer-showcase { margin-bottom: var(--s-7); }
+.foyer-showcase-item { position: relative; }
+.foyer-showcase-item .bookmark-tile { margin: 4px; }
+.foyer-showcase-remove {
+  position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid rgb(201 164 92 / .45); background: rgb(20 13 12 / .85); color: var(--text);
+  font-size: 1.1rem; line-height: 1; cursor: pointer;
+}
+.foyer-showcase-remove:hover { border-color: var(--brass); }
+:root[data-skin="foyer"] .bookmark-item [data-pin] {
+  border-radius: 6px; font-family: var(--foyer-caps); font-weight: 600; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase;
+}
+:root[data-skin="foyer"] .bookmark-item [data-pin][aria-pressed="true"] { background: var(--foyer-paper); color: var(--foyer-ink); border-color: transparent; }
+
+/* ---- Detailseite: die Vorstellung ------------------------------------------ */
+
+:root[data-skin="foyer"] .detail-layout { grid-template-columns: 340px minmax(0, 1fr); gap: var(--s-8); }
+:root[data-skin="foyer"] .detail-cover .movie-card-cover {
+  border-radius: 3px;
+  box-shadow: 0 0 0 14px #1d1412, 0 0 0 22px #b8934e, 0 0 0 23px #6e5022, 0 40px 70px rgb(0 0 0 / .7), 0 0 90px rgb(227 194 122 / .12);
+  margin: 23px;
+}
+:root[data-skin="foyer"] .detail-cover-actions { margin-top: var(--s-6); }
+:root[data-skin="foyer"] body:has(#detail-layout) .page-head h1 {
+  font-size: clamp(3.4rem, 7vw, 7.6rem); line-height: .88; text-shadow: 0 0 60px rgb(255 226 160 / .14);
+}
+:root[data-skin="foyer"] .details-grid {
+  padding: 26px 30px; border-radius: var(--r-panel); background: var(--surface); border: 1px solid rgb(201 164 92 / .22);
+}
+:root[data-skin="foyer"] .detail-main > .details-grid::before {
+  content: "Programmheft"; grid-column: 1 / -1; margin-bottom: var(--s-3);
+  font-family: var(--foyer-caps); font-size: .72rem; font-weight: 600; letter-spacing: .3em; text-transform: uppercase; color: var(--brass);
+}
+:root[data-skin="foyer"] .detail-buttons .small-button { border-radius: 8px; min-height: 40px; }
+:root[data-skin="foyer"] .detail-buttons .small-button.danger { border-color: transparent; background: transparent; }
+
+/* ---- Vorführraum (Einstellungen) ------------------------------------------- */
+
+.modal.modal--foyer { max-width: 1040px; }
+.modal--foyer .modal-header h2 { font-size: 2rem; }
+.modal--foyer .modal-content { display: grid; grid-template-columns: 220px minmax(0, 1fr); column-gap: var(--s-6); align-items: start; }
+.modal--foyer .modal-content > * { grid-column: 2; }
+.foyer-settings-nav { grid-column: 1 !important; grid-row: 1 / span 20; position: sticky; top: 0; display: flex; flex-direction: column; gap: var(--s-2); }
+.foyer-settings-jump {
+  display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 14px;
+  border: 0; border-radius: 10px; background: transparent; box-shadow: inset 0 0 0 1px rgb(201 164 92 / .15);
+  color: var(--text); font-family: var(--foyer-caps); font-weight: 600; font-size: .76rem; letter-spacing: .14em; text-transform: uppercase; text-align: left; cursor: pointer;
+}
+.foyer-settings-jump.is-current { background: linear-gradient(180deg, #2a1d1a, var(--surface)); box-shadow: inset 0 0 0 1px rgb(201 164 92 / .55), 0 14px 30px rgb(0 0 0 / .45); }
+.foyer-lamp { flex: none; width: 11px; height: 11px; border-radius: 50%; background: #3a2a24; }
+.foyer-settings-jump.is-current .foyer-lamp { background: #ffd27a; box-shadow: 0 0 12px rgb(255 210 122 / .85); }
+.foyer-settings-jump:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Cover-Karten: „Gesehen" ist der Normalfall - im Foyer nur die offenen markiert */
+:root[data-skin="foyer"] .movie-card-facts .seen { display: none; }
+:root[data-skin="foyer"] .movie-card:not(:has(.seen)) .movie-card-cover::after {
+  content: "Offen"; position: absolute; top: 10px; left: 10px; z-index: 2; padding: 4px 10px;
+  background: var(--accent); color: var(--accent-text); box-shadow: 0 6px 12px rgb(0 0 0 / .5);
+  font-family: var(--foyer-caps); font-weight: 700; font-size: .62rem; letter-spacing: .2em; text-transform: uppercase;
+}
+/* Zitat in der Karte neben der Tafel: groß, mittig */
+.foyer-quote .quote-of-day { display: flex; flex-direction: column; justify-content: center; padding: var(--s-6); border-left: 0; }
+.foyer-quote .quote-of-day .quote-text { font-size: clamp(1.5rem, 2.2vw, 2.1rem); line-height: 1.15; }
+.foyer-quote .quote-of-day .quote-source { margin-top: var(--s-3); font-family: var(--foyer-caps); font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; }
+.modal--foyer .modal-content > .foyer-settings-nav + .form-section { padding-top: 0; margin-top: 0; border-top: 0; }
+.modal--foyer .form-section > h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; margin-bottom: var(--s-3); }

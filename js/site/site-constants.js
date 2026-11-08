@@ -6,13 +6,6 @@
 export const SITE_TITLE = "Meine Kinothek";
 
 /**
- * Dekoration unten links, nachdem sich der Vorhang geöffnet hat (siehe
- * js/ui/curtain-icons.js). Nur der Rückfall: Die Datendatei bringt die im
- * Dashboard gewählte Deko mit (`decor`).
- */
-export const CORNER_ICON = "popcorn";
-
-/**
  * Kinovorhang: wann er spielt (Ansicht → Kinovorhang). Ausgewertet in
  * js/site/boot.js. „Bei jedem Besuch" = einmal pro geöffnetem Browserfenster,
  * nicht bei jedem Zurückkehren von einer Detailseite.

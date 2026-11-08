@@ -5,6 +5,8 @@ import { initLinkTransitions } from "./link-transition.js";
 import { initBrandMedallion } from "./brand-medallion.js";
 import { initAutoBackup } from "./auto-backup.js";
 import { normalizeMovies } from "../collection.js";
+import { initFoyer } from "./foyer.js";
+import { foyerActive, FOYER_MIN_WIDTH } from "../logic/foyer-logic.js";
 
 /*
  * Gemeinsame Kopfleiste aller Seiten: Logo-Medaillon, Design-Auswahl
@@ -14,7 +16,24 @@ import { normalizeMovies } from "../collection.js";
  */
 
 const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+const wideQuery = window.matchMedia(`(min-width: ${FOYER_MIN_WIDTH}px)`);
 let themedState = null;
+
+/**
+ * Design „Foyer" oder Kino-Noir (Einstellung `design`, 2.41): setzt
+ * <html data-skin="foyer">, wenn das Foyer gewählt ist und das Fenster breit
+ * genug ist (am Handy immer Kino-Noir), und meldet den Wechsel
+ * (Ereignis „dashboard:skin", js/ui/foyer.js baut auf bzw. ab).
+ * Das Foyer ist immer dunkel.
+ */
+export function applyDesign(state) {
+  const root = document.documentElement;
+  const foyer = foyerActive(state.design, window.innerWidth);
+  const before = root.dataset.skin === "foyer";
+  if (foyer) root.dataset.skin = "foyer"; else delete root.dataset.skin;
+  if (foyer !== before) window.dispatchEvent(new CustomEvent("dashboard:skin", { detail: { foyer } }));
+  return foyer;
+}
 
 /**
  * Setzt das gespeicherte Design auf das Dokument und synchronisiert die Auswahl.
@@ -23,7 +42,8 @@ let themedState = null;
  */
 export function applyTheme(state) {
   themedState = state;
-  const resolved = state.theme === "system" ? (darkQuery.matches ? "dark" : "light") : state.theme;
+  const foyer = applyDesign(state);
+  const resolved = foyer ? "dark" : state.theme === "system" ? (darkQuery.matches ? "dark" : "light") : state.theme;
   document.documentElement.dataset.theme = resolved;
   syncBootMirror(state); // damit der nächste Seitenstart gleich im richtigen Design beginnt
   const select = $("#theme-select");
@@ -34,6 +54,10 @@ export function applyTheme(state) {
 darkQuery.addEventListener("change", () => {
   if (themedState?.theme === "system") applyTheme(themedState);
 });
+// Fenster schmal/breit: Foyer bzw. Kino-Noir (Handy-Grenze)
+wideQuery.addEventListener("change", () => {
+  if (themedState) applyTheme(themedState);
+});
 
 /**
  * Verdrahtet die Kopfleiste, die auf allen Seiten identisch ist:
@@ -43,6 +67,7 @@ darkQuery.addEventListener("change", () => {
  *   erfolgreichen Datei-Import aufgerufen, damit die Seite neu rendern kann.
  */
 export function initAppShell(state, hooks = {}) {
+  initFoyer(state, { onSettings: () => openSettingsModal(state, hooks.onImported) });
   applyTheme(state);
   followOtherTabs(state, hooks);
   initBrandMedallion({ motion: state.logoMotion }); // Logo-Animation nach den Einstellungen

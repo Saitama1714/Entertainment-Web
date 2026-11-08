@@ -35,18 +35,11 @@
 .tool-warning { margin-top: var(--s-3); font-size: .84rem; color: var(--brass); }
 code { font-size: .92em; padding: 1px 5px; border-radius: 4px; background: color-mix(in srgb, var(--text) 8%, transparent); }
 
-/* Ecken-Deko (Popcorn) nur, wenn neben dem Inhalt Platz ist - sonst läge sie
-   über den Karten der Sammlung */
-@media (max-width: 1535px) {
-  .corner-decor { display: none; }
-}
-
 /* Einlass mit Passwort (js/ui/site-gate.js) - reiner Sichtschutz. Solange
    die Seite gesperrt ist (oder noch geprüft wird), bleiben Kopfleiste und
    Inhalt unsichtbar; der Kinovorhang liegt darüber und öffnet sich wie sonst. */
 :root[data-gate] .appbar,
 :root[data-gate] .shell,
-:root[data-gate] .corner-decor,
 :root[data-gate] .skip-link { visibility: hidden; }
 /* Cover-Flug (js/cover-flight.js): Wer aus der Sammlung kommt, ist schon
    eingelassen - Cover und Titel stehen sofort da, der Rest folgt nach der Prüfung */

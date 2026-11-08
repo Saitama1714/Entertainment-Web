@@ -40,7 +40,6 @@ export function parseCollection(data) {
     importWindowDays: Number(data.importWindowDays) > 0 ? Number(data.importWindowDays) : 28,
     exportedAt: String(data.exportedAt || ""),
     generatedAt: String(data.generatedAt || ""),
-    decor: typeof data.decor === "string" ? data.decor : "", // "" = Standard der Website
     access: readAccess(data.access), // Prüfwert für den Einlass, null = ohne Passwort
     castData: readCastData(data.cast), // Besetzung je IMDb-Kennung (ältere Dateien: keine)
     duelThreshold: readThreshold(data.duelThreshold), // Schwelle „Ich gegen IMDb" wie im Dashboard (ältere Dateien: 1,5)

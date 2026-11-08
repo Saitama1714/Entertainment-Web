@@ -84,8 +84,11 @@
   /* Lade-Skelett: Glanzstreifen, der über ladende Cover wandert */
   --skeleton-shine: rgb(255 255 255 / .7);
 
-  /* Breite des Inhaltsbereichs - auch der Vorhang richtet sich danach */
-  --container-max: 1440px;
+  /* Breite des Inhaltsbereichs - auch der Vorhang richtet sich danach.
+     Basis 1440 px; breitere Fenster geben 3/4 ihres Überschusses an den
+     Inhalt, der Vorhang behält nur 1/4 davon (Nutzerwunsch: 75 % schmaler). */
+  --container-base: 1440px;
+  --container-max: max(var(--container-base), calc(var(--viewport-w, 100vw) * .75 + var(--container-base) / 4));
 
   /* Überschriften: klassische Buchschrift (Palatino unter Windows);
      Text: die Systemschrift - oder Inter/Instrument Serif, wenn installiert */

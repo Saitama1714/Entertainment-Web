@@ -60,15 +60,16 @@ export function cubicBezier(x1, y1, x2, y2) {
 
 /**
  * Sichtbare Vorhangbreite im Ruhezustand - dieselbe Regel wie --curtain-rest
- * in css/curtain.css: der freie Rand neben dem Inhaltsbereich, bei schmalen
- * Fenstern (Media-Query greift) 0.
+ * in css/curtain.css: der freie Rand neben dem Inhaltsbereich. Der Inhalt
+ * nimmt 3/4 des Überschusses über die Basisbreite, je Seite bleibt also
+ * (Breite − Basis) / 8. Bei schmalen Fenstern (Media-Query greift) 0.
  * @param {number} viewportWidth - nutzbare Breite ohne Scrollleiste (px).
  * @param {boolean} narrow - true, wenn die Media-Query "(max-width: 1535px)" greift.
- * @param {number} containerMax - Breite des Inhaltsbereichs (px).
+ * @param {number} containerBase - Basisbreite des Inhaltsbereichs (--container-base, px).
  */
-export function restWidth(viewportWidth, narrow, containerMax = 1440) {
+export function restWidth(viewportWidth, narrow, containerBase = 1440) {
   if (narrow) return 0;
-  return Math.max(0, (viewportWidth - containerMax) / 2);
+  return Math.max(0, (viewportWidth - containerBase) / 8);
 }
 
 /**
@@ -127,7 +128,7 @@ function fabricTimeline() {
   for (let t = HOLD; t <= HOLD + MOVE; t += 5) maxVel = Math.max(maxVel, (top(t + 2) - top(t - 2)) / 4);
 
   return {
-    duration: DURATION, holdEnd: HOLD, decorCue: 2150,
+    duration: DURATION, holdEnd: HOLD,
     frame(t, { W, R }) {
       const pTop = top(t);
       const pBottom = sampleTrack(bottom, t);

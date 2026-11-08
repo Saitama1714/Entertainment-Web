@@ -14,3 +14,4 @@
 @import url("logo.css");   /* Logo-Animation (Medaillon) */
 @import url("responsive.css");   /* Schmale Fenster */
 @import url("cover-flight.css");   /* Cover-Flug */
+@import url("foyer.css");   /* Design „Foyer" (nur unter data-skin="foyer") */

@@ -1,5 +1,14 @@
 # Änderungen
 
+## 1.22.0 – Mehr Platz, keine Ecken-Deko (Dashboard 2.41.3)
+- Der Kinovorhang ist im Ruhezustand 75 % schmaler; die Kinothek nutzt die
+  gewonnene Breite (auf großen Bildschirmen deutlich mehr Cover je Reihe).
+- Die Ecken-Deko unten links (Popcorn & Co.) ist entfernt.
+- Mittlere Fensterbreiten (681–860 px): Die Reiter stehen in einer eigenen
+  Zeile, nichts rutscht mehr aus dem Fenster.
+- Das neue Design „Foyer" gibt es nur im Dashboard; die Website bleibt bei
+  Kino-Noir.
+
 ## 1.21.1 – Gleichstand mit Dashboard 2.40.1
 - Gebaut aus Dashboard 2.40.1. Keine sichtbaren Änderungen: Der neue Reiter
   „Upgrade“ (mit Merkliste und „Nicht upgraden“) bleibt bewusst nur im

@@ -7,6 +7,10 @@
   .appbar .appbar-inner, .appbar--compact .appbar-inner { padding-left: var(--s-5); }
   .brand--medallion, .appbar--compact .brand--medallion { position: static; flex-shrink: 0; width: var(--medal-small); height: var(--medal-small); }
   .page-head { padding-left: 0; }
+  /* Reiter in eine eigene Zeile, damit die Knöpfe nicht aus dem Fenster rutschen */
+  .appbar-inner { flex-wrap: wrap; gap: var(--s-3); }
+  .nav { order: 3; width: 100%; margin: 0; overflow-x: auto; }
+  .appbar-actions { margin-left: auto; }
   .detail-layout { grid-template-columns: 1fr; gap: var(--s-5); }
   .detail-cover { max-width: 210px; }
   .details-grid { grid-template-columns: 1fr; }

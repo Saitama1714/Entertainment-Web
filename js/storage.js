@@ -24,6 +24,8 @@ const DEFAULTS = {
   clickDuration: 450,            // Dauer der Klick-Animation in ms: 250 | 450 | 800
   projectorDust: true,           // Lichtkegel mit Staub im Kopf der Übersicht (js/ui/projector-dust.js)
   universeIntro: "hourly",       // Urknall im Filmuniversum: "session" | "always" | "hourly" | "every2h" | "daily" | "off" (js/logic/universe-logic.js)
+  buildIntro: "hourly",          // Aufbau der Übersicht beim Öffnen: Werte wie universeIntro (js/logic/page-build-logic.js)
+  buildStyle: "light",           // … Stil: "light" | "beam" | "film" | "beam-light" | "film-neon"
   duelIntro: "hourly",           // Auftritt in „Du gegen IMDb": Werte wie universeIntro (js/logic/duel-logic.js)
   logoMotion: null,              // Logo-Animation {mode, effects, tempo} (js/logic/logo-motion-logic.js); null = Standard
   lastImdbImportAt: "",          // Datenstand des letzten IMDb-Imports (ISO)
@@ -48,6 +50,7 @@ const DEFAULTS = {
   castData: {},                  // Besetzung von OMDb je IMDb-Kennung (js/logic/cast-logic.js) - Teil der Sicherung
   upgradeList: [],               // „Upgrade": Merkliste [{id, target: "4k"|"bd", state: "wish"|"bought", at}] (js/logic/upgrade-logic.js) - nur Dashboard
   duelThreshold: 1.5,            // „Du gegen IMDb": ab diesem Abstand Geheimtipp/unterschätzt (js/logic/duel-logic.js) - kommt auf die Website
+  savedFilters: [],              // gemerkte Filter als Schnellfilter [{id, name, filters}] (js/logic/saved-filters-logic.js) - nur Dashboard
   castFetch: null,               // Abruf der Besetzung: {enabled, pausedUntil, lastError, activeAt} (js/cast-fetch.js)
 };
 const KEYS = Object.keys(DEFAULTS);
@@ -82,8 +85,8 @@ export async function loadState() {
 }
 
 /**
- * Hält die synchrone Kopie für js/boot.js aktuell (Design und wann der
- * Vorhang spielt). Aufrufen, wenn sich theme oder introMode ändern.
+ * Hält die synchrone Kopie für js/boot.js aktuell (Design, wann der
+ * Vorhang und der Aufbau der Übersicht spielen). Aufrufen, wenn sich theme oder introMode ändern.
  * Nie ein Fehler nach außen: ohne Kopie startet die Seite einfach mit den
  * Standardwerten.
  * @param {{theme: string, introMode: string}} state
@@ -93,6 +96,9 @@ export function syncBootMirror(state) {
     localStorage.setItem("dashboard:theme", state.theme || "dark");
     localStorage.setItem("dashboard:intro-mode", state.introMode || "hourly");
     localStorage.setItem("dashboard:design", state.design || "noir");
+    localStorage.setItem("dashboard:click-effect", state.clickEffect || "zoom"); // Seitenwechsel (js/boot.js)
+    localStorage.setItem("dashboard:build-intro", state.buildIntro || "hourly"); // Aufbau der Übersicht (js/boot.js)
+    localStorage.setItem("dashboard:build-style", state.buildStyle || "light");
   } catch {
     // localStorage nicht verfügbar - nur der Start ist dann nicht optimiert
   }

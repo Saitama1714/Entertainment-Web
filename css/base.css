@@ -382,11 +382,20 @@ select.compact { padding: 6px 8px; font-size: .86rem; border-color: var(--line);
 }
 .view-tab:hover { color: var(--text); }
 .view-tab[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-pop); }
+/* Gleitende Markierung (2.43): die Pille wandert, der Reiter selbst bleibt durchsichtig */
+.view-tabs.has-pill { position: relative; }
+.view-tabs.has-pill .view-tab { position: relative; z-index: 1; }
+.view-tabs.has-pill .view-tab[aria-selected="true"] { background: none; box-shadow: none; }
+.view-tab-pill {
+  position: absolute; left: 0; top: 3px; z-index: 0; pointer-events: none;
+  border-radius: var(--r-chip); background: var(--surface); box-shadow: var(--shadow-pop);
+  transition: transform .38s cubic-bezier(.2, .8, .2, 1), width .38s cubic-bezier(.2, .8, .2, 1);
+}
+@media (prefers-reduced-motion: reduce) { .view-tab-pill { transition: none; } }
 
-/* Entertainment: Suchfeld mit dem Menü "Mehr" in einer Zeile */
+/* Entertainment: Suchfeld (die Werkzeuge liegen seit 2.41.4 in den Einstellungen) */
 .search-row { display: flex; align-items: stretch; gap: var(--s-2); }
 .search-row .search { flex: 1; min-width: 0; }
-.search-row .tools-menu > summary { height: 100%; }
 
 /* Entertainment: Filter-Chips + Sortierung in einer Zeile unter der Suche */
 .toolbar-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: var(--s-3) var(--s-5); margin-top: var(--s-4); }
@@ -606,3 +615,40 @@ select.compact { padding: 6px 8px; font-size: .86rem; border-color: var(--line);
 .form-grid .check-row { grid-column: 1 / -1; margin-top: calc(-1 * var(--s-2)); }
 .check-row { display: flex; align-items: center; gap: var(--s-2); font-size: .86rem; color: var(--text-muted); cursor: pointer; }
 .check-row input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+
+/* Suchvorschläge (2.43, js/ui/search-suggest.js) */
+.search-row.has-suggest { position: relative; }
+.search-suggest {
+  position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; right: 0;
+  max-height: min(60vh, 460px); overflow: auto; padding: 6px;
+  border-radius: var(--r-panel); background: var(--surface);
+  box-shadow: var(--shadow-pop), inset 0 1px 0 var(--brass-line), inset 0 0 0 1px var(--line);
+}
+.search-suggest[hidden] { display: none; }
+.suggest-group + .suggest-group { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--line); }
+.suggest-label { margin: 4px 10px 2px; font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-faint); }
+.suggest-option { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: var(--r-control); cursor: pointer; }
+.suggest-option[aria-selected="true"] { background: var(--surface-hover); box-shadow: inset 2px 0 0 var(--brass); }
+.suggest-cover { flex: none; width: 28px; height: 42px; object-fit: cover; border-radius: var(--r-poster); background: var(--surface-sunken); }
+.suggest-text { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); min-width: 0; flex: 1; }
+.suggest-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.suggest-meta { flex: none; font-size: .8rem; color: var(--text-faint); }
+.suggest-option mark { background: none; color: var(--brass); font-weight: 650; }
+
+/* Filter merken (2.43): Schnellfilter über der Filterleiste */
+.saved-filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); margin-bottom: var(--s-3); }
+.saved-filters-label { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-faint); margin-right: 2px; }
+.saved-filter {
+  display: inline-flex; align-items: stretch; max-width: 100%;
+  border-radius: var(--r-chip); background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--brass-line);
+  transition: background-color .2s, box-shadow .2s;
+}
+.saved-filter:hover { background: var(--surface-hover); }
+.saved-filter.is-active { background: var(--accent-wash); box-shadow: inset 0 0 0 1px var(--accent); }
+.saved-filter-apply, .saved-filter-remove { border: 0; background: none; color: var(--text); font: inherit; cursor: pointer; }
+.saved-filter-apply { padding: 6px 4px 6px 14px; font-size: .84rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.saved-filter-remove { padding: 0 12px 0 6px; font-size: 1rem; line-height: 1; color: var(--text-faint); border-radius: 0 var(--r-chip) var(--r-chip) 0; }
+.saved-filter-remove:hover { color: var(--accent-ink); }
+.saved-filter-apply:focus-visible, .saved-filter-remove:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; border-radius: var(--r-chip); }
+.filter-save { color: var(--brass); }

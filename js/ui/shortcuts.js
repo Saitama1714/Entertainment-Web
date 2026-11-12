@@ -16,6 +16,8 @@ const SHORTCUTS = [
   { keys: ["?"], label: "Diese Übersicht anzeigen", where: "Überall" },
   { keys: ["/"], label: "Suche öffnen", where: "{list}" },
   { keys: ["Esc"], label: "Suche leeren (im Suchfeld)", where: "{list}" },
+  { keys: ["←↑→↓"], label: "Durch die Cover wandern", where: "{list}" },
+  { keys: ["Leer"], label: "Schnellvorschau eines Covers", where: "{list}" },
   { keys: ["←", "→"], label: "Vorheriger / nächster Titel", where: "Detailseite" },
 ];
 

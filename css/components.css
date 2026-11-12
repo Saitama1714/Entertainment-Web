@@ -1,34 +1,4 @@
 /* =========================================================================
-   Werkzeug-Menü
-   ========================================================================= */
-
-.tools-menu { position: relative; }
-.tools-menu summary { list-style: none; cursor: pointer; }
-.tools-menu summary::-webkit-details-marker { display: none; }
-.tools-menu[open] summary { background: var(--surface-hover); color: var(--text); }
-
-.tools-menu-panel {
-  position: absolute; top: calc(100% + 6px); right: 0; z-index: 25;
-  min-width: 232px;
-  display: flex; flex-direction: column;
-  padding: var(--s-1);
-  border: 1px solid var(--line);
-  border-radius: var(--r-control);
-  background: var(--surface);
-  box-shadow: var(--shadow-pop);
-}
-
-.tools-menu-item {
-  display: block; width: 100%;
-  padding: 9px 11px;
-  border: 0; border-radius: var(--r-chip);
-  background: none;
-  font-size: .87rem; text-align: left; cursor: pointer;
-}
-.tools-menu-item:hover { background: var(--surface-hover); }
-.tools-menu-item input[type="file"] { display: none; }
-
-/* =========================================================================
    Dialoge
    ========================================================================= */
 
@@ -66,6 +36,7 @@
 .field input, .field select, .field textarea { color: var(--text); }
 .field textarea { resize: vertical; min-height: 72px; }
 .field-note { font-size: .76rem; line-height: 1.35; color: var(--text-faint); }
+.field select:disabled { opacity: .5; cursor: not-allowed; }
 .form-actions { display: flex; justify-content: flex-end; gap: var(--s-2); margin-top: var(--s-5); }
 
 .form-section { padding-top: var(--s-5); margin-top: var(--s-5); border-top: 1px solid var(--line); }
@@ -74,6 +45,39 @@
 .form-section > form { margin-top: var(--s-4); }
 /* Einstellungen: die erste Sektion braucht keine Trennlinie nach oben */
 .modal-content > .form-section:first-child { padding-top: 0; margin-top: 0; border-top: 0; }
+
+/* ---- Einstellungen (seit 2.41.4): Sprungleiste links, Abschnitte rechts ---- */
+.modal.modal--settings { width: min(1000px, 100%); max-height: min(86vh, 900px); }
+.modal--settings .modal-content { display: grid; grid-template-columns: 188px minmax(0, 1fr); column-gap: var(--s-6); align-items: start; scroll-padding-top: var(--s-3); }
+.modal--settings .modal-content > * { grid-column: 2; min-width: 0; }
+.modal--settings .modal-content > .settings-nav + .form-section { padding-top: 0; margin-top: 0; border-top: 0; }
+.settings-nav { grid-column: 1 !important; grid-row: 1 / span 20; position: sticky; top: 0; display: flex; flex-direction: column; gap: 2px; }
+.settings-jump {
+  position: relative; display: block; width: 100%; padding: 10px 14px;
+  border: 0; border-radius: var(--r-chip); background: none;
+  color: var(--text-muted); font: 500 .9rem var(--font-text); text-align: left; cursor: pointer;
+}
+.settings-jump:hover { background: var(--surface-hover); color: var(--text); }
+.settings-jump.is-current { background: var(--surface-hover); color: var(--text); box-shadow: inset 3px 0 0 var(--brass); }
+.settings-jump:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.modal--settings .form-section { padding-top: var(--s-6); margin-top: var(--s-6); }
+.modal--settings .form-section > h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.55rem; line-height: 1.15; margin: 0 0 4px; }
+.settings-lead { margin: 0 0 var(--s-3); color: var(--text-muted); font-size: .88rem; max-width: 60ch; }
+.modal--settings .settings-subhead {
+  margin: var(--s-6) 0 var(--s-2) !important; padding-top: var(--s-4); border-top: 1px dashed var(--line);
+  font-size: .72rem !important; font-weight: 700 !important; letter-spacing: .14em !important; text-transform: uppercase; color: var(--text-muted);
+}
+.modal--settings .form-section > .settings-lead + .settings-subhead { margin-top: var(--s-4) !important; padding-top: 0; border-top: 0; }
+.settings-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 var(--s-4); }
+.settings-status-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--s-2) var(--s-4); margin: var(--s-2) 0 var(--s-3); }
+.settings-status-row > .meta { margin: 0; flex: 1 1 220px; }
+.settings-status-row > .form-section-actions { margin: 0; }
+.settings-key { margin: var(--s-2) 0 var(--s-3) !important; }
+.modal--settings #cover-store-status { margin-bottom: var(--s-3); }
+.settings-key-row { display: flex; gap: var(--s-2); max-width: 460px; }
+.settings-key-row input { flex: 1; min-width: 0; }
+.modal--settings .check-row { margin-top: var(--s-3); }
+.modal--settings .website-file { margin-top: 0; padding-left: 0; border-left: 0; }
 
 /* Auswahl als Radio-Gruppe (z. B. Einstellungen → Bewegung) */
 .choice-group { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: var(--s-3) 0 0; padding: 0; border: 0; min-width: 0; }

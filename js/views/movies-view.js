@@ -3,16 +3,20 @@ import { loadState, saveDashboardData } from "../storage.js";
 import { normalizeMovies } from "../collection.js";
 import {
   searchMovies, filterMovies, sortMovies, toggleFilterValue,
-  emptyFilters, hasActiveFilters, SORT_OPTIONS, DEFAULT_SORT, setImportWindowDays, resolveSort,
+  emptyFilters, hasActiveFilters, SORT_OPTIONS, DEFAULT_SORT, setImportWindowDays, resolveSort, missingCovers,
 } from "../logic/movies-logic.js";
 import { fetchMissingCovers } from "../cover.js";
-import { movieGridHtml, movieCardHtml, settleCachedCovers } from "../ui/movie-card.js";
+import { movieGridHtml, movieCardHtml, settleCachedCovers, revealGrid } from "../ui/movie-card.js";
+import { countUp } from "../ui/count-up.js";
 import { captureGrid, animateGrid } from "../ui/grid-motion.js";
 import { filterChipsHtml, initFilterBar } from "../ui/movie-filters.js";
 import { initSortControl } from "../ui/sort-control.js";
 import { renderStats } from "../ui/stats.js";
 import { initAppShell } from "../ui/app-shell.js";
 import { initShortcuts } from "../ui/shortcuts.js";
+import { initGridKeys } from "../ui/grid-keys.js";
+import { initSearchSuggest } from "../ui/search-suggest.js";
+import { readSaved, addSaved, removeSaved, applySaved, canSave, sameFilters } from "../logic/saved-filters-logic.js";
 import { $, $$, escapeHtml, debounce, emptyState, markReady, reducedMotion } from "../utils/dom.js";
 import { showToast } from "../utils/toast.js";
 import { takeDeletedMovie, playRemoval } from "../ui/deleted-movie.js";
@@ -29,7 +33,7 @@ import { initDuel } from "../ui/duel.js";
 import { initUpgrade } from "../ui/upgrade.js";
 import { runCastFetch, readCastFetch, enableCastFetch, castFetchActive } from "../cast-fetch.js";
 import { readCastData, castStatus, creditsOf, personKey } from "../logic/cast-logic.js";
-import { readEntertainmentView, tabFromUrl } from "../logic/view-logic.js";
+import { readEntertainmentView, tabFromUrl, swipeStep, SWIPE_TABS } from "../logic/view-logic.js";
 import { refreshFoyer } from "../ui/foyer.js";
 import { SITE, has } from "../utils/host.js";
 import { startSitePage, startSiteCollection, siteLoadFailed } from "../site/site-page.js";
@@ -108,6 +112,72 @@ function renderToolbar(searched) {
   row.hidden = state.movies.length === 0;
   if (row.hidden) return;
   $("#filter-chips").innerHTML = filterChipsHtml(state.movies, searched, filters); // Website: ohne nicht veröffentlichte Gruppen
+  if (!SITE) renderSavedFilters();
+}
+
+/*
+ * Filter merken (2.43, js/logic/saved-filters-logic.js): Schnellfilter über
+ * der Filterleiste und „Filter merken" neben „Filter zurücksetzen".
+ * Nur im Dashboard - auf der Website gibt es nichts zu speichern.
+ */
+function renderSavedFilters() {
+  const box = $("#filter-chips");
+  const saved = readSaved(state.savedFilters);
+  if (saved.length) {
+    box.insertAdjacentHTML("afterbegin", `
+      <div class="saved-filters" role="group" aria-label="Schnellfilter">
+        <span class="saved-filters-label">Schnellfilter</span>
+        ${saved.map(entry => `
+          <span class="saved-filter${sameFilters(filters, entry.filters) ? " is-active" : ""}">
+            <button type="button" class="saved-filter-apply" data-saved="${escapeHtml(entry.id)}" aria-pressed="${sameFilters(filters, entry.filters)}">${escapeHtml(entry.name)}</button>
+            <button type="button" class="saved-filter-remove" data-saved-remove="${escapeHtml(entry.id)}" aria-label="Schnellfilter „${escapeHtml(entry.name)}“ löschen" title="Löschen">×</button>
+          </span>`).join("")}
+      </div>`);
+  }
+  if (canSave(filters) && !saved.some(entry => sameFilters(entry.filters, filters))) {
+    $("#filter-reset")?.insertAdjacentHTML("beforebegin", `<button type="button" class="filter-reset filter-save" id="filter-save">Filter merken</button>`);
+  }
+}
+
+async function saveSavedFilters(list) {
+  state.savedFilters = list;
+  await saveDashboardData({ savedFilters: list });
+}
+
+/** Klicks auf Schnellfilter, „×" und „Filter merken"; true, wenn erledigt. */
+function onSavedFilterClick(event) {
+  const saved = readSaved(state.savedFilters);
+  const apply = event.target.closest("[data-saved]");
+  if (apply) {
+    const entry = saved.find(item => item.id === apply.dataset.saved);
+    if (!entry) return true;
+    filters = sameFilters(filters, entry.filters) ? emptyFilters() : applySaved(entry); // nochmal antippen hebt auf
+    renderMovies({ animate: true });
+    $(`#filter-chips [data-saved="${CSS.escape(entry.id)}"]`)?.focus();
+    return true;
+  }
+  const remove = event.target.closest("[data-saved-remove]");
+  if (remove) {
+    const entry = saved.find(item => item.id === remove.dataset.savedRemove);
+    saveSavedFilters(removeSaved(saved, remove.dataset.savedRemove));
+    renderToolbar(searchMovies(state.movies, $("#movie-search").value, state.castData));
+    if (entry) showToast(`Schnellfilter „${entry.name}“ gelöscht.`, "info");
+    $("#filter-chips").focus();
+    return true;
+  }
+  if (event.target.closest("#filter-save")) {
+    const { list, entry, added } = addSaved(saved, filters);
+    if (added) {
+      saveSavedFilters(list);
+      renderToolbar(searchMovies(state.movies, $("#movie-search").value, state.castData));
+      showToast(`Als Schnellfilter gemerkt: „${entry.name}“.`, "success");
+      const chip = $(`#filter-chips [data-saved="${CSS.escape(entry.id)}"]`);
+      chip?.focus();
+      if (!reducedMotion()) chip?.parentElement.animate([{ transform: "scale(.85)", opacity: 0 }, { transform: "scale(1.04)", offset: .6 }, { transform: "none", opacity: 1 }], { duration: 320, easing: "cubic-bezier(.2, .7, .2, 1)" });
+    }
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -116,6 +186,8 @@ function renderToolbar(searched) {
  * @param {{animate?: boolean}} [options] - animate: Suche/Filter/Sortierung
  *   geändert - die Cover gleiten an ihren neuen Platz (js/ui/grid-motion.js).
  */
+let firstRender = true; // erstes Raster: versetzt einblenden, Anzahl zählt hoch (2.43)
+
 function renderMovies({ animate = false } = {}) {
   refreshFoyer(state); // Saalschild im Foyer: Zahlen
   const query = $("#movie-search").value;
@@ -128,7 +200,7 @@ function renderMovies({ animate = false } = {}) {
   syncUniverse(query, filtered);
 
   const empty = state.movies.length === 0
-    ? emptyState(SITE ? "Hier sind noch keine Titel veröffentlicht." : "Noch nichts importiert. Deine IMDb-Listen holst du über „Mehr“ → „IMDb-Listen importieren“.")
+    ? emptyState(SITE ? "Hier sind noch keine Titel veröffentlicht." : "Noch nichts importiert. Deine IMDb-Listen holst du über Einstellungen → Entertainment → „IMDb-Listen importieren“.")
     : emptyState(query.trim() || !hasActiveFilters(filters)
       ? "Keine Treffer. Andere Suche versuchen?"
       : "Keine Treffer für diese Filter.");
@@ -137,15 +209,16 @@ function renderMovies({ animate = false } = {}) {
   grid.innerHTML = movieGridHtml(sorted, "movie.html", empty, { coverPending: coverFetchRunning });
   settleCachedCovers(grid);
   animateGrid(grid, before);
+  if (firstRender && sorted.length) revealGrid(grid);
   renderToolbar(searched);
 
   const total = state.movies.length;
   const shown = filtered.length;
-  $("#collection-count").textContent = total === 0
-    ? "Noch nichts importiert."
-    : shown === total
-      ? `${total} Titel`
-      : `${shown} von ${total} Titeln`;
+  const countText = n => (shown === total ? `${n.toLocaleString("de-DE")} Titel` : `${n.toLocaleString("de-DE")} von ${total.toLocaleString("de-DE")} Titeln`);
+  if (total === 0) $("#collection-count").textContent = "Noch nichts importiert.";
+  else if (firstRender) countUp($("#collection-count"), shown, countText);
+  else $("#collection-count").textContent = countText(shown);
+  if (firstRender && grid.querySelector(".movie-card")) firstRender = false;
   if (SITE) rememberView({ browse: { query, filters, sortKey, sortDirection } }); // Website: für diesen Besuch
 }
 
@@ -253,9 +326,15 @@ async function runCoverFetch() {
   }
 }
 
-/** Schließt das Menü „Mehr". */
-function closeToolsMenu() {
-  $("#tools-menu").removeAttribute("open");
+/** Werkzeuge der Kinothek - seit 2.41.4 in den Einstellungen → Entertainment. */
+function kinothekTools() {
+  const refresh = () => { renderMovies(); renderStats(state); syncFilmYear(); };
+  return {
+    import: startImdbImport,
+    covers: runCoverFetch,
+    seen: () => openSeenCleanup(state, refresh),
+    orphans: () => openOrphanCleanup(state, refresh),
+  };
 }
 
 /**
@@ -268,12 +347,50 @@ function initTabs(initial) {
   const tabs = $$(".view-tab");
   const panelOf = tab => $(`#${tab.getAttribute("aria-controls")}`);
 
+  // Gleitende Markierung (2.43): eine Pille, die zum gewählten Reiter wandert
+  const bar = tabs[0]?.parentElement;
+  let pill = null;
+  if (bar) {
+    pill = document.createElement("span");
+    pill.className = "view-tab-pill";
+    pill.setAttribute("aria-hidden", "true");
+    bar.prepend(pill);
+    bar.classList.add("has-pill");
+  }
+  let pillPlaced = false;
+  const placePill = (target, instant = false) => {
+    if (!pill || !target || !target.offsetWidth) return;
+    if (!pillPlaced) instant = true; // erstes Mal: sofort an Ort und Stelle, ohne Gleiten
+    pillPlaced = true;
+    if (instant) pill.style.transition = "none";
+    pill.style.transform = `translateX(${target.offsetLeft}px)`;
+    pill.style.width = `${target.offsetWidth}px`;
+    pill.style.height = `${target.offsetHeight}px`;
+    pill.style.top = `${target.offsetTop}px`;
+    if (instant) requestAnimationFrame(() => { pill.style.transition = ""; });
+  };
+  const current = () => tabs.find(tab => tab.getAttribute("aria-selected") === "true");
+  window.addEventListener("resize", () => placePill(current(), true));
+  document.fonts?.ready.then(() => placePill(current(), true));
+  if ("ResizeObserver" in window && bar) new ResizeObserver(() => placePill(current(), true)).observe(bar);
+
   const select = target => {
+    const before = tabs.findIndex(tab => tab.getAttribute("aria-selected") === "true");
     for (const tab of tabs) {
       const active = tab === target;
       tab.setAttribute("aria-selected", String(active));
       tab.tabIndex = active ? 0 : -1;
       panelOf(tab).hidden = !active;
+    }
+    placePill(target);
+    // Fließender Reiterwechsel (2.42): der neue Saal gleitet aus der Richtung herein
+    const after = tabs.indexOf(target);
+    if (before >= 0 && before !== after && !reducedMotion()) {
+      const from = (after > before ? 1 : -1) * 28;
+      panelOf(target).animate(
+        [{ opacity: 0, transform: `translateX(${from}px)` }, { opacity: 1, transform: "none" }],
+        { duration: 340, easing: "cubic-bezier(.2, .7, .2, 1)" },
+      );
     }
     const tabName = target.id.replace("tab-", "");
     // Schmale Fenster: Leiste wischbar - gewählten Reiter in den sichtbaren Bereich holen
@@ -311,12 +428,50 @@ function initTabs(initial) {
   const start = tabs.find(tab => tab.id === `tab-${initial}`);
   if (start && start !== tabs[0]) select(start);
   else window.dispatchEvent(new CustomEvent("dashboard:tab", { detail: { tab: "titles" } }));
+  placePill(current(), true);
   selectTab = name => { const tab = $(`#tab-${name}`); if (tab) select(tab); };
+  initTabSwipe(tabs, select);
   // Foyer: Spule und Saalschild wechseln den Saal (js/ui/foyer.js)
   window.addEventListener("dashboard:select-tab", event => {
     selectTab(event.detail?.tab);
     window.scrollTo({ top: 0 }); // Saalschild oben im Blick
   });
+}
+
+/**
+ * Handy (2.43): Wischen nach links/rechts wechselt zum nächsten/vorigen
+ * Reiter - nur in ruhigen Reitern (SWIPE_TABS, js/logic/view-logic.js) und
+ * nicht auf Reglern, Feldern oder Leisten, die selbst seitlich scrollen.
+ */
+function initTabSwipe(tabs, select) {
+  if (!window.matchMedia("(pointer: coarse)").matches) return;
+  const panels = SWIPE_TABS.map(name => $(`#${name}-panel`)).filter(Boolean);
+  const scrollsSideways = (element, stop) => {
+    for (let node = element; node && node !== stop; node = node.parentElement) {
+      if (node.scrollWidth > node.clientWidth + 2 && /(auto|scroll)/.test(getComputedStyle(node).overflowX)) return true;
+    }
+    return false;
+  };
+  let start = null;
+  for (const panel of panels) {
+    panel.addEventListener("touchstart", event => {
+      const touch = event.touches[0];
+      const skip = event.touches.length > 1 || event.target.closest("input, select, textarea, button[role='slider'], [data-no-swipe]") || scrollsSideways(event.target, panel);
+      start = skip ? null : { x: touch.clientX, y: touch.clientY, at: performance.now() };
+    }, { passive: true });
+    panel.addEventListener("touchend", event => {
+      if (!start) return;
+      const touch = event.changedTouches[0];
+      const step = swipeStep({ dx: touch.clientX - start.x, dy: touch.clientY - start.y, ms: performance.now() - start.at });
+      start = null;
+      if (!step) return;
+      const visible = tabs.filter(tab => !tab.hidden && tab.isConnected);
+      const now = visible.findIndex(tab => tab.getAttribute("aria-selected") === "true");
+      const next = visible[now + step];
+      if (next) select(next);
+    }, { passive: true });
+    panel.addEventListener("touchcancel", () => { start = null; }, { passive: true });
+  }
 }
 
 /** Wechselt die Registerkarte (gesetzt von initTabs). */
@@ -363,8 +518,12 @@ function applyLinkFilter() {
   }
   const genre = params.get("genre");
   const person = params.get("person");
-  if (!genre && !person) return;
-  if (genre) filters = { ...emptyFilters(), genres: [genre] };
+  const noCover = params.get("cover") === "missing"; // aus den Einstellungen: Titel ohne Cover
+  if (!genre && !person && !noCover) return;
+  const gaps = noCover ? missingCovers(state.movies).ids : [];
+  if (noCover && !gaps.length) showToast("Alle Titel haben ein Cover.", "success");
+  if (noCover) filters = gaps.length ? { ...emptyFilters(), person: gaps, personLabel: "Ohne Cover" } : filters;
+  else if (genre) filters = { ...emptyFilters(), genres: [genre] };
   else {
     const key = personKey(person);
     const ids = state.movies.filter(movie => creditsOf(movie, state.castData).some(credit => credit.key === key)).map(movie => movie.id);
@@ -373,6 +532,7 @@ function applyLinkFilter() {
   $("#movie-search").value = "";
   params.delete("genre");
   params.delete("person");
+  params.delete("cover");
   history.replaceState(null, "", location.pathname + (params.toString() ? `?${params}` : ""));
   selectTab("titles");
 }
@@ -382,10 +542,30 @@ function refocusChip(category, value) {
   $$(".filter-chip", $("#filter-chips")).find(chip => chip.dataset.category === category && chip.dataset.value === value)?.focus();
 }
 
+/** Kurzes Federn des gerade umgeschalteten Chips (2.43) - Rückmeldung ohne Worte. */
+function popChip(category, value) {
+  if (reducedMotion()) return;
+  const chip = $$(".filter-chip", $("#filter-chips")).find(item => item.dataset.category === category && item.dataset.value === value);
+  chip?.animate([{ transform: "scale(.9)" }, { transform: "scale(1.05)", offset: .6 }, { transform: "none" }], { duration: 280, easing: "cubic-bezier(.2, .7, .2, 1)" });
+}
+
 /** Verdrahtet Suche, Menü, Sortierung und Chips (Chips per Event-Delegation). */
 function bindEvents() {
   // Debounce: verhindert, dass bei jedem Tastendruck das Raster neu entsteht.
   $("#movie-search").oninput = debounce(() => renderMovies({ animate: true }), CONFIG.SEARCH_DEBOUNCE_MS);
+  // Suchvorschläge (2.43): vor dem Enter-Handler, damit ein gewählter Vorschlag Vorrang hat
+  const fromSuggestion = patch => {
+    filters = { ...filters, ...patch };
+    $("#movie-search").value = "";
+    renderMovies({ animate: true });
+  };
+  initSearchSuggest($("#movie-search"), {
+    movies: () => state.movies,
+    castData: () => state.castData,
+    detailHref: id => `movie.html?id=${encodeURIComponent(id)}`,
+    onPerson: person => fromSuggestion({ person: person.ids, personName: person.name, personLabel: "" }),
+    onGenre: name => fromSuggestion({ genres: [name], genresAll: [] }),
+  });
   // Filmuniversum: Enter in der Suche fliegt zum ersten Treffer
   $("#movie-search").addEventListener("keydown", event => {
     if (event.key !== "Enter" || $("#universe-panel")?.hidden !== false) return;
@@ -394,30 +574,13 @@ function bindEvents() {
     universe?.flyToMatch();
   });
   initShortcuts({ search: $("#movie-search"), onSearchCleared: () => renderMovies({ animate: true }) });
+  initGridKeys($("#movies-grid"), id => state.movies.find(movie => movie.id === id)); // Pfeiltasten, Leertaste = Schnellvorschau (2.43)
   initSortControl({
     select: $("#movie-sort"), button: $("#movie-sort-dir"), options: sortOptions,
     key: sortKey, direction: sortDirection,
     onChange: ({ key, direction }) => { sortKey = key; sortDirection = direction; renderMovies({ animate: true }); },
   });
   bindFilterChips();
-  if (SITE) return; // Website: nur anschauen - kein Menü „Mehr"
-  $("#imdb-import-button").onclick = () => { closeToolsMenu(); startImdbImport(); };
-  $("#fetch-covers-button").onclick = () => { closeToolsMenu(); runCoverFetch(); };
-  $("#seen-cleanup-button").onclick = () => {
-    closeToolsMenu();
-    openSeenCleanup(state, () => { renderMovies(); renderStats(state); syncFilmYear(); });
-  };
-  $("#orphan-cleanup-button").onclick = () => {
-    closeToolsMenu();
-    openOrphanCleanup(state, () => { renderMovies(); renderStats(state); syncFilmYear(); });
-  };
-  document.addEventListener("click", event => {
-    const menu = $("#tools-menu");
-    if (menu.hasAttribute("open") && !menu.contains(event.target)) closeToolsMenu();
-  });
-  document.addEventListener("keydown", event => {
-    if (event.key === "Escape") closeToolsMenu();
-  });
 }
 
 /** Filter-Chips: aufklappbare Gruppen, ein Klick-Listener für die ganze Leiste. */
@@ -426,12 +589,14 @@ function bindFilterChips() {
   // Ein Listener für die ganze Chip-Leiste: Chips entstehen bei jedem Render
   // neu (Zählung ändert sich), einzelne Handler wären also nutzlos.
   $("#filter-chips").addEventListener("click", event => {
+    if (!SITE && onSavedFilterClick(event)) return;
     const chip = event.target.closest(".filter-chip");
     if (chip) {
       const { category, value } = chip.dataset;
       filters = toggleFilterValue(filters, category, value);
       renderMovies({ animate: true });
       refocusChip(category, value);
+      popChip(category, value);
       return;
     }
     if (event.target.closest("#filter-reset")) {
@@ -537,6 +702,7 @@ async function init() {
     state = await loadState();
     initAppShell(state, {
       onImported: () => { state.movies = normalizeMovies(state.movies); renderMovies(); renderStats(state); syncFilmYear(); renderImportReminder(state); scheduleCoverStore(); },
+      tools: kinothekTools(),
     });
   }
   setImportWindowDays(state.importWindowDays);
@@ -615,12 +781,17 @@ async function init() {
 
   renderImportReminder(state, { onImport: startImdbImport });
 
-  // Von der Startseite über "Jetzt importieren": Dialog direkt öffnen und
-  // den Parameter entfernen, damit Neuladen ihn nicht erneut öffnet
+  // Von der Startseite („Jetzt importieren", ?import=1) oder aus den
+  // Einstellungen einer anderen Seite (?tool=…): Werkzeug direkt starten und
+  // den Parameter entfernen, damit Neuladen es nicht erneut startet
   const params = new URLSearchParams(location.search);
-  if (params.has("import")) {
-    history.replaceState(null, "", location.pathname);
-    startImdbImport();
+  const tool = params.has("import") ? "import" : params.get("tool");
+  const run = tool && kinothekTools()[tool];
+  if (run) {
+    params.delete("import");
+    params.delete("tool");
+    history.replaceState(null, "", location.pathname + (params.size ? `?${params}` : ""));
+    run();
   }
 
   scheduleCoverStore();

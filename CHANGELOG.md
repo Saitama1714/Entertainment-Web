@@ -1,5 +1,21 @@
 # Änderungen
 
+## 1.23.0 – Suchvorschläge, Tastatur, Cover-Stimmung (Dashboard 2.45.1)
+- **Suchvorschläge:** Ab zwei Zeichen klappt unter der Suche eine Liste auf –
+  Titel mit Cover, Personen und Genres, der Treffer hervorgehoben. Ein Titel
+  öffnet die Detailseite, eine Person oder ein Genre wird zum Filter.
+- **Tastatur im Cover-Raster:** Pfeiltasten wandern durch die Cover, Enter
+  öffnet, die Leertaste zeigt eine Schnellvorschau.
+- **Handy:** In Titel und Heute wechselt Wischen zum nächsten oder vorigen Reiter.
+- **Kleine Bewegungen:** Cover neigen sich zur Maus mit Lichtreflex, die
+  Reiter-Markierung gleitet, beim ersten Öffnen blenden die Cover versetzt ein
+  und die Anzahl zählt hoch.
+- **Detailseite als Bühne:** das Cover groß und unscharf hinter dem Kopf,
+  Titel groß wie auf einem Plakat. Den farbigen Lichtschein gibt es nur, wenn
+  die Cover-Seite es zulässt.
+- Nur im Dashboard bleiben: Foyer, Aufbau der Übersicht, „Filter merken“,
+  fließende Seitenwechsel und der Reiter „Upgrade“.
+
 ## 1.22.0 – Mehr Platz, keine Ecken-Deko (Dashboard 2.41.3)
 - Der Kinovorhang ist im Ruhezustand 75 % schmaler; die Kinothek nutzt die
   gewonnene Breite (auf großen Bildschirmen deutlich mehr Cover je Reihe).

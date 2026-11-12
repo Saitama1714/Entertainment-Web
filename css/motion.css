@@ -3,7 +3,7 @@
    ========================================================================= */
 
 @media (prefers-reduced-motion: no-preference) {
-  .button, .small-button, .icon-button, .nav-link, .tools-menu-item,
+  .button, .small-button, .icon-button, .nav-link,
   .bookmark-tile, .bookmark-item,
   .movie-card-cover, .movie-card-title {
     transition: transform .2s cubic-bezier(.2, .7, .3, 1), background-color .15s ease,
@@ -13,7 +13,8 @@
   /* Cover wächst beim Überfahren und legt sich über die Nachbarn */
   .movie-card:hover .movie-card-cover,
   .movie-card:focus-visible .movie-card-cover {
-    transform: scale(1.15);
+    /* Cover hinter Glas (2.43, js/ui/card-tilt.js): leicht zur Maus geneigt */
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(1.15);
     box-shadow: inset 0 0 0 1px rgb(0 0 0 / .07), var(--shadow-hover);
   }
   .movie-card:hover .movie-card-title { color: var(--accent-ink); }
@@ -48,10 +49,8 @@
 
   .modal { animation: modal-in .17s ease-out; }
   .modal-backdrop { animation: fade-in .15s ease-out; }
-  .tools-menu[open] .tools-menu-panel { animation: menu-in .12s ease-out; }
 }
 
 @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
 @keyframes modal-in { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
-@keyframes menu-in { from { opacity: 0; transform: translateY(-4px) } to { opacity: 1; transform: none } }
 @keyframes skeleton-shine { from { transform: translateX(-60%) } to { transform: translateX(90%) } }

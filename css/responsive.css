@@ -28,6 +28,11 @@
   .form-grid { grid-template-columns: 1fr; }
   .field.full { grid-column: auto; }
   .modal-content, .modal-header { padding-left: var(--s-4); padding-right: var(--s-4); }
+  /* Einstellungen: Sprungleiste als Zeile oben, die Abschnitte darunter */
+  .modal--settings .modal-content { display: block; }
+  .settings-nav { position: sticky; top: calc(-1 * var(--s-5)); z-index: 2; flex-direction: row; gap: var(--s-1); overflow-x: auto; margin: calc(-1 * var(--s-5)) calc(-1 * var(--s-4)) var(--s-4); padding: var(--s-2) var(--s-4); background: var(--surface); border-bottom: 1px solid var(--line); scrollbar-width: none; }
+  .settings-jump { width: auto; flex: none; white-space: nowrap; padding: 8px 12px; }
+  .settings-jump.is-current { box-shadow: inset 0 -2px 0 var(--brass); }
   .toast-stack { right: var(--s-4); left: var(--s-4); bottom: var(--s-4); max-width: none; }
   .import-file { grid-template-columns: minmax(0, 1fr) auto; }
   .import-file-name { grid-column: 1 / -1; grid-row: 2; }

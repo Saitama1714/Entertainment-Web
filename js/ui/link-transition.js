@@ -38,6 +38,7 @@ function reset() {
   timers = [];
   document.querySelectorAll(".link-zoom, .cover-flight-veil, .cover-flight-card").forEach(element => element.remove());
   document.querySelectorAll(".movie-card-cover").forEach(cover => { cover.style.visibility = ""; });
+  delete document.documentElement.dataset.vtPlain;
   busy = false;
 }
 
@@ -201,6 +202,10 @@ function onClick(event) {
 
   event.preventDefault();
   busy = true;
+  // Fließende Seitenwechsel (css/page-transition.css): Nach dem eigenen Effekt
+  // blendet die neue Seite nur schlicht über, ohne stehende Kopfleiste
+  document.documentElement.dataset.vtPlain = "";
+  try { sessionStorage.setItem("vt-plain", "1"); } catch { /* dann mit stehender Kopfleiste */ }
   const duration = normalizeClickDuration(settings?.clickDuration);
   // Cover-Karten fliegen zur Detailseite, alles andere zoomt
   const animations = (link.matches("a.movie-card[data-movie-id]") && playCoverFlight(link, duration)) || playZoom(link, duration);

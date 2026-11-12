@@ -16,6 +16,7 @@ import { icon } from "../utils/icons.js";
 import { showToast } from "../utils/toast.js";
 import { rememberDeletedMovie } from "../ui/deleted-movie.js";
 import { settleCachedCovers, movieGridHtml } from "../ui/movie-card.js";
+import { coverAmbient, applyAmbient } from "../ui/ambient.js";
 import { similarMovies } from "../logic/similar-logic.js";
 import { seenTicketHtml } from "../ui/seen-ticket.js";
 import { SITE, own, has } from "../utils/host.js";
@@ -206,6 +207,7 @@ function renderSimilar() {
  * etwa vom Cover-Flug (js/cover-flight.js) -, bleibt es stehen.
  */
 function renderCover() {
+  renderBackdrop(); // auch, wenn das Cover per Cover-Flug schon im Rahmen sitzt
   const frame = $("#detail-cover");
   const current = frame.querySelector("img.cover-image");
   if (movie.cover && current?.getAttribute("src") === movie.cover) return;
@@ -214,6 +216,38 @@ function renderCover() {
     ? `<img class="cover-image" src="${escapeHtml(movie.cover)}" alt="">`
     : `<span class="cover-placeholder">${icon("image")}</span>`;
   settleCachedCovers(frame.parentElement);
+}
+
+/**
+ * Die Bühne (2.42): das Cover groß und unscharf hinter dem Kopf der Seite,
+ * dazu ein Lichtschein in den Farben des Covers (js/ui/ambient.js).
+ */
+function renderBackdrop() {
+  let backdrop = $("#detail-backdrop");
+  if (!backdrop) {
+    backdrop = document.createElement("div");
+    backdrop.id = "detail-backdrop";
+    backdrop.className = "detail-backdrop";
+    backdrop.setAttribute("aria-hidden", "true");
+    backdrop.innerHTML = `<img alt="" decoding="async"><span class="detail-backdrop-glow"></span>`;
+    document.body.prepend(backdrop);
+  }
+  const img = backdrop.querySelector("img");
+  const url = movie.cover || "";
+  if (img.dataset.src === url) return;
+  img.dataset.src = url;
+  backdrop.classList.remove("is-ready", "has-ambient");
+  applyAmbient(document.documentElement, null);
+  if (!url) { img.removeAttribute("src"); return; }
+  img.onload = () => backdrop.classList.add("is-ready");
+  img.onerror = () => backdrop.classList.remove("is-ready");
+  img.src = url;
+  if (img.complete && img.naturalWidth) backdrop.classList.add("is-ready");
+  coverAmbient(url).then(palette => {
+    if (img.dataset.src !== url || !palette) return;
+    applyAmbient(document.documentElement, palette);
+    backdrop.classList.add("has-ambient");
+  });
 }
 
 /** Knöpfe der Detailseite: Bearbeiten, Löschen, Cover ändern, Cover neu laden. */

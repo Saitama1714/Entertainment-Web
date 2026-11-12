@@ -63,11 +63,12 @@ wideQuery.addEventListener("change", () => {
  * Verdrahtet die Kopfleiste, die auf allen Seiten identisch ist:
  * Design-Auswahl und Einstellungen-Dialog (inkl. Export/Import).
  * @param {object} state - Aktueller Dashboard-Zustand.
- * @param {{onImported?: Function}} [hooks] - onImported wird nach einem
- *   erfolgreichen Datei-Import aufgerufen, damit die Seite neu rendern kann.
+ * @param {{onImported?: Function, tools?: Record<string, Function>}} [hooks] - onImported
+ *   wird nach einem erfolgreichen Datei-Import aufgerufen, damit die Seite neu
+ *   rendern kann; tools sind die Werkzeuge der Kinothek (nur Entertainment).
  */
 export function initAppShell(state, hooks = {}) {
-  initFoyer(state, { onSettings: () => openSettingsModal(state, hooks.onImported) });
+  initFoyer(state, { onSettings: () => openSettingsModal(state, hooks.onImported, hooks.tools) });
   applyTheme(state);
   followOtherTabs(state, hooks);
   initBrandMedallion({ motion: state.logoMotion }); // Logo-Animation nach den Einstellungen
@@ -85,7 +86,7 @@ export function initAppShell(state, hooks = {}) {
 
   const settingsButton = $("#settings-button");
   if (settingsButton) {
-    settingsButton.addEventListener("click", () => openSettingsModal(state, hooks.onImported));
+    settingsButton.addEventListener("click", () => openSettingsModal(state, hooks.onImported, hooks.tools));
   }
 
   const backButton = $("#back-button");

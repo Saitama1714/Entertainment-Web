@@ -36,6 +36,18 @@ export function searchMovies(movies, query, castData = null) {
  *   Test-Code kann hier eine feste Folge einsetzen (siehe pickRandomUnseen).
  * @returns {Array}
  */
+/**
+ * Titel ohne Cover (2.42.3, Einstellungen → Entertainment): alle Kennungen
+ * und wie viele davon keine IMDb-Kennung haben - die kann „Fehlende Cover
+ * laden" nicht holen, dort hilft nur „Cover ändern" auf der Detailseite.
+ * @param {Array} movies
+ * @returns {{ids: string[], withoutImdb: number}}
+ */
+export function missingCovers(movies) {
+  const missing = (movies || []).filter(movie => !String(movie.cover || "").trim());
+  return { ids: missing.map(movie => movie.id), withoutImdb: missing.filter(movie => !movie.imdbId).length };
+}
+
 export function previewMovies(movies, count, { rng = Math.random } = {}) {
   const shuffled = [...movies];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -175,7 +187,7 @@ export function importFilterOptions(movies, now = Date.now()) {
  * Genres haben (die Gruppe „Genre" dagegen: irgendeines davon).
  */
 export function emptyFilters() {
-  return { kind: [], genres: [], media: [], seen: [], lists: [], import: [], genresAll: [], person: [], personName: "" };
+  return { kind: [], genres: [], media: [], seen: [], lists: [], import: [], genresAll: [], person: [], personName: "", personLabel: "" };
 }
 
 /**
@@ -228,7 +240,7 @@ export function toggleFilterValue(filters, category, value) {
   // Die Schnittmenge gibt es nur als Ganzes: antippen hebt sie auf
   if (category === "genresAll") return { ...filters, genresAll: [] };
   // Ebenso die Titel einer Person aus „Besetzung"
-  if (category === "person") return { ...filters, person: [], personName: "" };
+  if (category === "person") return { ...filters, person: [], personName: "", personLabel: "" };
   const active = filters[category] || [];
   const next = active.includes(value) ? active.filter(entry => entry !== value) : [...active, value];
   return { ...filters, [category]: next };

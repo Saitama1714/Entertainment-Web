@@ -21,10 +21,24 @@
 
 .favicon { width: 18px; height: 18px; border-radius: 3px; object-fit: contain; flex: none; }
 
-/* Sortiermodus der Favoriten (Startseite): Kacheln lassen sich per Ziehen
-   (oder Pfeiltaste links/rechts) neu anordnen. Nur aktiv, wenn "Sortieren"
-   eingeschaltet ist - sonst navigiert ein Klick ganz normal. */
+/* Favoriten bearbeiten (Seite Lesezeichen, js/ui/favorites-editor.js):
+   Kacheln lassen sich per Ziehen (oder Pfeiltaste links/rechts) neu anordnen,
+   das × nimmt eine heraus. Nur aktiv, wenn "Sortieren" eingeschaltet ist -
+   sonst navigiert ein Klick ganz normal. */
+.favorites-editor { margin-bottom: var(--s-7); }
 .favorites-sort-hint { margin: -6px 0 var(--s-4); }
+.favorite-item { position: relative; min-width: 0; display: grid; }
+.favorite-item.is-dragging { opacity: .45; }
+.bookmark-grid.is-sorting .favorite-item { cursor: grab; }
+.favorite-remove {
+  position: absolute; z-index: 8; top: -8px; right: -8px;
+  width: 28px; height: 28px; display: grid; place-items: center; padding: 0;
+  border: 1px solid var(--line-strong); border-radius: 50%;
+  background: var(--surface); color: var(--text); box-shadow: var(--shadow-pop);
+  font-size: 1rem; line-height: 1; cursor: pointer;
+}
+.favorite-remove:hover { border-color: var(--danger, #b3261e); color: var(--danger, #b3261e); }
+.favorite-remove:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 .bookmark-grid.is-sorting .bookmark-tile {
   cursor: grab;

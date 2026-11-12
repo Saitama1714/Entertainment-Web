@@ -9,11 +9,13 @@ import {
 import { backupReminderStatus, downloadBackup } from "./backup.js";
 import { formatDay } from "../utils/format.js";
 import { CONFIG } from "../utils/constants.js";
+import { countUp } from "./count-up.js";
+import { igniteBoard, extinguishBoard } from "./board-ignite.js";
 
 /*
  * Design „Foyer" (2.41) - die Oberfläche. Ist <html data-skin="foyer"> gesetzt
  * (js/ui/app-shell.js, applyDesign), kommen hier dazu:
- *   - die Spule: der Knopf oben rechts klappt sie auf (innen Foyer, Lesezeichen,
+ *   - die Spule: der Knopf „Wegweiser" oben rechts klappt sie auf (innen Foyer, Lesezeichen,
  *     Entertainment, Vorführraum; außen die Säle von Entertainment); das
  *     Logo-Medaillon führt wie in Kino-Noir zur Übersicht (seit 2.41.3),
  *   - ein Ortsschild in der Kopfleiste („Foyer · Guten Abend", „Saal 2 · …"),
@@ -180,6 +182,29 @@ function renderBoard() {
   $("#foyer-board-reroll").hidden = picks.length < 2 && boardRound === 0 && !movies.length;
 }
 
+/*
+ * „Neu stecken" (2.45): die alte Tafel erlischt, die neue zündet Buchstabe
+ * für Buchstabe (js/ui/board-ignite.js). Schnell nacheinander geklickt,
+ * bricht der laufende Wechsel ab; bei „Bewegung reduzieren" sofort.
+ */
+let boardAnimations = [];
+let boardSwap = 0;
+function restickBoard() {
+  const box = $("#foyer-board-lines");
+  boardAnimations.forEach(animation => animation.cancel());
+  boardAnimations = [];
+  clearTimeout(boardSwap);
+  if (!box || reducedMotion()) { renderBoard(); return; }
+  const out = extinguishBoard(box);
+  boardAnimations = out.animations;
+  boardSwap = setTimeout(() => {
+    renderBoard();
+    boardAnimations = igniteBoard($("#foyer-board-lines"));
+  }, out.duration + 60);
+}
+
+let kasseCounted = false;
+
 function renderKasse() {
   const ticket = $("#foyer-kasse");
   if (!ticket || !state) return;
@@ -193,6 +218,14 @@ function renderKasse() {
     <div class="foyer-kasse-part"><span class="foyer-kasse-label">Offen</span><span class="foyer-kasse-value">${n(count.open)}</span><span class="foyer-kasse-note">warten noch</span></div>
     <div class="foyer-kasse-stub"><span class="foyer-kasse-label">Abriss · Sicherung</span><span class="foyer-kasse-backup">${escapeHtml(backup)}</span>
       <button type="button" class="foyer-kasse-button" id="foyer-backup-now">Jetzt sichern</button></div>`;
+  // Beim ersten Erscheinen zählen die Zahlen kurz hoch (2.43); Breite steht vorher fest
+  if (!kasseCounted) {
+    kasseCounted = true;
+    ticket.querySelectorAll(".foyer-kasse-value").forEach((value, index) => {
+      value.style.minWidth = `${value.textContent.length}ch`;
+      countUp(value, [count.total, count.seen, count.open][index]);
+    });
+  }
   $("#foyer-backup-now").addEventListener("click", async () => {
     await downloadBackup(state);
     renderKasse();
@@ -225,7 +258,7 @@ function mountHome() {
     </section>`);
   moveInto($(".clock-widget"), $("#foyer-clock"));
   moveInto($("#quote-of-day"), $("#foyer-quote"));
-  $("#foyer-board-reroll").addEventListener("click", () => { boardRound++; renderBoard(); });
+  $("#foyer-board-reroll").addEventListener("click", () => { boardRound++; restickBoard(); });
   renderBoard();
 
   const favorites = $("#bookmarks-heading")?.closest("section");
@@ -280,8 +313,8 @@ function renderSpoolButton() {
   const inner = $(".appbar-inner");
   if (!inner || spoolButton()) return;
   inner.insertAdjacentHTML("beforeend", `<button type="button" class="foyer-spool-button" id="foyer-spool-button" data-foyer
-      aria-haspopup="dialog" aria-expanded="false" aria-label="Spule öffnen – Bereiche und Säle">
-      <span class="foyer-spool-button-label" aria-hidden="true">Spule</span>
+      aria-haspopup="dialog" aria-expanded="false" aria-label="Wegweiser öffnen – Bereiche und Säle">
+      <span class="foyer-spool-button-label" aria-hidden="true">Wegweiser</span>
       <span class="foyer-spool-button-reel" aria-hidden="true">${MINI_REEL_SVG}</span>
     </button>`);
   spoolButton().addEventListener("click", () => { if (spool) closeSpool(); else openSpool(); });
@@ -320,7 +353,7 @@ export function openSpool() {
   spool.className = "foyer-spool is-right";
   spool.setAttribute("role", "dialog");
   spool.setAttribute("aria-modal", "true");
-  spool.setAttribute("aria-label", "Spule – wohin möchtest du?");
+  spool.setAttribute("aria-label", "Wegweiser – wohin möchtest du?");
   spool.style.setProperty("--cx", `${center.x}px`);
   spool.style.setProperty("--cy", `${center.y}px`);
   spool.style.setProperty("--r-inner", `${layout.innerR}px`);

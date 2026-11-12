@@ -112,7 +112,7 @@ export function filterChipsHtml(allMovies, searched, filters) {
   // Titel einer Person aus „Besetzung": ebenso ein Knopf
   const person = filters.person?.length
     ? `<button type="button" class="filter-chip filter-set" data-category="person" data-value="all" aria-pressed="true" title="Filter aufheben">
-        <span class="filter-chip-label">Mit ${escapeHtml(filters.personName || "Person")}</span><span aria-hidden="true">×</span></button>`
+        <span class="filter-chip-label">${escapeHtml(filters.personLabel || `Mit ${filters.personName || "Person"}`)}</span><span aria-hidden="true">×</span></button>`
     : "";
   const reset = hasActiveFilters(filters)
     ? `<button type="button" class="filter-reset" id="filter-reset">Filter zurücksetzen</button>`

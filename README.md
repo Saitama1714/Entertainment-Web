@@ -25,6 +25,9 @@ Website mit dem Dashboard gleichziehen soll. Von Hand gepflegt werden hier nur
   IMDb-Bewertung). „Import" zeigt, was im Dashboard im dort eingestellten Zeitraum (Standard 4 Wochen)
   neu importiert oder durch den Import geändert wurde. Suche, Filter und Sortierung
   bleiben während des Besuchs erhalten, auch nach einer Detailseite.
+  Beim Tippen erscheinen Vorschläge (Titel mit Cover, Personen, Genres). Im
+  Raster wandern die Pfeiltasten durch die Cover, Enter öffnet, die Leertaste
+  zeigt eine Schnellvorschau. Am Handy wechselt Wischen in Titel und Heute zum nächsten oder vorigen Reiter.
 - **Zeitleiste**: Cover Flow (ein Titel groß in der Mitte, die Nachbarn
   schräg daneben), darunter eine Zeitleiste mit einem Strich je Titel –
   nach Erscheinen oder (wenn veröffentlicht) nach dem Tag meiner Bewertung;
@@ -53,7 +56,7 @@ Website mit dem Dashboard gleichziehen soll. Von Hand gepflegt werden hier nur
   Markierungen gelten nur für den Besuch. Beim Öffnen der Auftritt
   (höchstens einmal pro Stunde). Nur, wenn meine Bewertungen veröffentlicht
   sind.
-- **Detailseite** je Titel: „Meine Bewertung" als Leuchtreklame, Knöpfe zu
+- **Detailseite** je Titel als Bühne (das Cover groß und unscharf hinter dem Kopf): „Meine Bewertung" als Leuchtreklame, Knöpfe zu
   IMDb und WerStreamt.es (zeigt, wo der Titel im Stream läuft), die
   wichtigsten Angaben samt Besetzung, Wertungen, Freigabe, Land und Sprache;
   Genre-Schilder und Namen führen zu den passenden Titeln; Seltenes unter

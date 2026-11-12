@@ -69,3 +69,22 @@ function readBrowse(value) {
     sortDirection: value.sortDirection === "asc" ? "asc" : "desc",
   };
 }
+
+/*
+ * Wischen zwischen den Reitern (2.43, nur Touch): Reiter, in denen man
+ * nicht schon selbst wischt oder zieht - und die Schwellen einer Wischgeste.
+ */
+export const SWIPE_TABS = ["titles", "stats", "upgrade"];
+export const SWIPE_MIN_X = 70;
+export const SWIPE_MAX_Y = 40;
+export const SWIPE_MAX_MS = 700;
+
+/**
+ * Richtung einer Wischgeste: 1 = zum nächsten Reiter (nach links gewischt),
+ * -1 = zum vorigen, 0 = keine Wischgeste (zu kurz, zu schräg, zu langsam).
+ * @param {{dx: number, dy: number, ms: number}} gesture
+ */
+export function swipeStep({ dx, dy, ms }) {
+  if (!(Math.abs(dx) >= SWIPE_MIN_X) || Math.abs(dy) >= SWIPE_MAX_Y || ms > SWIPE_MAX_MS) return 0;
+  return dx < 0 ? 1 : -1;
+}

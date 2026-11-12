@@ -1,6 +1,8 @@
 import { escapeHtml } from "../utils/dom.js";
 import { icon } from "../utils/icons.js";
 import { MEDIA_BADGES } from "../utils/media.js";
+import "./ambient.js"; // Cover-Stimmung: Leuchten beim Darüberfahren (2.42)
+import "./card-tilt.js"; // Cover hinter Glas: Neigung und Lichtreflex (2.43)
 
 /*
  * Lade-Skelett für Cover: Solange ein Coverbild lädt, schimmert an seiner
@@ -35,7 +37,7 @@ document.addEventListener("error", settleCover, true);
  *   Lade-Skelett statt des Platzhalter-Symbols.
  * @returns {string} HTML-String.
  */
-export function movieCardHtml(movie, detailHref, { coverPending = false } = {}) {
+export function movieCardHtml(movie, detailHref, { coverPending = false, index = 0 } = {}) {
   // Ohne Medium (nur auf IMDb-Listen, nicht im Regal) gibt es kein Abzeichen
   const badge = movie.medium ? (MEDIA_BADGES[movie.medium] || MEDIA_BADGES["Sonstiges"]) : null;
   const badgeHtml = badge
@@ -53,9 +55,10 @@ export function movieCardHtml(movie, detailHref, { coverPending = false } = {}) 
   ].filter(Boolean).join("");
 
   return `
-    <a class="movie-card" href="${detailHref}" data-movie-id="${escapeHtml(movie.id)}">
+    <a class="movie-card" href="${detailHref}" data-movie-id="${escapeHtml(movie.id)}" style="--i:${Math.min(index, 24)}">
       <div class="${coverClass}">
         ${cover}
+        <span class="cover-glare" aria-hidden="true"></span>
         ${badgeHtml}
       </div>
       <div class="movie-card-body">
@@ -74,8 +77,19 @@ export function movieCardHtml(movie, detailHref, { coverPending = false } = {}) 
  */
 export function movieGridHtml(movies, detailBasePath, emptyHtml, cardOptions = {}) {
   return movies.length
-    ? movies.map(movie => movieCardHtml(movie, `${detailBasePath}?id=${encodeURIComponent(movie.id)}`, cardOptions)).join("")
+    ? movies.map((movie, index) => movieCardHtml(movie, `${detailBasePath}?id=${encodeURIComponent(movie.id)}`, { ...cardOptions, index })).join("")
     : emptyHtml;
+}
+
+/**
+ * Erstes Erscheinen eines Rasters (2.43): Karten blenden leicht versetzt ein
+ * (css/collection.css, .is-revealing). Danach übernimmt grid-motion.js.
+ * @param {HTMLElement} grid
+ */
+export function revealGrid(grid) {
+  if (!grid || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  grid.classList.add("is-revealing");
+  setTimeout(() => grid.classList.remove("is-revealing"), 1400);
 }
 
 /**

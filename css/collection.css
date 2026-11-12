@@ -20,6 +20,12 @@
 }
 .grid-ghost img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .movie-card:hover, .movie-card:focus-within { z-index: 3; }
+/* Cover-Stimmung (2.42): beim Darüberfahren leuchtet die Fläche hinter dem
+   Cover in seiner Farbe (js/ui/ambient.js setzt --amb-1, data-amb="1") */
+.movie-card[data-amb="1"]:is(:hover, :focus-visible) .movie-card-cover {
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / .07), var(--shadow-hover),
+              0 18px 50px -4px rgb(var(--amb-1) / .55), 0 0 0 1px rgb(var(--amb-1) / .35);
+}
 
 .movie-card-cover {
   position: relative;
@@ -32,6 +38,18 @@
   display: flex; align-items: center; justify-content: center;
 }
 .movie-card-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Erstes Erscheinen (2.43, revealGrid): Karten blenden leicht versetzt ein */
+.movie-grid.is-revealing .movie-card { animation: card-reveal .5s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 32ms); }
+@keyframes card-reveal { from { opacity: 0; transform: translateY(10px); } }
+/* Lichtreflex über dem Cover (2.43): folgt der Maus, nur beim Darüberfahren */
+.cover-glare {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none; border-radius: inherit;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 25%), rgb(255 255 255 / .32), rgb(255 255 255 / .06) 38%, transparent 62%);
+  mix-blend-mode: soft-light; opacity: 0; transition: opacity .25s ease;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .movie-card:hover .cover-glare { opacity: 1; }
+}
 
 /* Klick-Rückmeldung ohne Bewegung (gilt auch bei "Bewegung reduzieren") */
 .button:active:not(:disabled), .small-button:active:not(:disabled) { filter: brightness(.93); }
@@ -88,3 +106,16 @@
 .media-badge.tone-gray span { color: var(--badge-gray); }
 .media-badge.tone-blue span { color: var(--badge-blue); }
 .media-badge.tone-green span { color: var(--badge-green); }
+
+/* Schnellvorschau (Leertaste im Raster, 2.43) */
+.quick-preview { display: grid; grid-template-columns: 132px 1fr; gap: var(--s-4); align-items: start; }
+.quick-preview-cover { width: 132px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: var(--r-poster); box-shadow: var(--shadow-pop); background: var(--surface-sunken); display: block; }
+.quick-preview-body { display: grid; gap: var(--s-2); min-width: 0; }
+.quick-preview-body .meta, .quick-preview-genres { margin: 0; }
+.quick-preview-genres { color: var(--text-muted); font-size: .9rem; }
+.quick-preview-scores { display: flex; flex-wrap: wrap; gap: var(--s-3); margin: 0; font-size: .9rem; color: var(--text-muted); }
+.quick-preview-scores b { color: var(--text); font-size: 1.1rem; }
+.quick-preview-scores .seen { color: var(--brass); }
+.quick-preview .form-actions { justify-content: flex-start; margin-top: var(--s-2); }
+.quick-preview-hint { margin: 0; font-size: .78rem; }
+@media (max-width: 420px) { .quick-preview { grid-template-columns: 96px 1fr; } .quick-preview-cover { width: 96px; } }

@@ -1,4 +1,4 @@
-import { IMPORT_WINDOW_OPTIONS, IMPORT_WINDOW_DAYS, setImportWindowDays } from "../logic/movies-logic.js";
+import { IMPORT_WINDOW_OPTIONS, IMPORT_WINDOW_DAYS, setImportWindowDays, missingCovers } from "../logic/movies-logic.js";
 import { $, escapeHtml } from "../utils/dom.js";
 import { openModal, closeModal } from "../utils/modal.js";
 import { saveDashboardData, importDashboard, getDashboardData, syncBootMirror } from "../storage.js";
@@ -21,9 +21,23 @@ import { readCastFetch, enableCastFetch, disableCastFetch, castFetchActive } fro
 import { logoMotionSettingsHtml, bindLogoMotionSettings } from "./logo-motion-settings.js";
 import { UNIVERSE_INTRO_OPTIONS, DEFAULT_UNIVERSE_INTRO } from "../logic/universe-logic.js";
 import { DEFAULT_DUEL_INTRO } from "../logic/duel-logic.js";
+import { BUILD_STYLES, BUILD_INTRO_OPTIONS, DEFAULT_BUILD_INTRO, readBuildStyle } from "../logic/page-build-logic.js";
+import { previewPageBuild } from "./page-build.js";
 import { setLogoMotion } from "./brand-medallion.js";
 import { applyTheme } from "./app-shell.js";
 import { readDesign, FOYER_MIN_WIDTH } from "../logic/foyer-logic.js";
+
+/** Ist gerade das Foyer zu sehen (gewählt und Fenster breit genug)? Dann gibt es kein Hell/Dunkel. */
+const foyerShown = state => readDesign(state.design) === "foyer" && window.innerWidth >= FOYER_MIN_WIDTH;
+
+/** Hell/Dunkel im Foyer ausgrauen, mit Hinweis (Nutzerwunsch 08.11.2026). */
+function syncThemeField(state) {
+  const shown = foyerShown(state);
+  const select = $("#settings-theme-select");
+  if (select) select.disabled = shown;
+  const note = $("#settings-theme-note");
+  if (note) note.hidden = !shown;
+}
 
 /** Auswahl „Design": Kino-Noir oder Foyer (2.41), mit kleinem Vorschaubild. */
 function designPickerHtml(state) {
@@ -44,36 +58,92 @@ function designPickerHtml(state) {
         </div>
       </fieldset>
       <p class="meta">Am Handy und in schmalen Fenstern (unter ${FOYER_MIN_WIDTH} px) erscheint immer Kino-Noir; wer dort die Desktop-Ansicht wählt, sieht das Foyer. Das Foyer ist immer dunkel.</p>
-      <label class="field">Hell oder dunkel (Kino-Noir)
-        <select id="settings-theme-select">
+      <label class="field" id="settings-theme-field">Hell oder dunkel (Kino-Noir)
+        <select id="settings-theme-select" ${foyerShown(state) ? "disabled" : ""} aria-describedby="settings-theme-note">
           ${[["dark", "Dunkel"], ["light", "Hell"], ["system", "Wie das System"]].map(([value, label]) =>
             `<option value="${value}" ${state.theme === value ? "selected" : ""}>${label}</option>`).join("")}
         </select>
+        <span class="field-note" id="settings-theme-note" ${foyerShown(state) ? "" : "hidden"}>Das Foyer ist immer dunkel – Hell oder Dunkel gilt nur für Kino-Noir (z. B. am Handy).</span>
       </label>`;
 }
 
-/** Foyer: Einstellungen als „Vorführraum" mit Sprungleiste zu den Abschnitten. */
-function dressAsProjectionRoom() {
+/**
+ * Sprungleiste links (beide Designs, seit 2.41.4): ein Eintrag je Abschnitt,
+ * leuchtet beim Scrollen mit. Im Foyer heißen die Einstellungen „Vorführraum"
+ * und die Einträge tragen Lampen.
+ */
+function buildSettingsNav() {
   const modal = document.querySelector(".modal");
-  if (!modal || document.documentElement.dataset.skin !== "foyer") return;
-  modal.classList.add("modal--foyer");
-  const heading = modal.querySelector(".modal-header h2");
-  if (heading) heading.textContent = "Vorführraum";
-  modal.setAttribute("aria-label", "Vorführraum – Einstellungen");
+  if (!modal) return;
+  const foyer = document.documentElement.dataset.skin === "foyer";
+  modal.classList.add("modal--settings");
+  if (foyer) {
+    modal.classList.add("modal--foyer");
+    const heading = modal.querySelector(".modal-header h2");
+    if (heading) heading.textContent = "Vorführraum";
+    modal.setAttribute("aria-label", "Vorführraum – Einstellungen");
+  }
   const sections = [...modal.querySelectorAll(".form-section > h2[id]")];
   const content = modal.querySelector(".modal-content");
-  content.insertAdjacentHTML("afterbegin", `<nav class="foyer-settings-nav" aria-label="Abschnitte">${sections.map(h2 =>
-    `<button type="button" class="foyer-settings-jump" data-jump="${h2.id}"><span class="foyer-lamp" aria-hidden="true"></span>${escapeHtml(h2.textContent)}</button>`).join("")}</nav>`);
-  const jumps = [...content.querySelectorAll(".foyer-settings-jump")];
-  const light = id => jumps.forEach(jump => jump.classList.toggle("is-current", jump.dataset.jump === id));
+  content.insertAdjacentHTML("afterbegin", `<nav class="settings-nav${foyer ? " foyer-settings-nav" : ""}" aria-label="Abschnitte">${sections.map(h2 =>
+    `<button type="button" class="settings-jump${foyer ? " foyer-settings-jump" : ""}" data-jump="${h2.id}">${foyer ? `<span class="foyer-lamp" aria-hidden="true"></span>` : ""}${escapeHtml(h2.textContent)}</button>`).join("")}</nav>`);
+  const jumps = [...content.querySelectorAll(".settings-jump")];
+  const nav = content.querySelector(".settings-nav");
+  const navIsRow = () => getComputedStyle(nav).flexDirection === "row"; // schmale Fenster: Leiste oben
+  const light = id => jumps.forEach(jump => {
+    const on = jump.dataset.jump === id;
+    jump.classList.toggle("is-current", on);
+    if (on) jump.setAttribute("aria-current", "true"); else jump.removeAttribute("aria-current");
+    // Leiste als Zeile: den aktuellen Eintrag ins Bild holen (nur waagerecht)
+    if (on && navIsRow()) nav.scrollLeft = Math.max(0, jump.offsetLeft - (nav.clientWidth - jump.offsetWidth) / 2);
+  });
   light(sections[0]?.id);
+  let jumping = 0;
   content.addEventListener("click", event => {
-    const jump = event.target.closest(".foyer-settings-jump");
+    const jump = event.target.closest(".settings-jump");
     if (!jump) return;
-    document.getElementById(jump.dataset.jump)?.closest(".form-section")?.scrollIntoView({ block: "start", behavior: "smooth" });
+    const target = document.getElementById(jump.dataset.jump)?.closest(".form-section");
+    if (!target) return;
+    jumping = Date.now();
+    const offset = navIsRow() ? nav.offsetHeight + 12 : 4;
+    content.scrollTo({ top: target.getBoundingClientRect().top - content.getBoundingClientRect().top + content.scrollTop - offset, behavior: "smooth" });
     light(jump.dataset.jump);
   });
+  // Mitleuchten beim Scrollen: der Abschnitt, dessen Kopf zuletzt oben vorbeikam
+  content.addEventListener("scroll", () => {
+    if (Date.now() - jumping < 700) return;
+    const top = content.getBoundingClientRect().top + (navIsRow() ? nav.offsetHeight : 0) + 80;
+    let current = sections[0];
+    for (const h2 of sections) if (h2.getBoundingClientRect().top <= top) current = h2;
+    if (content.scrollTop + content.clientHeight >= content.scrollHeight - 4) current = sections[sections.length - 1];
+    light(current?.id);
+  }, { passive: true });
 }
+
+/** „12 Titel ohne Cover, davon 3 ohne IMDb-Kennung · Titel zeigen" (2.42.3). */
+function coverGapsHtml(state) {
+  const { ids, withoutImdb } = missingCovers(state.movies);
+  if (!(state.movies || []).length) return "Noch keine Titel.";
+  if (!ids.length) return "Alle Titel haben ein Cover.";
+  const n = ids.length.toLocaleString("de-DE");
+  const href = `${location.pathname.includes("/views/") ? "" : "views/"}movies.html?cover=missing`;
+  const extra = withoutImdb
+    ? `, davon ${withoutImdb.toLocaleString("de-DE")} ohne IMDb-Kennung (die lädt „Fehlende Cover laden“ nicht – dort hilft „Cover ändern“ auf der Detailseite)`
+    : "";
+  return `<strong>${n} ${ids.length === 1 ? "Titel" : "Titel"} ohne Cover</strong>${extra}. <a class="external-link" id="cover-gaps-link" href="${href}">Titel zeigen</a>`;
+}
+
+/** Werkzeuge der Kinothek: auf Entertainment direkt, sonst dorthin mit ?tool=… */
+const TOOLS = [
+  { key: "import", id: "imdb-import-button", label: "IMDb-Listen importieren …", primary: true },
+  { key: "covers", id: "fetch-covers-button", label: "Fehlende Cover laden" },
+  { key: "seen", id: "seen-cleanup-button", label: "Gesehen mit IMDb abgleichen …" },
+  { key: "orphans", id: "orphan-cleanup-button", label: "Titel ohne IMDb-Liste aufräumen …" },
+];
+const toolButton = key => {
+  const tool = TOOLS.find(item => item.key === key);
+  return `<button class="${tool.primary ? "button" : "small-button"}" type="button" id="${tool.id}" data-tool="${tool.key}">${escapeHtml(tool.label)}</button>`;
+};
 
 /** "Datenstand: 22.09.2026 (vor 3 Tagen)" oder Hinweis, dass noch nichts importiert wurde. */
 function importStatusText(state) {
@@ -98,31 +168,38 @@ function reminderOptions(current) {
 }
 
 /**
- * Einstellungen-Dialog in vier Sektionen: Erscheinungsbild, Bewegung,
- * Entertainment (IMDb-Datenstand, Erinnerung, OMDb-Schlüssel) und Daten
- * (Sichern und Wiederherstellen). Auf jeder Seite über die Kopfleiste erreichbar.
+ * Einstellungen-Dialog (seit 2.41.4 neu geordnet) in fünf Abschnitten mit
+ * Sprungleiste: Erscheinungsbild, Bewegung, Entertainment (IMDb-Daten,
+ * Aufräumen, Cover und Besetzung), Sicherung, Website. Auf jeder Seite über
+ * die Kopfleiste (Foyer: Wegweiser → Vorführraum) erreichbar.
  * @param {object} state - wird bei Änderungen mutiert.
- * @param {Function} [onImported] - Callback nach erfolgreichem Import.
+ * @param {Function} [onImported] - Callback nach erfolgreichem Laden einer Sicherung.
+ * @param {Record<string, Function>} [tools] - Werkzeuge der Kinothek, wenn die
+ *   Seite sie selbst ausführt (Entertainment); sonst führt ein Klick dorthin.
  */
-export function openSettingsModal(state, onImported) {
+export function openSettingsModal(state, onImported, tools = null) {
   const hasCurtain = Boolean(document.querySelector(".curtain")); // Übersicht und Entertainment
+  const onHome = Boolean(document.querySelector("#movie-preview")); // Aufbau gibt es nur auf der Übersicht
+  const choiceSelect = (id, options, current) => `<select id="${id}">${options.map(option =>
+    `<option value="${option.value}" ${current === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("")}</select>`;
   openModal("Einstellungen", `
     <section class="form-section" aria-labelledby="settings-appearance">
       <h2 id="settings-appearance">Erscheinungsbild</h2>
+      <p class="settings-lead">Wie das Dashboard aussieht.</p>
       ${designPickerHtml(state)}
       <div class="intro-picker">
         <label class="field intro-field">Kinovorhang
-          <select id="intro-mode-select">
-            ${INTRO_OPTIONS.map(option =>
-              `<option value="${option.value}" ${state.introMode === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`
-            ).join("")}
-          </select>
+          ${choiceSelect("intro-mode-select", INTRO_OPTIONS, state.introMode)}
         </label>
         ${hasCurtain ? `<button class="small-button" type="button" id="curtain-preview-button">Vorschau abspielen</button>` : ""}
       </div>
       <p class="meta">${hasCurtain
-        ? "Die Vorschau spielt den Vorhang hier auf dieser Seite ab."
+        ? "Die Vorschau spielt den Vorhang hier auf dieser Seite ab; danach geht es hierher zurück."
         : "Eine Vorschau gibt es auf der Übersicht und unter Entertainment."}</p>
+      <label class="check-row">
+        <input type="checkbox" id="projector-dust-check" ${state.projectorDust === false ? "" : "checked"}>
+        Lichtkegel mit Staub im Kopf der Übersicht
+      </label>
       <div class="form-section-actions">
         <button class="small-button" type="button" id="show-shortcuts">Tastenkürzel anzeigen</button>
       </div>
@@ -130,8 +207,10 @@ export function openSettingsModal(state, onImported) {
 
     <section class="form-section" aria-labelledby="settings-motion">
       <h2 id="settings-motion">Bewegung</h2>
+      <p class="settings-lead">Animationen beim Öffnen der Übersicht, beim Klicken, am Logo und beim Öffnen einzelner Reiter. Mit „Bewegung reduzieren“ im System bleibt alles ruhig.</p>
+      <h3 class="settings-subhead">Klick-Effekt</h3>
       <fieldset class="choice-group">
-        <legend>Klick-Effekt</legend>
+        <legend class="visually-hidden">Klick-Effekt</legend>
         ${CLICK_EFFECT_OPTIONS.map(option => `
           <label class="choice">
             <input type="radio" name="click-effect" value="${option.value}" ${normalizeClickEffect(state.clickEffect) === option.value ? "checked" : ""}>
@@ -146,92 +225,104 @@ export function openSettingsModal(state, onImported) {
             ${escapeHtml(option.label)}
           </label>`).join("")}
       </fieldset>
-      <p class="meta">Beim Öffnen von Favoriten, Lesezeichen und beim Wechsel zwischen den Seiten; die Seite öffnet, sobald die Animation durch ist. Mit „Aus" (oder „Bewegung reduzieren" im System) öffnet ein Klick sofort. Cover fliegen beim Öffnen eines Titels direkt zur Detailseite.</p>
-      <label class="check-row">
-        <input type="checkbox" id="projector-dust-check" ${state.projectorDust === false ? "" : "checked"}>
-        Lichtkegel mit Staub im Kopf der Übersicht
-      </label>
-      <label class="field intro-field">Urknall im Filmuniversum
-        <select id="universe-intro-select">
-          ${UNIVERSE_INTRO_OPTIONS.map(option =>
-            `<option value="${option.value}" ${(state.universeIntro || DEFAULT_UNIVERSE_INTRO) === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`
-          ).join("")}
-        </select>
-      </label>
-      <p class="meta">Beim Öffnen von Entertainment → Filmuniversum fliegen die Sterne aus der Mitte an ihren Platz. Mit „Bewegung reduzieren“ im System nie.</p>
-      <label class="field intro-field">Auftritt in „Du gegen IMDb“
-        <select id="duel-intro-select">
-          ${UNIVERSE_INTRO_OPTIONS.map(option =>
-            `<option value="${option.value}" ${(state.duelIntro || DEFAULT_DUEL_INTRO) === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`
-          ).join("")}
-        </select>
-      </label>
-      <p class="meta">Die Titel fliegen aus beiden Ecken ins Feld, der Ring füllt sich, der Stempel fällt. Mit „Bewegung reduzieren“ im System nie.</p>
+      <p class="meta">Beim Öffnen von Favoriten, Lesezeichen und beim Wechsel zwischen den Seiten; die Seite öffnet, sobald die Animation durch ist. Mit „Aus“ öffnet ein Klick sofort. Cover fliegen beim Öffnen eines Titels direkt zur Detailseite.</p>
+
+      <h3 class="settings-subhead" id="settings-build">Aufbau der Übersicht</h3>
+      <div class="settings-pair">
+        <label class="field intro-field">Stil
+          ${choiceSelect("build-style-select", BUILD_STYLES, readBuildStyle(state.buildStyle))}
+        </label>
+        <label class="field intro-field">Wann
+          ${choiceSelect("build-intro-select", BUILD_INTRO_OPTIONS, state.buildIntro || DEFAULT_BUILD_INTRO)}
+        </label>
+      </div>
+      <div class="form-section-actions">
+        ${onHome ? `<button class="small-button" type="button" id="build-preview-button">Vorschau abspielen</button>` : ""}
+      </div>
+      <p class="meta">Beim Öffnen baut sich die Übersicht Stück für Stück auf (gut 1 Sekunde). Saallicht und Neon: Die Lichter gehen nacheinander an, die Leuchtreklame flackert an. Lichtkegel: Der Projektor im Logo wirft die Seite auf die Leinwand. Filmstreifen: Die Bereiche laufen ein wie Bilder durchs Bildfenster. Die beiden Kombinationen verbinden Lichtkegel mit Saallicht und Filmstreifen mit Neon. Im Foyer zünden dabei die Buchstaben der Programmtafel einzeln. Spielt auch der Kinovorhang, folgt der Aufbau, wenn er offen ist; ein Klick beendet ihn sofort.${onHome ? "" : " Eine Vorschau gibt es auf der Übersicht."}</p>
+
+      <h3 class="settings-subhead">Logo</h3>
       ${logoMotionSettingsHtml(state.logoMotion)}
+
+      <h3 class="settings-subhead">Auftritte unter Entertainment</h3>
+      <div class="settings-pair">
+        <label class="field intro-field">Urknall im Filmuniversum
+          ${choiceSelect("universe-intro-select", UNIVERSE_INTRO_OPTIONS, state.universeIntro || DEFAULT_UNIVERSE_INTRO)}
+        </label>
+        <label class="field intro-field">Auftritt in „Du gegen IMDb“
+          ${choiceSelect("duel-intro-select", UNIVERSE_INTRO_OPTIONS, state.duelIntro || DEFAULT_DUEL_INTRO)}
+        </label>
+      </div>
+      <p class="meta">Urknall: Die Sterne fliegen aus der Mitte an ihren Platz. Auftritt: Die Titel fliegen aus beiden Ecken ins Feld, der Ring füllt sich, der Stempel fällt.</p>
     </section>
 
     <section class="form-section" aria-labelledby="settings-entertainment">
       <h2 id="settings-entertainment">Entertainment</h2>
-      <p class="meta" id="imdb-data-status">${escapeHtml(importStatusText(state))}</p>
-      <label class="field reminder-field">An neuen Export erinnern
-        <select id="reminder-select">
-          ${reminderOptions(state.importReminderDays).map(option =>
-            `<option value="${option.value}" ${Number(state.importReminderDays) === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`
-          ).join("")}
-        </select>
-      </label>
-      <label class="field reminder-field">Filter „Import" zeigt Neu/Geändert der letzten
-        <select id="import-window-select">
-          ${IMPORT_WINDOW_OPTIONS.map(option =>
-            `<option value="${option.value}" ${Number(state.importWindowDays || IMPORT_WINDOW_DAYS) === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`
-          ).join("")}
-        </select>
-      </label>
-      <p class="meta">Neue Daten holst du unter Entertainment über „Mehr" → „IMDb-Listen importieren".</p>
+      <p class="settings-lead">Deine Kinothek: Daten aus IMDb, Aufräumen, Cover und Besetzung.</p>
+
+      <h3 class="settings-subhead">IMDb-Daten</h3>
+      <div class="settings-status-row">
+        <p class="meta" id="imdb-data-status">${escapeHtml(importStatusText(state))}</p>
+        ${toolButton("import")}
+      </div>
+      <div class="settings-pair">
+        <label class="field reminder-field">An neuen Export erinnern
+          ${choiceSelect("reminder-select", reminderOptions(state.importReminderDays), Number(state.importReminderDays))}
+        </label>
+        <label class="field reminder-field">Filter „Import“ zeigt die letzten
+          ${choiceSelect("import-window-select", IMPORT_WINDOW_OPTIONS, Number(state.importWindowDays || IMPORT_WINDOW_DAYS))}
+        </label>
+      </div>
       <label class="check-row">
         <input type="checkbox" id="sort-downloads-check" ${state.sortImdbDownloads === false ? "" : "checked"}>
-        IMDb-Exporte beim Herunterladen im Unterordner „IMDb-Exporte" ablegen
+        IMDb-Exporte beim Herunterladen im Unterordner „IMDb-Exporte“ ablegen
       </label>
-      <form id="settings-form">
-        <div class="field full">
+
+      <h3 class="settings-subhead">Aufräumen</h3>
+      <p class="meta">Zeigt erst eine Liste zum Prüfen – geändert wird nur, was du bestätigst.</p>
+      <div class="form-section-actions">
+        ${toolButton("seen")}
+        ${toolButton("orphans")}
+      </div>
+
+      <h3 class="settings-subhead">Cover und Besetzung (OMDb)</h3>
+      <form id="settings-form" class="settings-key">
+        <div class="field">
           <label for="omdb-key">OMDb-Schlüssel</label>
-          <input id="omdb-key" name="omdbApiKey" type="text" autocomplete="off"
-                 value="${escapeHtml(state.omdbApiKey || "")}" placeholder="a1b2c3d4">
-          <p class="meta">
-            Lädt die Cover und die Besetzung deiner Titel. Kostenlos anfordern auf
-            <a class="external-link" href="https://www.omdbapi.com/apikey.aspx" target="_blank" rel="noreferrer">omdbapi.com</a>.
-          </p>
-        </div>
-        <div class="form-actions">
-          <button class="button secondary" type="button" id="cancel-settings">Abbrechen</button>
-          <button class="button" type="submit">Schlüssel speichern</button>
+          <div class="settings-key-row">
+            <input id="omdb-key" name="omdbApiKey" type="text" autocomplete="off"
+                   value="${escapeHtml(state.omdbApiKey || "")}" placeholder="a1b2c3d4">
+            <button class="small-button" type="submit">Speichern</button>
+          </div>
+          <p class="field-note">Kostenlos anfordern auf
+            <a class="external-link" href="https://www.omdbapi.com/apikey.aspx" target="_blank" rel="noreferrer">omdbapi.com</a>. Damit lädt das Dashboard Cover, Besetzung und weitere Angaben.</p>
         </div>
       </form>
-
-      <h3 class="settings-subhead">Besetzung</h3>
-      <p class="meta">Für die Registerkarte „Besetzung“: Darsteller (die ersten drei bis vier je Titel) und Drehbuch kommen von OMDb, die Regie steht schon im IMDb-Export. OMDb erlaubt rund 1.000 Abrufe am Tag – bei vielen Titeln dauert der erste Durchlauf also mehrere Tage und geht jeweils von selbst weiter, solange Entertainment offen ist. Danach kommen nur neue Titel dazu. Cover haben Vorrang.</p>
+      <div class="settings-status-row">
+        <p class="meta" id="cover-gaps">${coverGapsHtml(state)}</p>
+        ${toolButton("covers")}
+      </div>
+      <p class="meta" id="cover-store-status">Cover offline: wird gezählt …</p>
+      <p class="meta">Besetzung für das Filmuniversum und die Detailseite: Darsteller und Drehbuch kommen von OMDb (rund 1.000 Abrufe am Tag); der erste Durchlauf dauert bei vielen Titeln mehrere Tage und geht von selbst weiter, solange Entertainment offen ist. Cover haben Vorrang.</p>
       <div class="cast-fetch" id="cast-fetch" aria-live="polite"></div>
     </section>
 
     <section class="form-section" aria-labelledby="settings-data">
-      <h2 id="settings-data">Daten</h2>
-      <p class="meta">Sichert Design, Favoriten und alle Einträge unter Entertainment als Datei. Die Lesezeichen selbst bleiben in Chrome.</p>
-      <p class="meta" id="backup-status">${escapeHtml(backupStatusText(state))}</p>
-      <div class="form-section-actions">
-        <button class="small-button" type="button" id="export-button">Sicherung speichern</button>
-        <label class="small-button import-label">Sicherung laden
-          <input id="import-input" type="file" accept="application/json" aria-label="Sicherungsdatei auswählen">
-        </label>
+      <h2 id="settings-data">Sicherung</h2>
+      <p class="settings-lead">Design, Favoriten und alle Einträge unter Entertainment als Datei. Die Lesezeichen selbst bleiben in Chrome.</p>
+      <div class="settings-status-row">
+        <p class="meta" id="backup-status">${escapeHtml(backupStatusText(state))}</p>
+        <div class="form-section-actions">
+          <button class="small-button" type="button" id="export-button">Sicherung speichern</button>
+          <label class="small-button import-label">Sicherung laden
+            <input id="import-input" type="file" accept="application/json" aria-label="Sicherungsdatei auswählen">
+          </label>
+        </div>
       </div>
-      <label class="field reminder-field">An Sicherung erinnern
-        <select id="backup-reminder-select">
-          ${reminderOptions(state.backupReminderDays).map(option =>
-            `<option value="${option.value}" ${Number(state.backupReminderDays) === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`
-          ).join("")}
-        </select>
-      </label>
       <p class="status-line" id="settings-status" aria-live="polite"></p>
-      <p class="meta" id="cover-store-status">Cover offline: wird gezählt …</p>
+      <label class="field reminder-field">An Sicherung erinnern
+        ${choiceSelect("backup-reminder-select", reminderOptions(state.backupReminderDays), Number(state.backupReminderDays))}
+      </label>
 
       <h3 class="settings-subhead">Automatisch sichern</h3>
       <label class="check-row">
@@ -239,10 +330,18 @@ export function openSettingsModal(state, onImported) {
         Nach jedem IMDb-Import und jeder Änderung an Titeln
       </label>
       <p class="meta">Still im Download-Ordner unter „${AUTO_BACKUP_FOLDER}“. Die letzten ${AUTO_BACKUP_KEEP} bleiben, ältere löscht das Dashboard; von Hand gespeicherte Sicherungen bleiben unberührt.</p>
+      <div class="form-section-actions">
+        <button class="small-button" type="button" id="auto-backup-now">Jetzt automatisch sichern</button>
+      </div>
+    </section>
+
+    <section class="form-section" aria-labelledby="settings-website">
+      <h2 id="settings-website">Website</h2>
+      <p class="settings-lead">„Meine Kinothek“: die Datei <code>sammlung.json</code> entsteht bei jeder automatischen Sicherung mit.</p>
       <div class="website-file" id="website-file-block">
         <label class="check-row">
           <input type="checkbox" id="website-file-check" ${state.websiteFile === false ? "" : "checked"}>
-          Dabei auch <code>sammlung.json</code> für die Website speichern
+          Bei der automatischen Sicherung auch <code>sammlung.json</code> für die Website speichern
         </label>
         <fieldset class="website-file-options" id="website-options">
           <legend>Auf der Website zeigen</legend>
@@ -261,23 +360,31 @@ export function openSettingsModal(state, onImported) {
             <p class="field-note" id="website-password-status"></p>
           </div>
         </fieldset>
-        <p class="meta">Die Datei kopierst du danach in den Website-Ordner (<code>data/sammlung.json</code>) – oder per Doppelklick auf <code>Sammlung-holen.bat</code> dort.</p>
-      </div>
-      <div class="form-section-actions">
-        <button class="small-button" type="button" id="auto-backup-now">Jetzt automatisch sichern</button>
+        <p class="meta" id="website-file-note">Die Datei kopierst du danach in den Website-Ordner (<code>data/sammlung.json</code>) – oder per Doppelklick auf <code>Sammlung-holen.bat</code> dort.</p>
       </div>
     </section>`);
-  dressAsProjectionRoom();
+  buildSettingsNav();
 
-  $("#cancel-settings").onclick = closeModal;
+  // Werkzeuge der Kinothek: auf Entertainment gleich hier, sonst dorthin
+  document.querySelector(".modal")?.addEventListener("click", event => {
+    const key = event.target.closest("[data-tool]")?.dataset.tool;
+    if (!key) return;
+    if (tools?.[key]) {
+      closeModal();
+      tools[key]();
+      return;
+    }
+    const base = location.pathname.includes("/views/") ? "" : "views/";
+    location.href = `${base}movies.html?tool=${key}`;
+  });
 
   $("#settings-form").onsubmit = async event => {
     event.preventDefault();
     const key = new FormData(event.currentTarget).get("omdbApiKey").trim();
     state.omdbApiKey = key;
     await saveDashboardData({ omdbApiKey: key });
-    showToast("OMDb-Schlüssel gespeichert.", "success");
-    closeModal();
+    showToast(key ? "OMDb-Schlüssel gespeichert." : "OMDb-Schlüssel entfernt.", "success");
+    showCastFetch();
   };
 
   // Design (Kino-Noir/Foyer) und Hell/Dunkel - gelten sofort
@@ -286,6 +393,7 @@ export function openSettingsModal(state, onImported) {
       state.design = readDesign(radio.value);
       await saveDashboardData({ design: state.design });
       applyTheme(state); // setzt data-skin, das Foyer baut auf bzw. ab
+      syncThemeField(state);
       const narrow = state.design === "foyer" && window.innerWidth < FOYER_MIN_WIDTH;
       showToast(narrow ? "Foyer gewählt – erscheint in breiten Fenstern." : state.design === "foyer" ? "Willkommen im Foyer." : "Zurück in Kino-Noir.", "success");
     };
@@ -309,6 +417,7 @@ export function openSettingsModal(state, onImported) {
       state.clickEffect = radio.value;
       $("#click-duration-group").disabled = state.clickEffect === "off"; // ohne Effekt kein Tempo
       await saveDashboardData({ clickEffect: state.clickEffect });
+      syncBootMirror(state); // Seitenwechsel ab der nächsten Seite (js/boot.js)
       showToast(state.clickEffect === "off" ? "Klick-Effekt ausgeschaltet." : "Klick-Effekt gespeichert.", "success");
     };
   }
@@ -345,11 +454,57 @@ export function openSettingsModal(state, onImported) {
     };
   }
 
+  // Aufbau der Übersicht (2.44): gilt ab dem nächsten neuen Tab, Vorschau sofort
+  $("#build-style-select").onchange = async event => {
+    state.buildStyle = readBuildStyle(event.target.value);
+    await saveDashboardData({ buildStyle: state.buildStyle });
+    syncBootMirror(state);
+    showToast("Gilt ab dem nächsten neuen Tab.", "success");
+  };
+  $("#build-intro-select").onchange = async event => {
+    state.buildIntro = event.target.value;
+    await saveDashboardData({ buildIntro: state.buildIntro });
+    syncBootMirror(state);
+    showToast("Gilt ab dem nächsten neuen Tab.", "success");
+  };
+  const buildPreview = $("#build-preview-button");
+  if (buildPreview) {
+    buildPreview.onclick = () => {
+      const style = $("#build-style-select")?.value || state.buildStyle;
+      closeModal();
+      // Nach der Vorschau zurück in die Einstellungen, an dieselbe Stelle (2.45)
+      const back = () => {
+        openSettingsModal(state, onImported, tools);
+        $("#settings-build")?.scrollIntoView({ block: "start" });
+        $("#build-preview-button")?.focus({ preventScroll: true });
+      };
+      if (!previewPageBuild(style, { onDone: back })) {
+        showToast("Mit „Bewegung reduzieren“ im System gibt es keinen Aufbau.", "info");
+        back();
+      }
+    };
+  }
+
   const previewButton = $("#curtain-preview-button");
   if (previewButton) {
     previewButton.onclick = () => {
       closeModal();
-      replayCurtain();
+      // Nach dem Vorhang zurück in die Einstellungen, an dieselbe Stelle (2.45.1)
+      const back = () => {
+        openSettingsModal(state, onImported, tools);
+        $("#intro-mode-select")?.closest(".intro-picker")?.scrollIntoView({ block: "center" });
+        $("#curtain-preview-button")?.focus({ preventScroll: true });
+      };
+      if (!replayCurtain()) { back(); return; }
+      const begin = performance.now();
+      const wait = setInterval(() => {
+        const age = performance.now() - begin;
+        // Ruhestand erreicht (oder Sicherung nach 6 s, falls kein Ende gemeldet wird)
+        if ((age > 300 && document.documentElement.dataset.curtainPhase === "rest") || age > 6000) {
+          clearInterval(wait);
+          setTimeout(back, 350);
+        }
+      }, 100);
     };
   }
 
@@ -419,7 +574,7 @@ export function openSettingsModal(state, onImported) {
       : !state.omdbApiKey ? ["Ohne Schlüssel", "", "Dafür brauchst du den OMDb-Schlüssel oben."]
       : fetch.lastError ? ["Angehalten", "is-warn", fetch.lastError]
       : !remaining ? ["Vollständig", "is-done", empty ? `${n(empty)} ${empty === 1 ? "Titel kennt" : "Titel kennt"} OMDb ohne Besetzung (meist Kurzfilme und Specials). Neue Titel kommen von selbst dazu.` : "Neue Titel aus dem nächsten Import kommen von selbst dazu."]
-      : !fetch.enabled ? [done ? "Angehalten" : "Nicht geladen", "", done ? "Bis zum Fortsetzen bleibt es bei dem, was schon da ist." : "Bis dahin zeigt die Registerkarte „Besetzung“ nur die Regie."]
+      : !fetch.enabled ? [done ? "Angehalten" : "Nicht geladen", "", done ? "Bis zum Fortsetzen bleibt es bei dem, was schon da ist." : "Bis dahin zeigen Filmuniversum und Detailseite nur die Regie."]
       : paused ? ["Weiter morgen", "is-busy", `OMDb-Tageslimit erreicht. Morgen geht es von selbst weiter – noch ${n(remaining)} Titel. Du musst nichts tun.`]
       : running ? ["Lädt …", "is-busy", "Läuft im Hintergrund, solange Entertainment offen ist."]
       : ["Eingeschaltet", "is-busy", "Läuft beim nächsten Öffnen von Entertainment weiter."];

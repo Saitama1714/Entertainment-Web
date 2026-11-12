@@ -332,15 +332,16 @@
 
 /* ---- Lesezeichen ------------------------------------------------------------- */
 
-.foyer-showcase { margin-bottom: var(--s-7); }
-.foyer-showcase-item { position: relative; }
-.foyer-showcase-item .bookmark-tile { margin: 4px; }
-.foyer-showcase-remove {
-  position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%;
-  border: 1px solid rgb(201 164 92 / .45); background: rgb(20 13 12 / .85); color: var(--text);
-  font-size: 1.1rem; line-height: 1; cursor: pointer;
+/* Seite Lesezeichen: Schaukästen bearbeiten - × in Messing, Namensschild ruht beim Bearbeiten */
+:root[data-skin="foyer"] .favorite-item .bookmark-tile { margin: 4px; }
+:root[data-skin="foyer"] .favorite-remove {
+  top: -6px; right: -6px; width: 26px; height: 26px;
+  border: 1px solid var(--brass); background: #1d1412; color: var(--foyer-gold-hi);
+  box-shadow: 0 4px 10px rgb(0 0 0 / .6);
 }
-.foyer-showcase-remove:hover { border-color: var(--brass); }
+:root[data-skin="foyer"] .favorite-remove:hover { background: var(--accent); color: #fff; border-color: var(--foyer-gold); }
+:root[data-skin="foyer"] .bookmark-grid.is-sorting .tile-title { display: none; }
+:root[data-skin="foyer"] .bookmark-grid.is-sorting .drag-handle { display: none; }
 :root[data-skin="foyer"] .bookmark-item [data-pin] {
   border-radius: 6px; font-family: var(--foyer-caps); font-weight: 600; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase;
 }
@@ -351,11 +352,11 @@
 :root[data-skin="foyer"] .detail-layout { grid-template-columns: 340px minmax(0, 1fr); gap: var(--s-8); }
 :root[data-skin="foyer"] .detail-cover .movie-card-cover {
   border-radius: 3px;
-  box-shadow: 0 0 0 14px #1d1412, 0 0 0 22px #b8934e, 0 0 0 23px #6e5022, 0 40px 70px rgb(0 0 0 / .7), 0 0 90px rgb(227 194 122 / .12);
+  box-shadow: 0 0 0 14px #1d1412, 0 0 0 22px #b8934e, 0 0 0 23px #6e5022, 0 40px 70px rgb(0 0 0 / .7), 0 0 120px 10px rgb(var(--amb-1, 227 194 122) / .22);
   margin: 23px;
 }
 :root[data-skin="foyer"] .detail-cover-actions { margin-top: var(--s-6); }
-:root[data-skin="foyer"] body:has(#detail-layout) .page-head h1 {
+:root[data-skin="foyer"] .page-head:has(+ .detail-layout) h1 {
   font-size: clamp(3.4rem, 7vw, 7.6rem); line-height: .88; text-shadow: 0 0 60px rgb(255 226 160 / .14);
 }
 :root[data-skin="foyer"] .details-grid {
@@ -397,4 +398,4 @@
 .foyer-quote .quote-of-day .quote-text { font-size: clamp(1.5rem, 2.2vw, 2.1rem); line-height: 1.15; }
 .foyer-quote .quote-of-day .quote-source { margin-top: var(--s-3); font-family: var(--foyer-caps); font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; }
 .modal--foyer .modal-content > .foyer-settings-nav + .form-section { padding-top: 0; margin-top: 0; border-top: 0; }
-.modal--foyer .form-section > h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; margin-bottom: var(--s-3); }
+.modal--foyer .form-section > h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; margin-bottom: 4px; }

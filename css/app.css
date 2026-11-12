@@ -8,10 +8,11 @@
 @import url("bookmarks.css");   /* Lesezeichen */
 @import url("collection.css");   /* Sammlung: Cover-Karten, Raster, Lade-Skelett */
 @import url("detail.css");   /* Detailseite und Kinoticket */
-@import url("components.css");   /* Werkzeug-Menü, Dialoge, Leerzustände, Toasts */
+@import url("components.css");   /* Dialoge, Einstellungen, Leerzustände, Toasts */
 @import url("timeline.css");   /* Zeitleiste mit Cover Flow */
 @import url("motion.css");   /* Bewegung */
 @import url("logo.css");   /* Logo-Animation (Medaillon) */
 @import url("responsive.css");   /* Schmale Fenster */
 @import url("cover-flight.css");   /* Cover-Flug */
 @import url("foyer.css");   /* Design „Foyer" (nur unter data-skin="foyer") */
+@import url("page-build.css");   /* Aufbau der Übersicht beim Öffnen */

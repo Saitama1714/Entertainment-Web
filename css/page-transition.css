@@ -1,0 +1,36 @@
+/* =========================================================================
+   Fließende Seitenwechsel (2.42, View Transitions zwischen den Seiten)
+   Die Kopfleiste bleibt stehen, der Inhalt blendet weich über und hebt sich
+   ein Stück. Nach Kachel-Zoom oder Cover-Flug (data-vt-plain) nur eine
+   schlichte Überblendung vom Endbild des Effekts. Klick-Effekt „Aus"
+   (data-vt-off, gesetzt von js/boot.js) und „Bewegung reduzieren": ohne.
+   Nur im Dashboard eingebunden (in den Vorlagen zwischen <!--dashboard-->),
+   die Website bleibt vorerst ohne.
+   ========================================================================= */
+
+@view-transition { navigation: auto; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .appbar { view-transition-name: appbar; }
+  :root[data-vt-plain] .appbar { view-transition-name: none; }
+
+  ::view-transition-group(appbar) { animation-duration: .28s; animation-timing-function: cubic-bezier(.2, .7, .2, 1); }
+  ::view-transition-old(root) { animation: vt-page-out .18s cubic-bezier(.4, 0, 1, 1) both; }
+  ::view-transition-new(root) { animation: vt-page-in .38s cubic-bezier(.2, .7, .2, 1) .06s both; }
+  :root[data-vt-plain]::view-transition-old(root) { animation: vt-fade-out .32s ease both; }
+  :root[data-vt-plain]::view-transition-new(root) { animation: vt-fade-in .32s ease both; }
+}
+
+@keyframes vt-page-out { to { opacity: 0; transform: translateY(-6px); } }
+@keyframes vt-page-in { from { opacity: 0; transform: translateY(12px); } }
+@keyframes vt-fade-out { to { opacity: 0; } }
+@keyframes vt-fade-in { from { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+}
+
+/* Klick-Effekt „Aus": der Übergang ist sofort fertig - die Seite springt wie bisher */
+:root[data-vt-off]::view-transition-group(*),
+:root[data-vt-off]::view-transition-old(*),
+:root[data-vt-off]::view-transition-new(*) { animation: none !important; }

@@ -255,7 +255,7 @@ export function reminderStatus(settings, now) {
 }
 
 /*
- * "Gesehen mit IMDb abgleichen" (Menü "Mehr"): Gesehen gilt als gesehen,
+ * "Gesehen mit IMDb abgleichen" (Einstellungen → Entertainment): Gesehen gilt als gesehen,
  * wenn der Titel auf IMDb bewertet ist. Titel, die als gesehen markiert
  * sind, aber keine eigene IMDb-Bewertung haben, lassen sich damit zurücksetzen.
  */
@@ -277,7 +277,7 @@ export function markUnseen(movies, ids) {
 }
 
 /*
- * "Titel ohne IMDb-Liste aufräumen" (Menü "Mehr"): Titel, die in keiner
+ * "Titel ohne IMDb-Liste aufräumen" (Einstellungen → Entertainment): Titel, die in keiner
  * IMDb-Liste mehr stehen (der Import löscht nie selbst), lassen sich gezielt
  * entfernen. Sie kommen beim nächsten Import nicht zurück.
  */

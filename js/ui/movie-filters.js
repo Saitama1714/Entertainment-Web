@@ -4,6 +4,7 @@ import {
   KIND_FILTER_OPTIONS, MEDIA_FILTER_OPTIONS, SEEN_FILTER_OPTIONS, IMPORT_FILTER_OPTIONS,
   listFilterOptions, genreFilterOptions, importFilterOptions, facetCounts, hasActiveFilters,
 } from "../logic/movies-logic.js";
+import { rangeGroupHtml, rangePillsHtml } from "./range-filter.js";
 
 /*
  * Filterleiste unter Entertainment: je Gruppe ein Knopf (Art, Genre, Medium, Status, Liste, Import),
@@ -102,7 +103,7 @@ export function filterChipsHtml(allMovies, searched, filters) {
   ]
     .filter(([, category]) => !published[category] || has(published[category]))
     .map(([label, category, options]) => groupHtml(label, category, options, filters, counts))
-    .join("");
+    .join("") + rangeGroupHtml(allMovies, searched, filters, openCategory === "ranges", CHEVRON); // 2.49: Jahr, Bewertung … von–bis
   if (!groups) return "";
   // Schnittmenge aus dem Sternbild: ein Knopf, Antippen hebt sie auf
   const set = filters.genresAll?.length
@@ -117,7 +118,7 @@ export function filterChipsHtml(allMovies, searched, filters) {
   const reset = hasActiveFilters(filters)
     ? `<button type="button" class="filter-reset" id="filter-reset">Filter zurücksetzen</button>`
     : "";
-  return `<div class="filter-bar">${set}${person}${groups}${reset}</div>`;
+  return `<div class="filter-bar">${set}${person}${rangePillsHtml(filters)}${groups}${reset}</div>`;
 }
 
 /* ---------------------------------------------------------------------------

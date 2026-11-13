@@ -6,7 +6,7 @@ import { $, $$, escapeHtml } from "../utils/dom.js";
 import { plural } from "../utils/format.js";
 
 /*
- * Einstellungen → Entertainment → "Gesehen mit IMDb abgleichen": zeigt alle Titel, die als
+ * Einstellungen → Kinothek & IMDb → "Gesehen mit IMDb abgleichen": zeigt alle Titel, die als
  * gesehen markiert sind, aber keine eigene IMDb-Bewertung haben. Alle sind
  * vorab angehakt; was angehakt bleibt, wird auf ungesehen gesetzt.
  */

@@ -1,4 +1,5 @@
 import { newMovie, normalizeMovies, IMDB_FIELDS } from "../collection.js";
+import { fixRuntime } from "./data-fixes-logic.js";
 import { ageReminder } from "./reminder-logic.js";
 
 /*
@@ -163,6 +164,12 @@ export function mergeImdbLists(movies, lists, now) {
         const value = row[field];
         if (value !== undefined && value !== null && String(value).trim() !== "") entry.fields[field] = String(value).trim();
       }
+      // Bekannte Fehler in den IMDb-Daten (z. B. Laufzeit von The Bear), js/logic/data-fixes-logic.js
+      if (entry.fields.runtimeMinutes !== undefined) {
+        const fixed = fixRuntime(row.imdbId, entry.fields.runtimeMinutes);
+        if (fixed.fixedFrom) entry.fixedFrom = fixed.fixedFrom;
+        entry.fields.runtimeMinutes = fixed.minutes;
+      }
       if (isIsoDay(row.imdbCreated)) entry.created.push(row.imdbCreated);
       entry.lists.add(list.name);
       incoming.set(row.imdbId, entry);
@@ -203,6 +210,7 @@ export function mergeImdbLists(movies, lists, now) {
       ...movie,
       ...updates,
       imdbLists: [...new Set([...keptLists, ...entry.lists])],
+      runtimeFixedFrom: entry.fixedFrom || "",
     };
     // Bewertet = gesehen. Das Datum bleibt das Bewertungsdatum (dateRated) -
     // wann der Titel wirklich gesehen wurde, weiß IMDb nicht
@@ -233,6 +241,7 @@ export function mergeImdbLists(movies, lists, now) {
       imdbLists: [...entry.lists],
       createdAt: dates[0] || stamp,
       importAddedAt: stamp,
+      runtimeFixedFrom: entry.fixedFrom || "",
     }));
     added++;
   }
@@ -255,7 +264,7 @@ export function reminderStatus(settings, now) {
 }
 
 /*
- * "Gesehen mit IMDb abgleichen" (Einstellungen → Entertainment): Gesehen gilt als gesehen,
+ * "Gesehen mit IMDb abgleichen" (Einstellungen → Kinothek & IMDb): Gesehen gilt als gesehen,
  * wenn der Titel auf IMDb bewertet ist. Titel, die als gesehen markiert
  * sind, aber keine eigene IMDb-Bewertung haben, lassen sich damit zurücksetzen.
  */
@@ -277,7 +286,7 @@ export function markUnseen(movies, ids) {
 }
 
 /*
- * "Titel ohne IMDb-Liste aufräumen" (Einstellungen → Entertainment): Titel, die in keiner
+ * "Titel ohne IMDb-Liste aufräumen" (Einstellungen → Kinothek & IMDb): Titel, die in keiner
  * IMDb-Liste mehr stehen (der Import löscht nie selbst), lassen sich gezielt
  * entfernen. Sie kommen beim nächsten Import nicht zurück.
  */

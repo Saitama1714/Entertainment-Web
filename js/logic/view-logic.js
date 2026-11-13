@@ -11,6 +11,7 @@
  * nach einer Detailseite dort weitermacht, wo man war.
  */
 import { emptyFilters } from "./movies-logic.js";
+import { readRanges } from "./range-filter-logic.js";
 
 export const VIEW_TABS = ["titles", "timeline", "universe", "stats", "year", "duel", "upgrade"];
 /** Früher eigene Registerkarten, heute im Filmuniversum (2.38). */
@@ -62,6 +63,7 @@ function readBrowse(value) {
     if (Array.isArray(filters[key]) && Array.isArray(saved)) filters[key] = saved.map(String);
     else if (typeof filters[key] === "string" && typeof saved === "string") filters[key] = saved;
   }
+  filters.ranges = readRanges(value.filters?.ranges);
   return {
     query: typeof value.query === "string" ? value.query : "",
     filters,

@@ -119,3 +119,6 @@
 .quick-preview .form-actions { justify-content: flex-start; margin-top: var(--s-2); }
 .quick-preview-hint { margin: 0; font-size: .78rem; }
 @media (max-width: 420px) { .quick-preview { grid-template-columns: 96px 1fr; } .quick-preview-cover { width: 96px; } }
+
+/* Foyer: „Frisch eingetroffen" nur eine Reihe (js/ui/home.js, 2.47.1) */
+.movie-card[hidden] { display: none; }

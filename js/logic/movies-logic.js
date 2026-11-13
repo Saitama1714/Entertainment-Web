@@ -1,4 +1,5 @@
 import { MEDIA_TYPES } from "../utils/media.js";
+import { inRanges, hasRanges } from "./range-filter-logic.js";
 
 /**
  * Filtert Filme anhand eines Suchbegriffs über Titel, Originaltitel, Medium,
@@ -37,7 +38,7 @@ export function searchMovies(movies, query, castData = null) {
  * @returns {Array}
  */
 /**
- * Titel ohne Cover (2.42.3, Einstellungen → Entertainment): alle Kennungen
+ * Titel ohne Cover (2.42.3, Einstellungen → Cover & Besetzung): alle Kennungen
  * und wie viele davon keine IMDb-Kennung haben - die kann „Fehlende Cover
  * laden" nicht holen, dort hilft nur „Cover ändern" auf der Detailseite.
  * @param {Array} movies
@@ -116,7 +117,7 @@ export const SEEN_FILTER_OPTIONS = [
 /*
  * Filtergruppe "Import": Einträge, die der IMDb-Import in den letzten
  * Wochen angelegt ("Neu") oder spürbar verändert ("Geändert") hat - Standard
- * 4 Wochen, einstellbar (setImportWindowDays, Einstellungen → Entertainment). Die
+ * 4 Wochen, einstellbar (setImportWindowDays, Einstellungen → Kinothek & IMDb). Die
  * Zeitstempel setzt mergeImdbLists() (importAddedAt/importChangedAt). Ein
  * Eintrag kann beides sein (neu und danach noch einmal geändert).
  * Gerechnet wird ab jetzt - die Chips leeren sich also von selbst wieder.
@@ -187,7 +188,7 @@ export function importFilterOptions(movies, now = Date.now()) {
  * Genres haben (die Gruppe „Genre" dagegen: irgendeines davon).
  */
 export function emptyFilters() {
-  return { kind: [], genres: [], media: [], seen: [], lists: [], import: [], genresAll: [], person: [], personName: "", personLabel: "" };
+  return { kind: [], genres: [], media: [], seen: [], lists: [], import: [], genresAll: [], person: [], personName: "", personLabel: "", ranges: {} };
 }
 
 /**
@@ -214,7 +215,7 @@ export function genreFilterOptions(movies) {
 
 /** True, sobald irgendeine Kategorie mindestens einen Wert aktiv hat. */
 export function hasActiveFilters(filters) {
-  return Object.values(filters).some(values => Array.isArray(values) && values.length > 0);
+  return Object.values(filters).some(values => Array.isArray(values) && values.length > 0) || hasRanges(filters.ranges);
 }
 
 /**
@@ -241,6 +242,8 @@ export function toggleFilterValue(filters, category, value) {
   if (category === "genresAll") return { ...filters, genresAll: [] };
   // Ebenso die Titel einer Person aus „Besetzung"
   if (category === "person") return { ...filters, person: [], personName: "", personLabel: "" };
+  // Ein Bereich (2.49): antippen der Pille hebt ihn auf
+  if (category === "range") { const ranges = { ...filters.ranges }; delete ranges[value]; return { ...filters, ranges }; }
   const active = filters[category] || [];
   const next = active.includes(value) ? active.filter(entry => entry !== value) : [...active, value];
   return { ...filters, [category]: next };
@@ -264,9 +267,10 @@ const valuesOf = {
  * @param {Array} movies
  * @param {{kind: string[], media: string[], seen: string[], lists: string[]}} filters
  * @param {string} [ignore] - Kategorie, die dabei nicht einschränkt (für die Zählung).
+ * @param {string} [ignoreRange] - Bereich, der nicht einschränkt (für dessen Balken).
  * @returns {Array}
  */
-export function filterMovies(movies, filters, ignore = "") {
+export function filterMovies(movies, filters, ignore = "", ignoreRange = "") {
   // Fehlt eine Kategorie im Filterobjekt, schränkt sie nicht ein
   const active = Object.keys(valuesOf)
     .filter(category => category !== ignore && filters[category]?.length)
@@ -276,7 +280,8 @@ export function filterMovies(movies, filters, ignore = "") {
   return movies.filter(movie =>
     active.every(([category, wanted]) => valuesOf[category](movie).some(value => wanted.has(value)))
     && (!all || all.every(name => genresOf(movie).includes(name)))
-    && (!person || person.has(movie.id)));
+    && (!person || person.has(movie.id))
+    && inRanges(movie, filters.ranges, ignoreRange));
 }
 
 /**

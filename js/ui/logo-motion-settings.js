@@ -42,6 +42,45 @@ export function logoMotionSettingsHtml(value) {
 }
 
 /**
+ * Derselbe Block als Zeilen für die Einstellungen (2.49): Wann + Vorschau,
+ * Was sich bewegt, Tempo. Gleiche Kennungen, damit bindLogoMotionSettings greift.
+ * @param {*} value
+ * @param {(options: object) => string} row - Zeilen-Baustein aus settings-modal.js.
+ */
+export function logoMotionRowsHtml(value, row) {
+  const motion = readLogoMotion(value);
+  const off = motion.mode === "off";
+  return `
+    <div class="logo-motion" id="logo-motion">
+      ${row({ label: "Logo-Animation", labelFor: "logo-mode-select", help: "Das Medaillon oben links. „Beim Öffnen“ spielt auf jeder Seite einmal.", control: `
+        <div class="intro-picker">
+          <select id="logo-mode-select">
+            ${LOGO_MODES.map(option => `<option value="${option.value}" ${motion.mode === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("")}
+          </select>
+          <button class="small-button" type="button" id="logo-preview-button" ${off ? "disabled" : ""}>Vorschau</button>
+        </div>` })}
+      ${row({ label: "Was sich bewegt", control: `
+        <fieldset class="choice-group" id="logo-effects-group" ${off ? "disabled" : ""}>
+          <legend class="visually-hidden">Was sich bewegt</legend>
+          ${LOGO_EFFECTS.map(option => `
+            <label class="choice" title="${escapeHtml(option.note)}">
+              <input type="checkbox" name="logo-effect" value="${option.value}" ${motion.effects.includes(option.value) ? "checked" : ""}>
+              ${escapeHtml(option.label)}
+            </label>`).join("")}
+        </fieldset>` })}
+      ${row({ label: "Tempo", control: `
+        <fieldset class="choice-group" id="logo-tempo-group" ${off ? "disabled" : ""}>
+          <legend class="visually-hidden">Tempo</legend>
+          ${LOGO_TEMPOS.map(option => `
+            <label class="choice">
+              <input type="radio" name="logo-tempo" value="${option.value}" ${motion.tempo === option.value ? "checked" : ""}>
+              ${escapeHtml(option.label)}
+            </label>`).join("")}
+        </fieldset>` })}
+    </div>`;
+}
+
+/**
  * Verdrahtet den Block.
  * @param {HTMLElement} root - enthält #logo-motion.
  * @param {*} value - aktuelle Einstellung.

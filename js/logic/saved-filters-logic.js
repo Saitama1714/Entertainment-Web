@@ -1,4 +1,5 @@
 import { KIND_FILTER_OPTIONS, SEEN_FILTER_OPTIONS, MEDIA_FILTER_OPTIONS, emptyFilters } from "./movies-logic.js";
+import { RANGE_KEYS, readRanges, rangeLabel } from "./range-filter-logic.js";
 
 /*
  * Filter merken (2.43): Eine Filterkombination, die man oft braucht, wird
@@ -6,7 +7,8 @@ import { KIND_FILTER_OPTIONS, SEEN_FILTER_OPTIONS, MEDIA_FILTER_OPTIONS, emptyFi
  * Gemerkt werden nur die Gruppen, die dauerhaft gleich bleiben (Art, Genre,
  * Medium, Status, Liste, Schnittmenge); „Import" (ändert sich mit der Zeit)
  * und die Titel einer Person (feste Kennungen) nicht. Gespeichert in
- * chrome.storage („savedFilters"), nur im Dashboard.
+ * chrome.storage („savedFilters"), nur im Dashboard. Seit 2.49 auch die
+ * Bereiche (Jahr 1980–1987 …) als ranges.
  * Getestet in tests/saved-filters.test.mjs.
  */
 
@@ -30,6 +32,8 @@ export function savablePart(filters) {
     const values = Array.isArray(filters?.[key]) ? filters[key].filter(value => typeof value === "string") : [];
     if (values.length) part[key] = [...new Set(values)].sort((a, b) => a.localeCompare(b, "de"));
   }
+  const ranges = readRanges(filters?.ranges);
+  if (Object.keys(ranges).length) part.ranges = Object.fromEntries(RANGE_KEYS.filter(key => ranges[key]).map(key => [key, ranges[key]]));
   return part;
 }
 
@@ -48,6 +52,7 @@ export function filterName(filters) {
     if (key === "genresAll") pieces.push(part[key].join(" + "));
     else pieces.push(part[key].map(LABELS[key]).join(" / "));
   }
+  for (const [key, range] of Object.entries(part.ranges || {})) pieces.push(rangeLabel(key, range).replace(": ", " "));
   const name = pieces.join(" · ");
   return name.length > NAME_MAX ? `${name.slice(0, NAME_MAX - 1).trimEnd()}…` : name;
 }
@@ -77,4 +82,4 @@ export function addSaved(list, filters, { id = `f${Date.now().toString(36)}` } =
 export const removeSaved = (list, id) => list.filter(entry => entry.id !== id);
 
 /** Schnellfilter anwenden: genau diese Auswahl, alles andere leer. */
-export const applySaved = entry => ({ ...emptyFilters(), ...savablePart(entry.filters) });
+export const applySaved = entry => ({ ...emptyFilters(), ...savablePart(entry.filters), ranges: { ...savablePart(entry.filters).ranges } });

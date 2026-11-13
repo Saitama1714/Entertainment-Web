@@ -71,8 +71,8 @@
 }
 :root[data-skin="foyer"] .appbar .nav,
 :root[data-skin="foyer"] .appbar .appbar-actions,
-:root[data-skin="foyer"] .view-tabs,
-:root[data-skin="foyer"] #backup-reminder-slot { display: none; }
+:root[data-skin="foyer"] .view-tabs { display: none; }
+/* Sicherungs-Hinweis: seit 2.47 auch im Foyer sichtbar (die Eintrittskarte hat keinen Abriss mehr) */
 :root[data-skin="foyer"] .appbar-inner { min-height: 64px; padding-top: var(--s-4); }
 .foyer-where { display: flex; flex-direction: column; line-height: 1.15; margin-right: auto; }
 .foyer-where-title { font-family: var(--font-display); font-size: 1.85rem; letter-spacing: -.01em; }
@@ -219,6 +219,14 @@
 
 /* Abschnittsköpfe mit Eyebrow */
 :root[data-skin="foyer"] .section-head h2 { font-size: clamp(2rem, 3.2vw, 3rem); }
+/* Übersicht (2.48): engere Abstände, damit Programm, Kinothek und Schaukästen in ein Fenster passen */
+:root[data-skin="foyer"] .foyer-stage { margin-bottom: var(--s-6); }
+:root[data-skin="foyer"] .foyer-stage ~ .section { margin-bottom: var(--s-6); }
+/* 2.48.1: unten kein Leerraum, der die Seite ein paar Millimeter scrollbar macht */
+:root[data-skin="foyer"] .foyer-stage ~ .section:last-child { margin-bottom: 0; }
+:root[data-skin="foyer"] .shell:has(> #foyer-stage) { padding-bottom: var(--s-5); }
+:root[data-skin="foyer"] .foyer-stage ~ .section .section-head { padding-bottom: var(--s-2); margin-bottom: var(--s-4); }
+:root[data-skin="foyer"] .foyer-stage ~ .section .section-head h2 { font-size: clamp(1.8rem, 2.4vw, 2.4rem); }
 .foyer-head-eyebrow { margin: 0 auto 0 var(--s-4); align-self: baseline; }
 
 /* ---- Schaukästen (Favoriten) ----------------------------------------------- */
@@ -290,6 +298,18 @@
   color: var(--foyer-ink-red); font: 600 .88rem var(--font-text); text-decoration: underline; text-underline-offset: 3px;
 }
 .foyer-kasse-button:focus-visible { outline: 2px solid var(--foyer-ink-red); outline-offset: 2px; }
+
+/* Klein im Saalschild „Titel" neben der Überschrift (2.47) */
+.foyer-saal-text.has-ticket { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-4) var(--s-6); }
+.foyer-kasse.is-mini { margin: 0; box-shadow: 0 14px 30px rgb(0 0 0 / .5); }
+.foyer-kasse.is-mini::before, .foyer-kasse.is-mini::after { width: 16px; height: 16px; margin-top: -8px; background: #241917; }
+.foyer-kasse.is-mini::before { left: -8px; } .foyer-kasse.is-mini::after { right: -8px; }
+.foyer-kasse.is-mini .foyer-kasse-part { padding: 12px 18px 11px; gap: 3px; }
+.foyer-kasse.is-mini .foyer-kasse-part:first-child { padding-left: 24px; }
+.foyer-kasse.is-mini .foyer-kasse-part:last-child { padding-right: 24px; }
+.foyer-kasse.is-mini .foyer-kasse-label { font-size: .56rem; letter-spacing: .22em; }
+.foyer-kasse.is-mini .foyer-kasse-value { font-size: 1.85rem; }
+.foyer-kasse.is-mini .foyer-kasse-note { font-size: .7rem; }
 
 /* ---- Saalschild (Entertainment, Lesezeichen) ------------------------------ */
 

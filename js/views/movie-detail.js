@@ -115,6 +115,7 @@ function render() {
   const entry = readCastData(state.castData)[String(movie.imdbId || "").trim()] || null;
   const directors = splitNames(movie.directors);
   const runtime = runtimeOf(movie);
+  const fixedFrom = SITE ? 0 : Number.parseFloat(movie.runtimeFixedFrom) || 0; // Ausnahme greift (2.49.1)
   const imdb = imdbScore(movie);
   const genres = genresOf(movie);
   const extraScores = entry ? joinParts([entry.rt && `Rotten Tomatoes ${entry.rt.replace("%", " %")}`, entry.mc && `Metascore ${entry.mc}`]) : "";
@@ -122,7 +123,7 @@ function render() {
   const facts = [
     field("Originaltitel", movie.originalTitle),
     field("Erschienen", releaseLabel(movie)),
-    field("Laufzeit", runtime ? `${runtimeLabel(runtime)}${titleKind(movie) === "series" ? " je Folge" : ""}` : ""),
+    field("Laufzeit", runtime ? `${runtimeLabel(runtime)}${titleKind(movie) === "series" ? " je Folge" : ""}${fixedFrom ? ` (korrigiert – IMDb meldet ${runtimeLabel(fixedFrom)})` : ""}` : ""),
     field("Art", movie.titleType),
     field("IMDb-Wertung", imdb ? `<b>${imdb.score}</b>${imdb.votes ? ` · ${escapeHtml(imdb.votes)}` : ""}` : "", { html: true }),
     field("Weitere Wertungen", extraScores),

@@ -26,6 +26,11 @@ export async function getAllBookmarks() {
   return items;
 }
 
+/** Der ganze Chrome-Baum (für Gruppen nach Ordnern, 2.46); bei Fehler leer. */
+export async function getBookmarkTree() {
+  try { return await chrome.bookmarks.getTree(); } catch { return []; }
+}
+
 /**
  * Lädt alle Lesezeichen und entfernt angeheftete IDs, die es in Chrome nicht
  * mehr gibt (gespeichert wird nur, wenn sich etwas geändert hat). Bei einem

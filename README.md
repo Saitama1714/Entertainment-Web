@@ -21,8 +21,8 @@ Website mit dem Dashboard gleichziehen soll. Von Hand gepflegt werden hier nur
 ## Was die Website kann
 
 - **Titel**: Raster mit Covern, Suche (Titel, Regie, Genre, Darsteller, Drehbuch), Filterleiste
-  mit aufklappbaren Gruppen (Art, Genre, Medium, Status, Liste, Import) und Sortierung (Standard:
-  IMDb-Bewertung). „Import" zeigt, was im Dashboard im dort eingestellten Zeitraum (Standard 4 Wochen)
+  mit aufklappbaren Gruppen (Art, Genre, Medium, Status, Liste, Import, Bereiche) und Sortierung (Standard:
+  IMDb-Bewertung). „Bereiche“ grenzt mit Reglern ein – Jahr, Bewertungen, Laufzeit, „Bewertet am“ von … bis. „Import" zeigt, was im Dashboard im dort eingestellten Zeitraum (Standard 4 Wochen)
   neu importiert oder durch den Import geändert wurde. Suche, Filter und Sortierung
   bleiben während des Besuchs erhalten, auch nach einer Detailseite.
   Beim Tippen erscheinen Vorschläge (Titel mit Cover, Personen, Genres). Im

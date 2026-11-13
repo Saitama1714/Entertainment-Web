@@ -18,11 +18,14 @@ import { createAccess, readAccess } from "../logic/access-logic.js";
 import { AUTO_BACKUP_FOLDER, AUTO_BACKUP_KEEP } from "../logic/auto-backup-logic.js";
 import { readCastData, castStatus, dropEmptyCast } from "../logic/cast-logic.js";
 import { readCastFetch, enableCastFetch, disableCastFetch, castFetchActive } from "../cast-fetch.js";
-import { logoMotionSettingsHtml, bindLogoMotionSettings } from "./logo-motion-settings.js";
+import { logoMotionRowsHtml, bindLogoMotionSettings } from "./logo-motion-settings.js";
 import { UNIVERSE_INTRO_OPTIONS, DEFAULT_UNIVERSE_INTRO } from "../logic/universe-logic.js";
 import { DEFAULT_DUEL_INTRO } from "../logic/duel-logic.js";
-import { BUILD_STYLES, BUILD_INTRO_OPTIONS, DEFAULT_BUILD_INTRO, readBuildStyle } from "../logic/page-build-logic.js";
+import { BUILD_STYLES, BUILD_INTRO_OPTIONS, DEFAULT_BUILD_INTRO, DEFAULT_BUILD_STYLE, readBuildStyle } from "../logic/page-build-logic.js";
+import { LOGO_DEFAULTS } from "../logic/logo-motion-logic.js";
 import { previewPageBuild } from "./page-build.js";
+import { BOOKMARK_SORT_OPTIONS } from "../logic/bookmark-groups-logic.js";
+import { SHOWCASE_TAKT_OPTIONS, DEFAULT_SHOWCASE_TAKT } from "../logic/showcase-logic.js";
 import { setLogoMotion } from "./brand-medallion.js";
 import { applyTheme } from "./app-shell.js";
 import { readDesign, FOYER_MIN_WIDTH } from "../logic/foyer-logic.js";
@@ -50,31 +53,61 @@ function designPickerHtml(state) {
           <span class="design-desc">${desc}</span>
         </label>`;
   return `
-      <fieldset class="design-picker">
-        <legend>Design</legend>
-        <div class="design-options">
-          ${option("noir", "Kino-Noir", "Klassisch: Kopfleiste und Reiter")}
-          ${option("foyer", "Foyer", "Verspielt: Spule, Programmtafel, Säle")}
-        </div>
-      </fieldset>
-      <p class="meta">Am Handy und in schmalen Fenstern (unter ${FOYER_MIN_WIDTH} px) erscheint immer Kino-Noir; wer dort die Desktop-Ansicht wählt, sieht das Foyer. Das Foyer ist immer dunkel.</p>
-      <label class="field" id="settings-theme-field">Hell oder dunkel (Kino-Noir)
-        <select id="settings-theme-select" ${foyerShown(state) ? "disabled" : ""} aria-describedby="settings-theme-note">
+      ${row({ label: "Design", help: `Am Handy und in schmalen Fenstern (unter ${FOYER_MIN_WIDTH} px) erscheint immer Kino-Noir; wer dort die Desktop-Ansicht wählt, sieht das Foyer.`, wide: true, control: `
+        <fieldset class="design-picker">
+          <legend class="visually-hidden">Design</legend>
+          <div class="design-options">
+            ${option("noir", "Kino-Noir", "Klassisch: Kopfleiste und Reiter")}
+            ${option("foyer", "Foyer", "Verspielt: Spule, Programmtafel, Säle")}
+          </div>
+        </fieldset>` })}
+      ${row({ id: "settings-theme-field", label: "Hell oder dunkel", labelFor: "settings-theme-select",
+        help: `Gilt für Kino-Noir. <span class="field-note" id="settings-theme-note" ${foyerShown(state) ? "" : "hidden"}>Das Foyer ist immer dunkel – Hell oder Dunkel gilt nur für Kino-Noir (z. B. am Handy).</span>`,
+        control: `<select id="settings-theme-select" ${foyerShown(state) ? "disabled" : ""} aria-describedby="settings-theme-note">
           ${[["dark", "Dunkel"], ["light", "Hell"], ["system", "Wie das System"]].map(([value, label]) =>
             `<option value="${value}" ${state.theme === value ? "selected" : ""}>${label}</option>`).join("")}
-        </select>
-        <span class="field-note" id="settings-theme-note" ${foyerShown(state) ? "" : "hidden"}>Das Foyer ist immer dunkel – Hell oder Dunkel gilt nur für Kino-Noir (z. B. am Handy).</span>
-      </label>`;
+        </select>` })}`;
 }
 
-/**
- * Sprungleiste links (beide Designs, seit 2.41.4): ein Eintrag je Abschnitt,
- * leuchtet beim Scrollen mit. Im Foyer heißen die Einstellungen „Vorführraum"
- * und die Einträge tragen Lampen.
+/*
+ * Bausteine des Einstellungsfensters (2.49, Entwurf B „Seitenleiste“):
+ * Bereiche links, rechts immer nur einer. Jede Einstellung ist eine Zeile –
+ * Name und kurze Erklärung links, der Regler rechts. Zeilen stehen in
+ * Gruppen (Karte mit Überschrift und „Zurücksetzen“).
  */
-function buildSettingsNav() {
+function row({ id = "", label, labelFor = "", help = "", control, wide = false, extra = "" }) {
+  const name = labelFor ? `<label class="set-label" for="${labelFor}">${label}</label>` : `<span class="set-label">${label}</span>`;
+  return `
+        <div class="set-row${wide ? " is-wide" : ""}"${id ? ` id="${id}"` : ""}>
+          <div class="set-text">${name}<span class="set-dot" aria-hidden="true" title="Geändert"></span>${help ? `<p class="set-help">${help}</p>` : ""}</div>
+          <div class="set-control">${control}</div>${extra}
+        </div>`;
+}
+const group = (title, rows, { id = "" } = {}) => `
+      <div class="set-group">
+        <div class="set-group-head"><h3 class="settings-subhead"${id ? ` id="${id}"` : ""}>${title}</h3><button type="button" class="set-reset" hidden>Zurücksetzen</button></div>
+        <div class="set-card">${rows}</div>
+      </div>`;
+const page = (id, title, lead, body) => `
+    <section class="form-section settings-page" id="settings-page-${id}" data-page="${id}" aria-labelledby="settings-${id}">
+      <h2 id="settings-${id}">${title}</h2>
+      ${lead ? `<p class="settings-lead">${lead}</p>` : ""}
+      ${body}
+    </section>`;
+const toggle = (id, checked, label) => `<input type="checkbox" class="set-switch" role="switch" id="${id}" ${checked ? "checked" : ""} aria-label="${escapeHtml(label)}">`;
+
+/** Zuletzt gezeigter Bereich (bleibt, solange die Seite offen ist). */
+let currentPage = "look";
+
+/**
+ * Seitenleiste (2.49): ein Eintrag je Bereich, rechts steht immer nur einer.
+ * Darüber die Suche über alle Einstellungen; Treffer erscheinen bereichsübergreifend.
+ * Im Foyer heißen die Einstellungen „Vorführraum“ und die Einträge tragen Lampen.
+ * Geänderte Werte bekommen einen Punkt, jede Gruppe ein „Zurücksetzen“.
+ */
+function buildSettingsNav(state, notify) {
   const modal = document.querySelector(".modal");
-  if (!modal) return;
+  if (!modal) return null;
   const foyer = document.documentElement.dataset.skin === "foyer";
   modal.classList.add("modal--settings");
   if (foyer) {
@@ -83,41 +116,121 @@ function buildSettingsNav() {
     if (heading) heading.textContent = "Vorführraum";
     modal.setAttribute("aria-label", "Vorführraum – Einstellungen");
   }
-  const sections = [...modal.querySelectorAll(".form-section > h2[id]")];
+  const pages = [...modal.querySelectorAll(".settings-page")];
   const content = modal.querySelector(".modal-content");
-  content.insertAdjacentHTML("afterbegin", `<nav class="settings-nav${foyer ? " foyer-settings-nav" : ""}" aria-label="Abschnitte">${sections.map(h2 =>
-    `<button type="button" class="settings-jump${foyer ? " foyer-settings-jump" : ""}" data-jump="${h2.id}">${foyer ? `<span class="foyer-lamp" aria-hidden="true"></span>` : ""}${escapeHtml(h2.textContent)}</button>`).join("")}</nav>`);
+  const warn = {
+    library: reminderStatus(state, Date.now()).due,
+    backup: backupReminderStatus(state, Date.now()).due,
+  };
+  content.insertAdjacentHTML("afterbegin", `<nav class="settings-nav${foyer ? " foyer-settings-nav" : ""}" aria-label="Bereiche">
+      <label class="settings-search"><span class="visually-hidden">Einstellungen durchsuchen</span>
+        <input type="search" id="settings-search" placeholder="Einstellung suchen …" autocomplete="off" spellcheck="false"></label>
+      ${pages.map(section => {
+        const id = section.dataset.page;
+        return `<button type="button" class="settings-jump${foyer ? " foyer-settings-jump" : ""}" data-jump="${id}">${foyer ? `<span class="foyer-lamp" aria-hidden="true"></span>` : ""}<span class="settings-jump-text">${escapeHtml(section.querySelector("h2").textContent)}</span>${warn[id] ? `<span class="settings-warn" title="Braucht Aufmerksamkeit"><span class="visually-hidden">(braucht Aufmerksamkeit)</span></span>` : ""}</button>`;
+      }).join("")}
+    </nav>
+    <p class="settings-empty" id="settings-empty" hidden>Nichts gefunden.</p>`);
   const jumps = [...content.querySelectorAll(".settings-jump")];
   const nav = content.querySelector(".settings-nav");
-  const navIsRow = () => getComputedStyle(nav).flexDirection === "row"; // schmale Fenster: Leiste oben
-  const light = id => jumps.forEach(jump => {
-    const on = jump.dataset.jump === id;
-    jump.classList.toggle("is-current", on);
-    if (on) jump.setAttribute("aria-current", "true"); else jump.removeAttribute("aria-current");
-    // Leiste als Zeile: den aktuellen Eintrag ins Bild holen (nur waagerecht)
-    if (on && navIsRow()) nav.scrollLeft = Math.max(0, jump.offsetLeft - (nav.clientWidth - jump.offsetWidth) / 2);
+  const search = content.querySelector("#settings-search");
+  const empty = content.querySelector("#settings-empty");
+
+  const show = id => {
+    if (!pages.some(section => section.dataset.page === id)) id = pages[0].dataset.page;
+    currentPage = id;
+    for (const section of pages) section.hidden = section.dataset.page !== id;
+    jumps.forEach(jump => {
+      const on = jump.dataset.jump === id;
+      jump.classList.toggle("is-current", on);
+      if (on) jump.setAttribute("aria-current", "page"); else jump.removeAttribute("aria-current");
+      if (on && getComputedStyle(nav).flexDirection === "row") nav.scrollLeft = Math.max(0, jump.offsetLeft - (nav.clientWidth - jump.offsetWidth) / 2);
+    });
+    content.scrollTop = 0;
+  };
+
+  // Suche: alle Bereiche durchsuchen, nur passende Zeilen zeigen
+  const filter = () => {
+    const query = search.value.trim().toLocaleLowerCase("de");
+    modal.classList.toggle("is-searching", Boolean(query));
+    if (!query) {
+      for (const item of modal.querySelectorAll(".set-row, .set-group")) item.hidden = false;
+      empty.hidden = true;
+      show(currentPage);
+      return;
+    }
+    let hits = 0;
+    for (const section of pages) {
+      let inPage = 0;
+      const title = section.querySelector("h2").textContent.toLocaleLowerCase("de");
+      for (const block of section.querySelectorAll(".set-group")) {
+        const head = block.querySelector(".settings-subhead").textContent.toLocaleLowerCase("de");
+        let inGroup = 0;
+        for (const line of block.querySelectorAll(".set-row")) {
+          const hit = `${title} ${head} ${line.textContent}`.toLocaleLowerCase("de").includes(query);
+          line.hidden = !hit;
+          inGroup += hit;
+        }
+        block.hidden = !inGroup;
+        inPage += inGroup;
+      }
+      section.hidden = !inPage;
+      hits += inPage;
+    }
+    jumps.forEach(jump => { jump.classList.remove("is-current"); jump.removeAttribute("aria-current"); });
+    empty.hidden = Boolean(hits);
+    if (!hits) empty.textContent = `Nichts gefunden für „${search.value.trim()}“.`;
+  };
+  search.addEventListener("input", filter);
+  search.addEventListener("keydown", event => {
+    if (event.key === "Escape" && search.value) { event.preventDefault(); event.stopPropagation(); search.value = ""; filter(); }
   });
-  light(sections[0]?.id);
-  let jumping = 0;
+
   content.addEventListener("click", event => {
     const jump = event.target.closest(".settings-jump");
     if (!jump) return;
-    const target = document.getElementById(jump.dataset.jump)?.closest(".form-section");
-    if (!target) return;
-    jumping = Date.now();
-    const offset = navIsRow() ? nav.offsetHeight + 12 : 4;
-    content.scrollTo({ top: target.getBoundingClientRect().top - content.getBoundingClientRect().top + content.scrollTop - offset, behavior: "smooth" });
-    light(jump.dataset.jump);
+    if (search.value) { search.value = ""; filter(); }
+    show(jump.dataset.jump);
   });
-  // Mitleuchten beim Scrollen: der Abschnitt, dessen Kopf zuletzt oben vorbeikam
-  content.addEventListener("scroll", () => {
-    if (Date.now() - jumping < 700) return;
-    const top = content.getBoundingClientRect().top + (navIsRow() ? nav.offsetHeight : 0) + 80;
-    let current = sections[0];
-    for (const h2 of sections) if (h2.getBoundingClientRect().top <= top) current = h2;
-    if (content.scrollTop + content.clientHeight >= content.scrollHeight - 4) current = sections[sections.length - 1];
-    light(current?.id);
-  }, { passive: true });
+  // Pfeiltasten in der Leiste
+  nav.addEventListener("keydown", event => {
+    const index = jumps.indexOf(event.target);
+    if (index < 0 || !["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
+    event.preventDefault();
+    const next = jumps[(index + (event.key === "ArrowDown" || event.key === "ArrowRight" ? 1 : jumps.length - 1)) % jumps.length];
+    next.focus();
+    next.click();
+  });
+
+  // Geändert-Punkt und „Zurücksetzen“ je Gruppe
+  const controls = scope => [...scope.querySelectorAll("[data-default]")];
+  const differs = input => {
+    if (input.type === "checkbox") return input.checked !== (input.dataset.default === "true");
+    if (input.type === "radio") return input.checked && input.dataset.default !== "true";
+    return String(input.value) !== input.dataset.default;
+  };
+  const mark = () => {
+    for (const line of modal.querySelectorAll(".set-row")) line.classList.toggle("is-changed", controls(line).some(differs));
+    for (const block of modal.querySelectorAll(".set-group")) block.querySelector(".set-reset").hidden = !block.querySelector(".set-row.is-changed");
+  };
+  modal.addEventListener("change", () => setTimeout(mark, 0));
+  modal.addEventListener("click", event => {
+    const reset = event.target.closest(".set-reset");
+    if (!reset) return;
+    const block = reset.closest(".set-group");
+    notify.quiet(true);
+    for (const input of controls(block).filter(differs)) {
+      if (input.type === "checkbox") input.checked = input.dataset.default === "true";
+      else if (input.type === "radio") { const target = [...block.querySelectorAll(`input[name="${input.name}"]`)].find(item => item.dataset.default === "true"); if (!target) continue; target.checked = true; target.dispatchEvent(new Event("change", { bubbles: true })); continue; }
+      else input.value = input.dataset.default;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    setTimeout(() => { notify.quiet(false); mark(); showToast(`„${block.querySelector(".settings-subhead").textContent}“ zurückgesetzt.`, "success"); }, 400);
+    block.querySelector(".set-reset").hidden = true;
+    (block.querySelector("[data-default]") || modal).focus();
+  });
+
+  return { show, mark };
 }
 
 /** „12 Titel ohne Cover, davon 3 ohne IMDb-Kennung · Titel zeigen" (2.42.3). */
@@ -168,9 +281,9 @@ function reminderOptions(current) {
 }
 
 /**
- * Einstellungen-Dialog (seit 2.41.4 neu geordnet) in fünf Abschnitten mit
- * Sprungleiste: Erscheinungsbild, Bewegung, Entertainment (IMDb-Daten,
- * Aufräumen, Cover und Besetzung), Sicherung, Website. Auf jeder Seite über
+ * Einstellungen-Dialog (seit 2.49 nach Entwurf B): neun Bereiche in der
+ * Seitenleiste – Aussehen, Start & Foyer, Bewegung, Lesezeichen, Kinothek &
+ * IMDb, Cover & Besetzung, Sicherung, Website, Hilfe –, darüber die Suche. Auf jeder Seite über
  * die Kopfleiste (Foyer: Wegweiser → Vorführraum) erreichbar.
  * @param {object} state - wird bei Änderungen mutiert.
  * @param {Function} [onImported] - Callback nach erfolgreichem Laden einer Sicherung.
@@ -182,188 +295,146 @@ export function openSettingsModal(state, onImported, tools = null) {
   const onHome = Boolean(document.querySelector("#movie-preview")); // Aufbau gibt es nur auf der Übersicht
   const choiceSelect = (id, options, current) => `<select id="${id}">${options.map(option =>
     `<option value="${option.value}" ${current === option.value ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("")}</select>`;
+  // Hinweise; beim „Zurücksetzen“ einer Gruppe still (dann kommt ein Hinweis für alles)
+  let quiet = false;
+  const notify = (...args) => { if (!quiet) showToast(...args); };
+  notify.quiet = value => { quiet = value; };
+  const select = (id, options, current) => choiceSelect(id, options, current);
+  const radios = (name, options, current) => options.map(option => `
+          <label class="choice">
+            <input type="radio" name="${name}" value="${option.value}" ${current === option.value ? "checked" : ""}>
+            ${escapeHtml(option.label)}
+          </label>`).join("");
+  const clickOff = normalizeClickEffect(state.clickEffect) === "off";
   openModal("Einstellungen", `
-    <section class="form-section" aria-labelledby="settings-appearance">
-      <h2 id="settings-appearance">Erscheinungsbild</h2>
-      <p class="settings-lead">Wie das Dashboard aussieht.</p>
-      ${designPickerHtml(state)}
-      <div class="intro-picker">
-        <label class="field intro-field">Kinovorhang
-          ${choiceSelect("intro-mode-select", INTRO_OPTIONS, state.introMode)}
-        </label>
-        ${hasCurtain ? `<button class="small-button" type="button" id="curtain-preview-button">Vorschau abspielen</button>` : ""}
-      </div>
-      <p class="meta">${hasCurtain
-        ? "Die Vorschau spielt den Vorhang hier auf dieser Seite ab; danach geht es hierher zurück."
-        : "Eine Vorschau gibt es auf der Übersicht und unter Entertainment."}</p>
-      <label class="check-row">
-        <input type="checkbox" id="projector-dust-check" ${state.projectorDust === false ? "" : "checked"}>
-        Lichtkegel mit Staub im Kopf der Übersicht
-      </label>
-      <div class="form-section-actions">
-        <button class="small-button" type="button" id="show-shortcuts">Tastenkürzel anzeigen</button>
-      </div>
-    </section>
+    ${page("look", "Aussehen", "Wie das Dashboard aussieht.", `
+      ${group("Design", `
+        ${designPickerHtml(state)}
+        ${row({ label: "Lichtkegel mit Staub", labelFor: "projector-dust-check", help: "Im Kopf der Übersicht.", control: toggle("projector-dust-check", state.projectorDust !== false, "Lichtkegel mit Staub") })}`)}`)}
 
-    <section class="form-section" aria-labelledby="settings-motion">
-      <h2 id="settings-motion">Bewegung</h2>
-      <p class="settings-lead">Animationen beim Öffnen der Übersicht, beim Klicken, am Logo und beim Öffnen einzelner Reiter. Mit „Bewegung reduzieren“ im System bleibt alles ruhig.</p>
-      <h3 class="settings-subhead">Klick-Effekt</h3>
-      <fieldset class="choice-group">
-        <legend class="visually-hidden">Klick-Effekt</legend>
-        ${CLICK_EFFECT_OPTIONS.map(option => `
-          <label class="choice">
-            <input type="radio" name="click-effect" value="${option.value}" ${normalizeClickEffect(state.clickEffect) === option.value ? "checked" : ""}>
-            ${escapeHtml(option.label)}
-          </label>`).join("")}
-      </fieldset>
-      <fieldset class="choice-group" id="click-duration-group" ${normalizeClickEffect(state.clickEffect) === "off" ? "disabled" : ""}>
-        <legend>Tempo</legend>
-        ${CLICK_DURATION_OPTIONS.map(option => `
-          <label class="choice">
-            <input type="radio" name="click-duration" value="${option.value}" ${normalizeClickDuration(state.clickDuration) === option.value ? "checked" : ""}>
-            ${escapeHtml(option.label)}
-          </label>`).join("")}
-      </fieldset>
-      <p class="meta">Beim Öffnen von Favoriten, Lesezeichen und beim Wechsel zwischen den Seiten; die Seite öffnet, sobald die Animation durch ist. Mit „Aus“ öffnet ein Klick sofort. Cover fliegen beim Öffnen eines Titels direkt zur Detailseite.</p>
+    ${page("start", "Start & Foyer", "Was beim Öffnen eines neuen Tabs passiert.", `
+      ${group("Beim Öffnen", `
+        ${row({ label: "Kinovorhang", labelFor: "intro-mode-select",
+          help: hasCurtain ? "Die Vorschau spielt den Vorhang hier ab; danach geht es hierher zurück." : "Eine Vorschau gibt es auf der Übersicht und unter Entertainment.",
+          control: `<div class="intro-picker">${select("intro-mode-select", INTRO_OPTIONS, state.introMode)}${hasCurtain ? `<button class="small-button" type="button" id="curtain-preview-button">Vorschau</button>` : ""}</div>` })}
+        ${row({ label: "Aufbau der Übersicht", labelFor: "build-style-select",
+          help: "Die Übersicht baut sich Stück für Stück auf (gut 1 Sekunde): Saallicht und Neon, Lichtkegel des Projektors, Filmstreifen oder eine Kombination. Im Foyer zünden dabei die Buchstaben der Programmtafel. Ein Klick beendet ihn sofort.",
+          control: `<div class="intro-picker">${select("build-style-select", BUILD_STYLES, readBuildStyle(state.buildStyle))}${onHome ? `<button class="small-button" type="button" id="build-preview-button">Vorschau</button>` : ""}</div>` })}
+        ${row({ label: "Aufbau – wann", labelFor: "build-intro-select", help: `Spielt auch der Kinovorhang, folgt der Aufbau, wenn er offen ist.${onHome ? "" : " Eine Vorschau gibt es auf der Übersicht."}`,
+          control: select("build-intro-select", BUILD_INTRO_OPTIONS, state.buildIntro || DEFAULT_BUILD_INTRO) })}`, { id: "settings-build" })}
+      ${group("Foyer", `
+        ${row({ id: "showcase-takt-field", label: "Thema der Reihe „Kinothek“ wechselt", labelFor: "showcase-takt-select",
+          help: "Die Reihe unter „Heute im Programm“ zeigt ein Thema aus deiner Kinothek – ein Genre, ein Jahrzehnt, eine Regie, deine Zehner … Kein Thema kommt so schnell wieder.",
+          control: select("showcase-takt-select", SHOWCASE_TAKT_OPTIONS, state.showcaseTakt || DEFAULT_SHOWCASE_TAKT) })}`)}`)}
 
-      <h3 class="settings-subhead" id="settings-build">Aufbau der Übersicht</h3>
-      <div class="settings-pair">
-        <label class="field intro-field">Stil
-          ${choiceSelect("build-style-select", BUILD_STYLES, readBuildStyle(state.buildStyle))}
-        </label>
-        <label class="field intro-field">Wann
-          ${choiceSelect("build-intro-select", BUILD_INTRO_OPTIONS, state.buildIntro || DEFAULT_BUILD_INTRO)}
-        </label>
-      </div>
-      <div class="form-section-actions">
-        ${onHome ? `<button class="small-button" type="button" id="build-preview-button">Vorschau abspielen</button>` : ""}
-      </div>
-      <p class="meta">Beim Öffnen baut sich die Übersicht Stück für Stück auf (gut 1 Sekunde). Saallicht und Neon: Die Lichter gehen nacheinander an, die Leuchtreklame flackert an. Lichtkegel: Der Projektor im Logo wirft die Seite auf die Leinwand. Filmstreifen: Die Bereiche laufen ein wie Bilder durchs Bildfenster. Die beiden Kombinationen verbinden Lichtkegel mit Saallicht und Filmstreifen mit Neon. Im Foyer zünden dabei die Buchstaben der Programmtafel einzeln. Spielt auch der Kinovorhang, folgt der Aufbau, wenn er offen ist; ein Klick beendet ihn sofort.${onHome ? "" : " Eine Vorschau gibt es auf der Übersicht."}</p>
+    ${page("motion", "Bewegung", "Animationen beim Klicken, am Logo und unter Entertainment. Mit „Bewegung reduzieren“ im System bleibt alles ruhig.", `
+      ${group("Klick-Effekt", `
+        ${row({ label: "Klick-Effekt", help: "Beim Öffnen von Favoriten, Lesezeichen und beim Wechsel zwischen den Seiten. Mit „Aus“ öffnet ein Klick sofort.",
+          control: `<fieldset class="choice-group"><legend class="visually-hidden">Klick-Effekt</legend>${radios("click-effect", CLICK_EFFECT_OPTIONS, normalizeClickEffect(state.clickEffect))}</fieldset>` })}
+        ${row({ label: "Tempo", help: "Die Seite öffnet, sobald die Animation durch ist.",
+          control: `<fieldset class="choice-group" id="click-duration-group" ${clickOff ? "disabled" : ""}><legend class="visually-hidden">Tempo</legend>${radios("click-duration", CLICK_DURATION_OPTIONS, normalizeClickDuration(state.clickDuration))}</fieldset>` })}`)}
+      ${group("Logo", `
+        ${logoMotionRowsHtml(state.logoMotion, row)}`)}
+      ${group("Auftritte unter Entertainment", `
+        ${row({ label: "Urknall im Filmuniversum", labelFor: "universe-intro-select", help: "Die Sterne fliegen aus der Mitte an ihren Platz.",
+          control: select("universe-intro-select", UNIVERSE_INTRO_OPTIONS, state.universeIntro || DEFAULT_UNIVERSE_INTRO) })}
+        ${row({ label: "Auftritt in „Du gegen IMDb“", labelFor: "duel-intro-select", help: "Die Titel fliegen aus beiden Ecken ins Feld, der Ring füllt sich, der Stempel fällt.",
+          control: select("duel-intro-select", UNIVERSE_INTRO_OPTIONS, state.duelIntro || DEFAULT_DUEL_INTRO) })}`)}`)}
 
-      <h3 class="settings-subhead">Logo</h3>
-      ${logoMotionSettingsHtml(state.logoMotion)}
+    ${page("marks", "Lesezeichen", "", `
+      ${group("Lesezeichen", `
+        ${row({ id: "bookmark-sort-field", label: "Reihenfolge", labelFor: "bookmark-sort-select",
+          help: "Gilt für „Alle Lesezeichen“ in jedem Ordner. „Oft genutzt“ zählt nur, was du im Dashboard öffnest – lokal auf diesem Rechner.",
+          control: select("bookmark-sort-select", BOOKMARK_SORT_OPTIONS, state.bookmarkSort === "used" ? "used" : "own") })}`)}`)}
 
-      <h3 class="settings-subhead">Auftritte unter Entertainment</h3>
-      <div class="settings-pair">
-        <label class="field intro-field">Urknall im Filmuniversum
-          ${choiceSelect("universe-intro-select", UNIVERSE_INTRO_OPTIONS, state.universeIntro || DEFAULT_UNIVERSE_INTRO)}
-        </label>
-        <label class="field intro-field">Auftritt in „Du gegen IMDb“
-          ${choiceSelect("duel-intro-select", UNIVERSE_INTRO_OPTIONS, state.duelIntro || DEFAULT_DUEL_INTRO)}
-        </label>
-      </div>
-      <p class="meta">Urknall: Die Sterne fliegen aus der Mitte an ihren Platz. Auftritt: Die Titel fliegen aus beiden Ecken ins Feld, der Ring füllt sich, der Stempel fällt.</p>
-    </section>
+    ${page("library", "Kinothek & IMDb", "Deine Kinothek: Daten aus IMDb und Aufräumen.", `
+      ${group("IMDb-Daten", `
+        ${row({ label: "Datenstand", help: `<span id="imdb-data-status">${escapeHtml(importStatusText(state))}</span>`, control: toolButton("import") })}
+        ${row({ label: "An neuen Export erinnern", labelFor: "reminder-select", control: select("reminder-select", reminderOptions(state.importReminderDays), Number(state.importReminderDays)) })}
+        ${row({ label: "Filter „Import“ zeigt die letzten", labelFor: "import-window-select", help: "Neu oder geändert durch einen Import.", control: select("import-window-select", IMPORT_WINDOW_OPTIONS, Number(state.importWindowDays || IMPORT_WINDOW_DAYS)) })}
+        ${row({ label: "IMDb-Downloads einsortieren", labelFor: "sort-downloads-check", help: "Exporte landen beim Herunterladen im Unterordner „IMDb-Exporte“.", control: toggle("sort-downloads-check", state.sortImdbDownloads !== false, "IMDb-Downloads einsortieren") })}`)}
+      ${group("Aufräumen", `
+        ${row({ label: "Gesehen mit IMDb abgleichen", help: "Zeigt erst eine Liste zum Prüfen – geändert wird nur, was du bestätigst.", control: toolButton("seen") })}
+        ${row({ label: "Titel ohne IMDb-Liste", help: "Ebenfalls erst eine Liste zum Prüfen.", control: toolButton("orphans") })}`)}`)}
 
-    <section class="form-section" aria-labelledby="settings-entertainment">
-      <h2 id="settings-entertainment">Entertainment</h2>
-      <p class="settings-lead">Deine Kinothek: Daten aus IMDb, Aufräumen, Cover und Besetzung.</p>
+    ${page("covers", "Cover & Besetzung", "Cover, Besetzung und weitere Angaben kommen von OMDb.", `
+      ${group("OMDb", `
+        ${row({ label: "OMDb-Schlüssel", labelFor: "omdb-key", help: `Kostenlos anfordern auf <a class="external-link" href="https://www.omdbapi.com/apikey.aspx" target="_blank" rel="noreferrer">omdbapi.com</a>.`,
+          control: `<form id="settings-form" class="settings-key"><div class="settings-key-row">
+              <input id="omdb-key" name="omdbApiKey" type="text" autocomplete="off" value="${escapeHtml(state.omdbApiKey || "")}" placeholder="a1b2c3d4">
+              <button class="small-button" type="submit">Speichern</button></div></form>` })}`)}
+      ${group("Cover", `
+        ${row({ label: "Titel ohne Cover", help: `<span id="cover-gaps">${coverGapsHtml(state)}</span>`, control: toolButton("covers") })}
+        ${row({ label: "Cover offline", wide: true, help: `<span id="cover-store-status">Wird gezählt …</span>`, control: "" })}`)}
+      ${group("Besetzung", `
+        ${row({ label: "Besetzung laden", wide: true, help: "Darsteller und Drehbuch für das Filmuniversum und die Detailseite (rund 1.000 Abrufe am Tag). Der erste Durchlauf dauert bei vielen Titeln mehrere Tage und geht von selbst weiter, solange Entertainment offen ist. Cover haben Vorrang.",
+          control: `<div class="cast-fetch" id="cast-fetch" aria-live="polite"></div>` })}`)}`)}
 
-      <h3 class="settings-subhead">IMDb-Daten</h3>
-      <div class="settings-status-row">
-        <p class="meta" id="imdb-data-status">${escapeHtml(importStatusText(state))}</p>
-        ${toolButton("import")}
-      </div>
-      <div class="settings-pair">
-        <label class="field reminder-field">An neuen Export erinnern
-          ${choiceSelect("reminder-select", reminderOptions(state.importReminderDays), Number(state.importReminderDays))}
-        </label>
-        <label class="field reminder-field">Filter „Import“ zeigt die letzten
-          ${choiceSelect("import-window-select", IMPORT_WINDOW_OPTIONS, Number(state.importWindowDays || IMPORT_WINDOW_DAYS))}
-        </label>
-      </div>
-      <label class="check-row">
-        <input type="checkbox" id="sort-downloads-check" ${state.sortImdbDownloads === false ? "" : "checked"}>
-        IMDb-Exporte beim Herunterladen im Unterordner „IMDb-Exporte“ ablegen
-      </label>
+    ${page("backup", "Sicherung", "Design, Favoriten und alle Einträge unter Entertainment als Datei. Die Lesezeichen selbst bleiben in Chrome.", `
+      ${group("Sicherung", `
+        ${row({ label: "Letzte Sicherung", help: `<span id="backup-status">${escapeHtml(backupStatusText(state))}</span>`,
+          control: `<div class="form-section-actions">
+              <button class="small-button" type="button" id="export-button">Sicherung speichern</button>
+              <label class="small-button import-label">Sicherung laden
+                <input id="import-input" type="file" accept="application/json" aria-label="Sicherungsdatei auswählen">
+              </label></div>`,
+          extra: `<p class="status-line" id="settings-status" aria-live="polite"></p>` })}
+        ${row({ label: "An Sicherung erinnern", labelFor: "backup-reminder-select", control: select("backup-reminder-select", reminderOptions(state.backupReminderDays), Number(state.backupReminderDays)) })}`)}
+      ${group("Automatisch sichern", `
+        ${row({ label: "Automatisch sichern", labelFor: "auto-backup-check", help: `Nach jedem IMDb-Import und jeder Änderung an Titeln – still im Download-Ordner unter „${AUTO_BACKUP_FOLDER}“. Die letzten ${AUTO_BACKUP_KEEP} bleiben; von Hand gespeicherte Sicherungen bleiben unberührt.`,
+          control: toggle("auto-backup-check", state.autoBackup !== false, "Automatisch sichern") })}
+        ${row({ label: "Jetzt automatisch sichern", control: `<button class="small-button" type="button" id="auto-backup-now">Jetzt sichern</button>` })}`)}`)}
 
-      <h3 class="settings-subhead">Aufräumen</h3>
-      <p class="meta">Zeigt erst eine Liste zum Prüfen – geändert wird nur, was du bestätigst.</p>
-      <div class="form-section-actions">
-        ${toolButton("seen")}
-        ${toolButton("orphans")}
-      </div>
-
-      <h3 class="settings-subhead">Cover und Besetzung (OMDb)</h3>
-      <form id="settings-form" class="settings-key">
-        <div class="field">
-          <label for="omdb-key">OMDb-Schlüssel</label>
-          <div class="settings-key-row">
-            <input id="omdb-key" name="omdbApiKey" type="text" autocomplete="off"
-                   value="${escapeHtml(state.omdbApiKey || "")}" placeholder="a1b2c3d4">
-            <button class="small-button" type="submit">Speichern</button>
-          </div>
-          <p class="field-note">Kostenlos anfordern auf
-            <a class="external-link" href="https://www.omdbapi.com/apikey.aspx" target="_blank" rel="noreferrer">omdbapi.com</a>. Damit lädt das Dashboard Cover, Besetzung und weitere Angaben.</p>
-        </div>
-      </form>
-      <div class="settings-status-row">
-        <p class="meta" id="cover-gaps">${coverGapsHtml(state)}</p>
-        ${toolButton("covers")}
-      </div>
-      <p class="meta" id="cover-store-status">Cover offline: wird gezählt …</p>
-      <p class="meta">Besetzung für das Filmuniversum und die Detailseite: Darsteller und Drehbuch kommen von OMDb (rund 1.000 Abrufe am Tag); der erste Durchlauf dauert bei vielen Titeln mehrere Tage und geht von selbst weiter, solange Entertainment offen ist. Cover haben Vorrang.</p>
-      <div class="cast-fetch" id="cast-fetch" aria-live="polite"></div>
-    </section>
-
-    <section class="form-section" aria-labelledby="settings-data">
-      <h2 id="settings-data">Sicherung</h2>
-      <p class="settings-lead">Design, Favoriten und alle Einträge unter Entertainment als Datei. Die Lesezeichen selbst bleiben in Chrome.</p>
-      <div class="settings-status-row">
-        <p class="meta" id="backup-status">${escapeHtml(backupStatusText(state))}</p>
-        <div class="form-section-actions">
-          <button class="small-button" type="button" id="export-button">Sicherung speichern</button>
-          <label class="small-button import-label">Sicherung laden
-            <input id="import-input" type="file" accept="application/json" aria-label="Sicherungsdatei auswählen">
-          </label>
-        </div>
-      </div>
-      <p class="status-line" id="settings-status" aria-live="polite"></p>
-      <label class="field reminder-field">An Sicherung erinnern
-        ${choiceSelect("backup-reminder-select", reminderOptions(state.backupReminderDays), Number(state.backupReminderDays))}
-      </label>
-
-      <h3 class="settings-subhead">Automatisch sichern</h3>
-      <label class="check-row">
-        <input type="checkbox" id="auto-backup-check" ${state.autoBackup === false ? "" : "checked"}>
-        Nach jedem IMDb-Import und jeder Änderung an Titeln
-      </label>
-      <p class="meta">Still im Download-Ordner unter „${AUTO_BACKUP_FOLDER}“. Die letzten ${AUTO_BACKUP_KEEP} bleiben, ältere löscht das Dashboard; von Hand gespeicherte Sicherungen bleiben unberührt.</p>
-      <div class="form-section-actions">
-        <button class="small-button" type="button" id="auto-backup-now">Jetzt automatisch sichern</button>
-      </div>
-    </section>
-
-    <section class="form-section" aria-labelledby="settings-website">
-      <h2 id="settings-website">Website</h2>
-      <p class="settings-lead">„Meine Kinothek“: die Datei <code>sammlung.json</code> entsteht bei jeder automatischen Sicherung mit.</p>
-      <div class="website-file" id="website-file-block">
-        <label class="check-row">
-          <input type="checkbox" id="website-file-check" ${state.websiteFile === false ? "" : "checked"}>
-          Bei der automatischen Sicherung auch <code>sammlung.json</code> für die Website speichern
-        </label>
-        <fieldset class="website-file-options" id="website-options">
-          <legend>Auf der Website zeigen</legend>
-          ${OPTIONAL_GROUPS.map(group => `
+    ${page("web", "Website", "„Meine Kinothek“: die Datei <code>sammlung.json</code> entsteht bei jeder automatischen Sicherung mit.", `
+      ${group("Meine Kinothek", `
+        <div id="website-file-block" class="website-file">
+        ${row({ label: "<code>sammlung.json</code> mitspeichern", labelFor: "website-file-check", help: "Die Datei kopierst du danach in den Website-Ordner (<code>data/sammlung.json</code>) – oder per Doppelklick auf <code>Sammlung-holen.bat</code> dort.",
+          control: toggle("website-file-check", state.websiteFile !== false, "sammlung.json mitspeichern") })}
+        ${row({ label: "Auf der Website zeigen", wide: true, control: `
+          <fieldset class="website-file-options" id="website-options">
+            <legend class="visually-hidden">Auf der Website zeigen</legend>
+            ${OPTIONAL_GROUPS.map(item => `
+              <label class="check-row">
+                <input type="checkbox" value="${item.key}" ${websiteOptions(state)[item.key] ? "checked" : ""}>
+                ${escapeHtml(item.label)}
+              </label>`).join("")}
             <label class="check-row">
-              <input type="checkbox" value="${group.key}" ${websiteOptions(state)[group.key] ? "checked" : ""}>
-              ${escapeHtml(group.label)}
-            </label>`).join("")}
-          <label class="check-row">
-            <input type="checkbox" id="website-password-check" ${readAccess(state.websiteAccess) ? "checked" : ""}>
-            Passwort für die Website
-          </label>
-          <div class="field website-password" id="website-password-field">
-            <label for="website-password" id="website-password-label"></label>
-            <input id="website-password" type="password" autocomplete="new-password" spellcheck="false">
-            <p class="field-note" id="website-password-status"></p>
-          </div>
-        </fieldset>
-        <p class="meta" id="website-file-note">Die Datei kopierst du danach in den Website-Ordner (<code>data/sammlung.json</code>) – oder per Doppelklick auf <code>Sammlung-holen.bat</code> dort.</p>
-      </div>
-    </section>`);
-  buildSettingsNav();
+              <input type="checkbox" id="website-password-check" ${readAccess(state.websiteAccess) ? "checked" : ""}>
+              Passwort für die Website
+            </label>
+            <div class="field website-password" id="website-password-field">
+              <label for="website-password" id="website-password-label"></label>
+              <input id="website-password" type="password" autocomplete="new-password" spellcheck="false">
+              <p class="field-note" id="website-password-status"></p>
+            </div>
+          </fieldset>` })}
+        </div>`)}`)}
+
+    ${page("help", "Hilfe", "", `
+      ${group("Hilfe", `
+        ${row({ label: "Tastenkürzel", help: "Überall auch mit der Taste „?“.", control: `<button class="small-button" type="button" id="show-shortcuts">Tastenkürzel anzeigen</button>` })}`)}`)}`);
+
+  // Standardwerte für Punkt und „Zurücksetzen“
+  const defaults = [
+    ['input[name="design"]', "noir"], ["#settings-theme-select", "dark"], ["#projector-dust-check", true],
+    ["#intro-mode-select", "hourly"], ["#build-style-select", DEFAULT_BUILD_STYLE], ["#build-intro-select", DEFAULT_BUILD_INTRO],
+    ["#showcase-takt-select", DEFAULT_SHOWCASE_TAKT], ['input[name="click-effect"]', "zoom"], ['input[name="click-duration"]', "450"],
+    ["#logo-mode-select", LOGO_DEFAULTS.mode], ['input[name="logo-effect"]', LOGO_DEFAULTS.effects], ['input[name="logo-tempo"]', LOGO_DEFAULTS.tempo],
+    ["#universe-intro-select", DEFAULT_UNIVERSE_INTRO], ["#duel-intro-select", DEFAULT_DUEL_INTRO], ["#bookmark-sort-select", "own"],
+    ["#reminder-select", "30"], ["#import-window-select", String(IMPORT_WINDOW_DAYS)], ["#sort-downloads-check", true],
+    ["#backup-reminder-select", "30"], ["#auto-backup-check", true], ["#website-file-check", true],
+    ...OPTIONAL_GROUPS.map(item => [`#website-options input[value="${item.key}"]`, item.standard]),
+  ];
+  for (const [selector, value] of defaults) {
+    for (const input of document.querySelectorAll(`.modal ${selector}`)) {
+      if (input.type === "radio") input.dataset.default = String(input.value === String(value));
+      else if (input.type === "checkbox" && Array.isArray(value)) input.dataset.default = String(value.includes(input.value));
+      else input.dataset.default = String(value);
+    }
+  }
+  const settingsNav = buildSettingsNav(state, notify);
+  settingsNav?.show(currentPage);
+  settingsNav?.mark();
 
   // Werkzeuge der Kinothek: auf Entertainment gleich hier, sonst dorthin
   document.querySelector(".modal")?.addEventListener("click", event => {
@@ -383,7 +454,7 @@ export function openSettingsModal(state, onImported, tools = null) {
     const key = new FormData(event.currentTarget).get("omdbApiKey").trim();
     state.omdbApiKey = key;
     await saveDashboardData({ omdbApiKey: key });
-    showToast(key ? "OMDb-Schlüssel gespeichert." : "OMDb-Schlüssel entfernt.", "success");
+    notify(key ? "OMDb-Schlüssel gespeichert." : "OMDb-Schlüssel entfernt.", "success");
     showCastFetch();
   };
 
@@ -395,7 +466,7 @@ export function openSettingsModal(state, onImported, tools = null) {
       applyTheme(state); // setzt data-skin, das Foyer baut auf bzw. ab
       syncThemeField(state);
       const narrow = state.design === "foyer" && window.innerWidth < FOYER_MIN_WIDTH;
-      showToast(narrow ? "Foyer gewählt – erscheint in breiten Fenstern." : state.design === "foyer" ? "Willkommen im Foyer." : "Zurück in Kino-Noir.", "success");
+      notify(narrow ? "Foyer gewählt – erscheint in breiten Fenstern." : state.design === "foyer" ? "Willkommen im Foyer." : "Zurück in Kino-Noir.", "success");
     };
   }
   $("#settings-theme-select").onchange = async event => {
@@ -404,11 +475,23 @@ export function openSettingsModal(state, onImported, tools = null) {
     applyTheme(state);
   };
 
+  $("#showcase-takt-select").onchange = async event => {
+    state.showcaseTakt = event.target.value;
+    await saveDashboardData({ showcaseTakt: state.showcaseTakt });
+    notify("Gilt ab dem nächsten neuen Tab.", "success");
+  };
+  $("#bookmark-sort-select").onchange = async event => {
+    state.bookmarkSort = event.target.value === "used" ? "used" : "own";
+    await saveDashboardData({ bookmarkSort: state.bookmarkSort });
+    window.dispatchEvent(new CustomEvent("dashboard:bookmark-sort", { detail: state.bookmarkSort }));
+    notify("Gespeichert.", "success");
+  };
+
   $("#intro-mode-select").onchange = async event => {
     state.introMode = event.target.value;
     await saveDashboardData({ introMode: state.introMode });
     syncBootMirror(state); // wirkt ab dem nächsten neuen Tab
-    showToast("Gilt ab dem nächsten neuen Tab.", "success");
+    notify("Gilt ab dem nächsten neuen Tab.", "success");
   };
 
   // Bewegung: Klick-Effekt und Tempo (gelten sofort, auch auf dieser Seite)
@@ -418,39 +501,39 @@ export function openSettingsModal(state, onImported, tools = null) {
       $("#click-duration-group").disabled = state.clickEffect === "off"; // ohne Effekt kein Tempo
       await saveDashboardData({ clickEffect: state.clickEffect });
       syncBootMirror(state); // Seitenwechsel ab der nächsten Seite (js/boot.js)
-      showToast(state.clickEffect === "off" ? "Klick-Effekt ausgeschaltet." : "Klick-Effekt gespeichert.", "success");
+      notify(state.clickEffect === "off" ? "Klick-Effekt ausgeschaltet." : "Klick-Effekt gespeichert.", "success");
     };
   }
   // Logo-Animation: gilt sofort, Änderungen spielen gleich als Vorschau
   bindLogoMotionSettings(document.querySelector(".modal"), state.logoMotion, async (motion, { preview, what }) => {
     if (what !== "preview") {
       state.logoMotion = motion;
-      saveDashboardData({ logoMotion: motion }).catch(() => showToast("Die Einstellung konnte nicht gespeichert werden.", "error"));
+      saveDashboardData({ logoMotion: motion }).catch(() => notify("Die Einstellung konnte nicht gespeichert werden.", "error"));
     }
     setLogoMotion(motion, { preview });
   });
   $("#universe-intro-select").onchange = async event => {
     state.universeIntro = event.target.value;
     await saveDashboardData({ universeIntro: state.universeIntro });
-    showToast("Gespeichert.", "success");
+    notify("Gespeichert.", "success");
   };
   $("#duel-intro-select").onchange = async event => {
     state.duelIntro = event.target.value;
     await saveDashboardData({ duelIntro: state.duelIntro });
-    showToast("Gespeichert.", "success");
+    notify("Gespeichert.", "success");
   };
 
   $("#projector-dust-check").onchange = async event => {
     state.projectorDust = event.target.checked;
     await saveDashboardData({ projectorDust: state.projectorDust });
     window.dispatchEvent(new CustomEvent("dashboard:projector-dust"));
-    showToast(state.projectorDust ? "Lichtkegel eingeschaltet." : "Lichtkegel ausgeschaltet.", "success");
+    notify(state.projectorDust ? "Lichtkegel eingeschaltet." : "Lichtkegel ausgeschaltet.", "success");
   };
   for (const radio of document.querySelectorAll('.modal input[name="click-duration"]')) {
     radio.onchange = async () => {
       state.clickDuration = Number(radio.value);
       await saveDashboardData({ clickDuration: state.clickDuration });
-      showToast("Tempo gespeichert.", "success");
+      notify("Tempo gespeichert.", "success");
     };
   }
 
@@ -459,13 +542,13 @@ export function openSettingsModal(state, onImported, tools = null) {
     state.buildStyle = readBuildStyle(event.target.value);
     await saveDashboardData({ buildStyle: state.buildStyle });
     syncBootMirror(state);
-    showToast("Gilt ab dem nächsten neuen Tab.", "success");
+    notify("Gilt ab dem nächsten neuen Tab.", "success");
   };
   $("#build-intro-select").onchange = async event => {
     state.buildIntro = event.target.value;
     await saveDashboardData({ buildIntro: state.buildIntro });
     syncBootMirror(state);
-    showToast("Gilt ab dem nächsten neuen Tab.", "success");
+    notify("Gilt ab dem nächsten neuen Tab.", "success");
   };
   const buildPreview = $("#build-preview-button");
   if (buildPreview) {
@@ -479,7 +562,7 @@ export function openSettingsModal(state, onImported, tools = null) {
         $("#build-preview-button")?.focus({ preventScroll: true });
       };
       if (!previewPageBuild(style, { onDone: back })) {
-        showToast("Mit „Bewegung reduzieren“ im System gibt es keinen Aufbau.", "info");
+        notify("Mit „Bewegung reduzieren“ im System gibt es keinen Aufbau.", "info");
         back();
       }
     };
@@ -512,7 +595,7 @@ export function openSettingsModal(state, onImported, tools = null) {
     state.importReminderDays = Number(event.target.value);
     await saveDashboardData({ importReminderDays: state.importReminderDays });
     renderImportReminder(state);
-    showToast(state.importReminderDays ? "Erinnerung gespeichert." : "Erinnerung ausgeschaltet.", "success");
+    notify(state.importReminderDays ? "Erinnerung gespeichert." : "Erinnerung ausgeschaltet.", "success");
   };
 
   $("#import-window-select").onchange = async event => {
@@ -520,13 +603,13 @@ export function openSettingsModal(state, onImported, tools = null) {
     setImportWindowDays(state.importWindowDays);
     await saveDashboardData({ importWindowDays: state.importWindowDays });
     window.dispatchEvent(new CustomEvent("dashboard:import-window"));
-    showToast("Zeitraum für den Filter „Import“ gespeichert.", "success");
+    notify("Zeitraum für den Filter „Import“ gespeichert.", "success");
   };
 
   $("#sort-downloads-check").onchange = async event => {
     state.sortImdbDownloads = event.target.checked;
     await saveDashboardData({ sortImdbDownloads: state.sortImdbDownloads });
-    showToast(state.sortImdbDownloads ? "IMDb-Exporte landen künftig in „IMDb-Exporte“." : "IMDb-Exporte bleiben im Download-Ordner.", "success");
+    notify(state.sortImdbDownloads ? "IMDb-Exporte landen künftig in „IMDb-Exporte“." : "IMDb-Exporte bleiben im Download-Ordner.", "success");
   };
 
   $("#show-shortcuts").onclick = () => {
@@ -602,7 +685,7 @@ export function openSettingsModal(state, onImported, tools = null) {
       await enableCastFetch();
     }
     const onEntertainment = Boolean(document.querySelector("#cast-panel"));
-    if (action !== "off") showToast(onEntertainment ? "Die Besetzung wird im Hintergrund geladen." : "Startet, sobald du Entertainment öffnest.", "success");
+    if (action !== "off") notify(onEntertainment ? "Die Besetzung wird im Hintergrund geladen." : "Startet, sobald du Entertainment öffnest.", "success");
     showCastFetch();
   });
   const onCastChange = (changes, area) => {
@@ -622,7 +705,7 @@ export function openSettingsModal(state, onImported, tools = null) {
     state.backupReminderDays = Number(event.target.value);
     await saveDashboardData({ backupReminderDays: state.backupReminderDays });
     renderBackupReminder(state);
-    showToast(state.backupReminderDays ? "Erinnerung gespeichert." : "Erinnerung ausgeschaltet.", "success");
+    notify(state.backupReminderDays ? "Erinnerung gespeichert." : "Erinnerung ausgeschaltet.", "success");
   };
 
   // Automatisch sichern: an/aus, Website-Datei, Häkchen, Passwort
@@ -639,7 +722,7 @@ export function openSettingsModal(state, onImported, tools = null) {
     state.autoBackup = event.target.checked;
     await saveDashboardData({ autoBackup: state.autoBackup });
     syncAutoBlock();
-    showToast(state.autoBackup ? "Automatische Sicherung eingeschaltet." : "Automatische Sicherung ausgeschaltet.", "success");
+    notify(state.autoBackup ? "Automatische Sicherung eingeschaltet." : "Automatische Sicherung ausgeschaltet.", "success");
   };
   $("#website-file-check").onchange = async event => {
     state.websiteFile = event.target.checked;
@@ -664,7 +747,7 @@ export function openSettingsModal(state, onImported, tools = null) {
     if (!event.target.checked && readAccess(state.websiteAccess)) {
       state.websiteAccess = null;
       await saveDashboardData({ websiteAccess: null });
-      showToast("Website ohne Passwort.", "success");
+      notify("Website ohne Passwort.", "success");
     }
     if (event.target.checked) $("#website-password").focus();
     passwordStatus();
@@ -676,7 +759,7 @@ export function openSettingsModal(state, onImported, tools = null) {
     input.value = "";
     await saveDashboardData({ websiteAccess: state.websiteAccess });
     passwordStatus();
-    showToast("Passwort für die Website gespeichert.", "success");
+    notify("Passwort für die Website gespeichert.", "success");
   };
   $("#website-password").addEventListener("change", savePassword);
   $("#website-password").addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); savePassword(); } });
@@ -690,7 +773,7 @@ export function openSettingsModal(state, onImported, tools = null) {
       $("#backup-status").textContent = backupStatusText(state);
       renderBackupReminder(state);
     }
-    showToast(ok ? `Gesichert in „${AUTO_BACKUP_FOLDER}“.` : "Die Sicherung hat nicht geklappt.", ok ? "success" : "error");
+    notify(ok ? `Gesichert in „${AUTO_BACKUP_FOLDER}“.` : "Die Sicherung hat nicht geklappt.", ok ? "success" : "error");
   };
 
   $("#import-input").onchange = async event => {
@@ -702,13 +785,13 @@ export function openSettingsModal(state, onImported, tools = null) {
       const fresh = await getDashboardData();
       Object.assign(state, fresh);
       syncBootMirror(state);
-      showToast("Sicherung geladen.", "success");
+      notify("Sicherung geladen.", "success");
       closeModal();
       onImported?.();
     } catch (error) {
       const message = error.message || "Die Datei konnte nicht gelesen werden.";
       if (status) status.textContent = message;
-      showToast(message, "error");
+      notify(message, "error");
     } finally {
       event.target.value = "";
     }

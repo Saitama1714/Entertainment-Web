@@ -6,8 +6,6 @@ import {
   spoolItems, spoolLayout, SPOOL, saalInfo, SAAL_ROOMS,
   programmPicks, boardLines, kasse, openWatchable,
 } from "../logic/foyer-logic.js";
-import { backupReminderStatus, downloadBackup } from "./backup.js";
-import { formatDay } from "../utils/format.js";
 import { CONFIG } from "../utils/constants.js";
 import { countUp } from "./count-up.js";
 import { igniteBoard, extinguishBoard } from "./board-ignite.js";
@@ -105,22 +103,19 @@ function renderMoviesSign() {
     });
   }
   const room = saalInfo(currentTab, availableTabs());
-  const count = kasse(state?.movies || []);
-  const line = room.tab === "titles"
-    ? `${count.total.toLocaleString("de-DE")} Titel in der Kinothek · ${count.seen.toLocaleString("de-DE")} gesehen · ${count.open.toLocaleString("de-DE")} offen`
-    : room.line;
+  const titles = room.tab === "titles"; // Saal „Titel": Eintrittskarte statt Zahlenzeile (2.47)
   sign.className = `foyer-saal${room.compact ? " is-compact" : ""}`;
   sign.setAttribute("aria-label", `Saal 2: ${room.name}`);
   sign.innerHTML = `${bulbs}
     <span class="foyer-saal-number" aria-hidden="true">2</span>
-    <div class="foyer-saal-text">
+    <div class="foyer-saal-text${titles ? " has-ticket" : ""}">
       <h2 class="foyer-saal-name">${escapeHtml(room.name)}</h2>
-      <p class="foyer-saal-line">${escapeHtml(line)}</p>
+      ${titles ? ticketHtml() : `<p class="foyer-saal-line">${escapeHtml(room.line)}</p>`}
     </div>
     <nav class="foyer-saal-nav" aria-label="Nachbarsäle">
       <button type="button" class="foyer-pill" data-foyer-tab="${room.prev.tab}"><span aria-hidden="true">‹</span> ${escapeHtml(room.prev.name)}</button>
       <button type="button" class="foyer-pill" data-foyer-tab="${room.next.tab}">${escapeHtml(room.next.name)} <span aria-hidden="true">›</span></button>
-    </nav>`;
+    </nav>`;  if (titles) countTicketOnce();
 }
 
 /** Saalschild auf „Lesezeichen" mit Zähler für die Schaukästen. */
@@ -153,6 +148,13 @@ function moveInto(node, target) {
   if (!node || !target) return;
   moved.push({ node, parent: node.parentNode, next: node.nextSibling });
   target.append(node);
+}
+
+/** Knoten vor einen anderen setzen und sich den alten Platz merken (2.47). */
+function moveBefore(node, reference) {
+  if (!node || !reference || node === reference) return;
+  moved.push({ node, parent: node.parentNode, next: node.nextSibling });
+  reference.before(node);
 }
 
 /** Text tauschen und den alten merken. */
@@ -203,33 +205,31 @@ function restickBoard() {
   }, out.duration + 60);
 }
 
-let kasseCounted = false;
-
-function renderKasse() {
-  const ticket = $("#foyer-kasse");
-  if (!ticket || !state) return;
-  const count = kasse(state.movies || []);
-  const status = backupReminderStatus(state, Date.now());
-  const backup = status.never ? "Noch keine Sicherung gespeichert." : `Letzte Sicherung: ${formatDay(state.lastBackupAt)}`;
+/**
+ * Eintrittskarte (seit 2.47 klein im Saalschild „Titel" neben der Überschrift,
+ * ohne Abriss - die Sicherung meldet sich im Foyer als Hinweisleiste).
+ */
+function ticketHtml() {
+  const count = kasse(state?.movies || []);
   const n = value => value.toLocaleString("de-DE");
-  ticket.innerHTML = `
-    <div class="foyer-kasse-part"><span class="foyer-kasse-label">Kinothek</span><span class="foyer-kasse-value">${n(count.total)}</span><span class="foyer-kasse-note">Titel insgesamt</span></div>
-    <div class="foyer-kasse-part"><span class="foyer-kasse-label">Gesehen</span><span class="foyer-kasse-value">${n(count.seen)}</span><span class="foyer-kasse-note">${count.percent} Prozent</span></div>
-    <div class="foyer-kasse-part"><span class="foyer-kasse-label">Offen</span><span class="foyer-kasse-value">${n(count.open)}</span><span class="foyer-kasse-note">warten noch</span></div>
-    <div class="foyer-kasse-stub"><span class="foyer-kasse-label">Abriss · Sicherung</span><span class="foyer-kasse-backup">${escapeHtml(backup)}</span>
-      <button type="button" class="foyer-kasse-button" id="foyer-backup-now">Jetzt sichern</button></div>`;
-  // Beim ersten Erscheinen zählen die Zahlen kurz hoch (2.43); Breite steht vorher fest
-  if (!kasseCounted) {
-    kasseCounted = true;
-    ticket.querySelectorAll(".foyer-kasse-value").forEach((value, index) => {
-      value.style.minWidth = `${value.textContent.length}ch`;
-      countUp(value, [count.total, count.seen, count.open][index]);
-    });
-  }
-  $("#foyer-backup-now").addEventListener("click", async () => {
-    await downloadBackup(state);
-    renderKasse();
-    document.getElementById("backup-reminder-slot")?.replaceChildren();
+  return `
+    <div class="foyer-kasse is-mini" id="foyer-kasse" role="group" aria-label="${escapeHtml(`Kasse: ${n(count.total)} Titel, ${n(count.seen)} gesehen, ${n(count.open)} offen`)}">
+      <div class="foyer-kasse-part"><span class="foyer-kasse-label">Kinothek</span><span class="foyer-kasse-value">${n(count.total)}</span><span class="foyer-kasse-note">Titel insgesamt</span></div>
+      <div class="foyer-kasse-part"><span class="foyer-kasse-label">Gesehen</span><span class="foyer-kasse-value">${n(count.seen)}</span><span class="foyer-kasse-note">${count.percent} Prozent</span></div>
+      <div class="foyer-kasse-part"><span class="foyer-kasse-label">Offen</span><span class="foyer-kasse-value">${n(count.open)}</span><span class="foyer-kasse-note">warten noch</span></div>
+    </div>`;
+}
+
+let ticketCounted = false;
+/** Beim ersten Erscheinen zählen die Zahlen kurz hoch (2.43); Breite steht vorher fest. */
+function countTicketOnce() {
+  const ticket = $("#foyer-kasse");
+  if (!ticket || ticketCounted) return;
+  ticketCounted = true;
+  const count = kasse(state?.movies || []);
+  ticket.querySelectorAll(".foyer-kasse-value").forEach((value, index) => {
+    value.style.minWidth = `${value.textContent.length}ch`;
+    countUp(value, [count.total, count.seen, count.open][index]);
   });
 }
 
@@ -261,14 +261,16 @@ function mountHome() {
   $("#foyer-board-reroll").addEventListener("click", () => { boardRound++; restickBoard(); });
   renderBoard();
 
+  // 2.47 (Nutzerwunsch): Plakate direkt unter „Heute im Programm", Schaukästen
+  // ganz unten; die Eintrittskarte steht jetzt unter Entertainment im Saal „Titel"
   const favorites = $("#bookmarks-heading")?.closest("section");
-  favorites?.insertAdjacentHTML("afterend", `<section class="foyer-kasse" id="foyer-kasse" data-foyer aria-label="Kasse"></section>`);
-  renderKasse();
+  moveBefore($("#collection-heading")?.closest("section"), favorites);
 
   swapText($("#bookmarks-heading"), "Schaukästen");
-  swapText($("#collection-heading"), "Frisch eingetroffen");
+  swapText($("#collection-heading"), "Kinothek"); // 2.48 (Nutzerwunsch), vorher „Frisch eingetroffen"
   $("#bookmarks-heading")?.insertAdjacentHTML("afterend", `<span class="foyer-eyebrow foyer-head-eyebrow" data-foyer>Deine Favoriten</span>`);
-  $("#collection-heading")?.insertAdjacentHTML("afterend", `<span class="foyer-eyebrow foyer-head-eyebrow" data-foyer>Zuletzt in die Kinothek</span>`);
+  // Unterzeile mit dem Thema der Reihe (js/ui/home.js); home.js füllt sie beim Zeichnen
+  $("#collection-heading")?.insertAdjacentHTML("afterend", `<span class="foyer-eyebrow foyer-head-eyebrow" id="foyer-kinothek-eyebrow" data-foyer>Heute im Foyer ausgestellt</span>`);
 }
 
 /* ---- Spule ---------------------------------------------------------------- */
@@ -488,7 +490,7 @@ export function initFoyer(appState, pageHooks = {}) {
 export function refreshFoyer(appState = state) {
   state = appState;
   if (!mounted) return;
-  if (page === "home") { renderBoard(); renderKasse(); }
+  if (page === "home") renderBoard();
   if (page === "movies") renderMoviesSign();
   if (page === "bookmarks") renderBookmarksSign();
 }

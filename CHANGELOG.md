@@ -1,5 +1,15 @@
 # Änderungen
 
+## 1.24.0 – Filter „Bereiche“ (Dashboard 2.49.1)
+- **Filter „Bereiche“:** Neuer Knopf in der Filterleiste mit Reglern mit
+  zwei Griffen für Jahr, IMDb-Bewertung, Laufzeit sowie – wenn
+  veröffentlicht – meine Bewertung und „Bewertet am“. Zum Beispiel nur Filme
+  von 1980 bis 1987. Balken zeigen, wie viele Titel wo liegen; genaue Werte
+  lassen sich eintippen, dazu Schnellwahl (Jahrzehnte, „Ab 8“, „Bis 2 Std.“ …).
+  Gesetzte Bereiche stehen als Pille mit × in der Leiste.
+- Nur im Dashboard bleiben: Lesezeichen-Seite, Foyer mit „Kinothek“-Reihe,
+  die neuen Einstellungen.
+
 ## 1.23.0 – Suchvorschläge, Tastatur, Cover-Stimmung (Dashboard 2.45.1)
 - **Suchvorschläge:** Ab zwei Zeichen klappt unter der Suche eine Liste auf –
   Titel mit Cover, Personen und Genres, der Treffer hervorgehoben. Ein Titel

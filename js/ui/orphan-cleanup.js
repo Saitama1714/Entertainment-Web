@@ -6,7 +6,7 @@ import { $, $$, escapeHtml } from "../utils/dom.js";
 import { plural } from "../utils/format.js";
 
 /*
- * Einstellungen → Entertainment → "Titel ohne IMDb-Liste aufräumen": zeigt alle Titel, die in
+ * Einstellungen → Kinothek & IMDb → "Titel ohne IMDb-Liste aufräumen": zeigt alle Titel, die in
  * keiner IMDb-Liste mehr stehen. Nichts ist vorab angehakt - angehakte
  * werden gelöscht (samt Notizen und Cover).
  */

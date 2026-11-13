@@ -10,6 +10,7 @@ import { movieGridHtml, movieCardHtml, settleCachedCovers, revealGrid } from "..
 import { countUp } from "../ui/count-up.js";
 import { captureGrid, animateGrid } from "../ui/grid-motion.js";
 import { filterChipsHtml, initFilterBar } from "../ui/movie-filters.js";
+import { initRangeFilter } from "../ui/range-filter.js";
 import { initSortControl } from "../ui/sort-control.js";
 import { renderStats } from "../ui/stats.js";
 import { initAppShell } from "../ui/app-shell.js";
@@ -188,7 +189,7 @@ function onSavedFilterClick(event) {
  */
 let firstRender = true; // erstes Raster: versetzt einblenden, Anzahl zählt hoch (2.43)
 
-function renderMovies({ animate = false } = {}) {
+function renderMovies({ animate = false, keepBar = false } = {}) {
   refreshFoyer(state); // Saalschild im Foyer: Zahlen
   const query = $("#movie-search").value;
   const searched = searchMovies(state.movies, query, state.castData); // mit Darstellern und Drehbuch
@@ -200,7 +201,7 @@ function renderMovies({ animate = false } = {}) {
   syncUniverse(query, filtered);
 
   const empty = state.movies.length === 0
-    ? emptyState(SITE ? "Hier sind noch keine Titel veröffentlicht." : "Noch nichts importiert. Deine IMDb-Listen holst du über Einstellungen → Entertainment → „IMDb-Listen importieren“.")
+    ? emptyState(SITE ? "Hier sind noch keine Titel veröffentlicht." : "Noch nichts importiert. Deine IMDb-Listen holst du über Einstellungen → Kinothek & IMDb → „IMDb-Listen importieren“.")
     : emptyState(query.trim() || !hasActiveFilters(filters)
       ? "Keine Treffer. Andere Suche versuchen?"
       : "Keine Treffer für diese Filter.");
@@ -210,7 +211,7 @@ function renderMovies({ animate = false } = {}) {
   settleCachedCovers(grid);
   animateGrid(grid, before);
   if (firstRender && sorted.length) revealGrid(grid);
-  renderToolbar(searched);
+  if (!keepBar) renderToolbar(searched); // keepBar: beim Ziehen eines Bereichs-Reglers (2.49)
 
   const total = state.movies.length;
   const shown = filtered.length;
@@ -326,7 +327,7 @@ async function runCoverFetch() {
   }
 }
 
-/** Werkzeuge der Kinothek - seit 2.41.4 in den Einstellungen → Entertainment. */
+/** Werkzeuge der Kinothek - seit 2.41.4 in den Einstellungen → Kinothek & IMDb. */
 function kinothekTools() {
   const refresh = () => { renderMovies(); renderStats(state); syncFilmYear(); };
   return {
@@ -586,6 +587,19 @@ function bindEvents() {
 /** Filter-Chips: aufklappbare Gruppen, ein Klick-Listener für die ganze Leiste. */
 function bindFilterChips() {
   initFilterBar($("#filter-chips")); // Gruppen auf-/zuklappen, Tastatur, Suchfeld
+  // Bereiche (2.49): beim Ziehen nur das Raster (einmal je Bild), beim Loslassen alles
+  let liveFrame = 0;
+  initRangeFilter($("#filter-chips"), {
+    movies: () => state.movies,
+    ranges: () => filters.ranges || {},
+    onChange: (ranges, { live, focus }) => {
+      filters = { ...filters, ranges };
+      cancelAnimationFrame(liveFrame);
+      if (live) { liveFrame = requestAnimationFrame(() => renderMovies({ keepBar: true })); return; }
+      renderMovies({ animate: true });
+      if (focus) $("#filter-chips").querySelector(focus)?.focus();
+    },
+  });
   // Ein Listener für die ganze Chip-Leiste: Chips entstehen bei jedem Render
   // neu (Zählung ändert sich), einzelne Handler wären also nutzlos.
   $("#filter-chips").addEventListener("click", event => {
@@ -673,7 +687,7 @@ function renderCastStatus() {
   const fetch = state.castFetch;
   const progress = total ? done / total : null;
   if (!total) { universe.setStatus(""); return; }
-  if (!state.omdbApiKey) { universe.setStatus("Darsteller und Drehbuch brauchen den OMDb-Schlüssel (Einstellungen → Entertainment)."); return; }
+  if (!state.omdbApiKey) { universe.setStatus("Darsteller und Drehbuch brauchen den OMDb-Schlüssel (Einstellungen → Cover & Besetzung)."); return; }
   if (!fetch.enabled) {
     universe.setStatus(remaining ? `Bisher nur Regie${done ? ` und Besetzung für ${n(done)} von ${n(total)} Titeln` : ""}.` : "Besetzung vollständig.",
       { action: remaining ? `Besetzung laden (${n(remaining)} Titel)` : "", progress: done ? progress : null });

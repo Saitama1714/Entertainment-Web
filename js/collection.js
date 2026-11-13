@@ -35,9 +35,10 @@ export const IMDB_FIELDS = Object.keys(IMDB_COLUMNS);
  * Textfelder, die nur das Dashboard pflegt. Ausnahme: importAddedAt und
  * importChangedAt setzt ausschließlich der IMDb-Import - wann er den Eintrag
  * angelegt bzw. zuletzt spürbar verändert hat (Filter "Import" unter
- * Entertainment). Leer = (noch) nie.
+ * Entertainment). Leer = (noch) nie. runtimeFixedFrom: ursprüngliche IMDb-Laufzeit,
+ * wenn der Import sie korrigiert hat (js/logic/data-fixes-logic.js), sonst leer.
  */
-const LOCAL_TEXT_FIELDS = ["cover", "notes", "imdbId", "importAddedAt", "importChangedAt"];
+const LOCAL_TEXT_FIELDS = ["cover", "notes", "imdbId", "importAddedAt", "importChangedAt", "runtimeFixedFrom"];
 
 /**
  * Erstellt ein vollständiges Eintrags-Objekt mit Standardwerten für alle

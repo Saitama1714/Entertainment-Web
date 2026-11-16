@@ -1,0 +1,122 @@
+/* =========================================================================
+   Anlässe im Foyer (2.50) - nur unter <html data-skin="foyer" data-occasion="…">
+   auf der Übersicht. Bausteine (js/ui/occasions.js):
+     - Vitrine: Karte rechts neben der Tafel (statt des Zitats) mit Bild und Zeile
+     - Girlande über der Tafel (Lichterkette, Wimpel, Sterne …)
+     - Effekt-Ebene über der Seite (Schnee, Konfetti, Feuerwerk, Blitze, Fledermäuse)
+     - Tafel: Birnenfarbe, Rahmen; Oscar-Nacht: Teppich, Kordeln, Goldrahmen
+     - Geburtstags-Schild (Hinweis vorher)
+   Alles schwebt über dem Inhalt oder sitzt in vorhandenen Lücken - die Seite
+   wird dadurch nie höher (kein Scrollen, Nutzerwunsch 2.48.1).
+   ========================================================================= */
+
+:root[data-skin="foyer"] {
+  --bulb-core: #fff6d8; --bulb-mid: #ffd27a; --bulb-edge: #a8742a; --bulb-glow: rgb(255 210 122 / .8);
+  --occasion-tint: transparent;
+}
+/* Glühbirnen nehmen die Farbe des Anlasses an */
+:root[data-skin="foyer"] .foyer-board .foyer-bulbs {
+  background: radial-gradient(circle, var(--bulb-core) 0 1.5px, var(--bulb-mid) 2.5px, var(--bulb-edge) 4px, transparent 5px) 0 50% / 38px 10px repeat-x;
+  filter: drop-shadow(0 0 5px var(--bulb-glow));
+}
+:root[data-occasion="advent"], :root[data-occasion="xmas"] { --bulb-mid: #ffc35c; --bulb-edge: #b5541a; --bulb-glow: rgb(255 180 90 / .9); --occasion-tint: rgb(255 170 90 / .12); }
+:root[data-occasion="nye"] { --bulb-core: #ffffff; --bulb-mid: #ffe9a8; --bulb-glow: rgb(255 236 180 / .95); --occasion-tint: rgb(227 194 122 / .12); }
+:root[data-occasion="oscar"] { --bulb-core: #ffffff; --bulb-mid: #fff1c4; --bulb-glow: rgb(255 244 210 / .95); --occasion-tint: rgb(190 30 40 / .16); }
+:root[data-occasion="halloween"] { --bulb-core: #fff0d0; --bulb-mid: #ff9a3c; --bulb-edge: #8a3206; --bulb-glow: rgb(255 120 30 / .9); --occasion-tint: rgb(255 100 20 / .16); }
+:root[data-occasion="summer"] { --bulb-mid: #ffd98a; --occasion-tint: rgb(70 100 190 / .16); }
+:root[data-occasion="ramadan"] { --bulb-mid: #ffd38a; --occasion-tint: rgb(40 80 150 / .24); }
+:root[data-occasion="fitr"], :root[data-occasion="adha"] { --bulb-mid: #ffe3a0; --occasion-tint: rgb(227 194 122 / .14); }
+:root[data-occasion="adha"] { --occasion-tint: rgb(150 170 210 / .14); }
+:root[data-occasion="bday"], :root[data-occasion="other"] { --bulb-mid: #ffe08a; --occasion-tint: rgb(227 194 122 / .14); }
+
+/* Stimmungslicht hinter der Tafel */
+:root[data-skin="foyer"][data-occasion] body {
+  background:
+    radial-gradient(60% 560px at 50% 80px, var(--occasion-tint), transparent 72%) no-repeat,
+    radial-gradient(70% 520px at 50% 0, rgb(156 2 5 / .2), transparent 70%) no-repeat,
+    var(--bg);
+}
+:root[data-occasion="halloween"] .shell > :not(.occasion-fx) { filter: brightness(.9) saturate(.92); }
+
+/* Halloween: Birnen flackern unruhig */
+:root[data-occasion="halloween"] .foyer-board .foyer-bulbs { animation: occasion-flicker 2.6s steps(1) infinite; }
+:root[data-occasion="halloween"] .foyer-board .foyer-bulbs.is-bottom { animation-delay: -1.3s; }
+@keyframes occasion-flicker { 0%, 100% { opacity: 1; } 11% { opacity: .35; } 13% { opacity: 1; } 46% { opacity: .55; } 48% { opacity: 1; } 77% { opacity: .2; } 79% { opacity: 1; } }
+
+/* Weihnachten: Zuckerstangen-Rand um die Tafel */
+:root[data-occasion="xmas"] .foyer-board::after {
+  content: ""; position: absolute; inset: -5px; border-radius: calc(var(--r-panel) + 4px); pointer-events: none;
+  padding: 5px; background: repeating-linear-gradient(45deg, #f1ebe2 0 10px, #c62a32 10px 20px);
+  -webkit-mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  box-shadow: 0 0 24px rgb(198 42 50 / .25);
+}
+
+/* Oscar-Nacht: Premiere am Eingang - die Plakate werfen Schatten wie unter Scheinwerfern */
+:root[data-occasion="oscar"] #movie-preview .movie-card { filter: drop-shadow(0 18px 24px rgb(0 0 0 / .55)); }
+
+/* ---- Vitrine (statt Zitat) ---------------------------------------------- */
+:root[data-occasion] .foyer-quote { display: none; }
+.occasion-card {
+  position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; overflow: hidden;
+  padding: 14px 20px 16px; border-radius: var(--r-panel);
+  background: radial-gradient(90% 70% at 50% 35%, color-mix(in srgb, var(--occasion-tint) 100%, #2a1d1a), #160f0d 78%);
+  border: 1px solid rgb(201 164 92 / .45); box-shadow: inset 0 0 40px rgb(0 0 0 / .5);
+}
+.occasion-card[hidden] { display: none; }
+.occasion-art { flex: 1 1 auto; min-height: 120px; position: relative; }
+.occasion-art svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.occasion-card .foyer-eyebrow { color: var(--foyer-gold); }
+.occasion-caption { margin: 0; font: italic 400 clamp(1.15rem, 1.6vw, 1.5rem)/1.2 var(--font-display); color: var(--text); text-wrap: balance; }
+
+/* ---- Girlande über der Tafel -------------------------------------------- */
+.occasion-garland { position: absolute; left: -12px; right: -12px; top: -46px; height: 64px; pointer-events: none; z-index: 2; overflow: visible; }
+
+/* ---- Oscar-Nacht: Samt-Volant über der Bühne, Teppich in Perspektive ---- */
+.occasion-valance { position: absolute; left: -20px; right: -20px; top: -60px; height: 112px; pointer-events: none; z-index: 3; filter: drop-shadow(0 12px 18px rgb(0 0 0 / .55)); }
+.occasion-valance svg { width: 100%; height: 100%; display: block; }
+#foyer-stage { position: relative; }
+.occasion-carpet { position: absolute; left: 0; right: 0; bottom: -58px; height: 58px; pointer-events: none; z-index: 1; }
+.occasion-carpet svg { width: 100%; height: 100%; display: block; }
+:root[data-occasion="oscar"] .foyer-stage { padding-top: 0; }
+
+/* ---- Effekt-Ebene über der ganzen Seite --------------------------------- */
+.occasion-fx { position: fixed; inset: 0; pointer-events: none; z-index: 40; }
+.occasion-fx canvas, .occasion-fx svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* ---- Geburtstags-Schild (Hinweis vorher) -------------------------------- */
+.occasion-hints {
+  position: fixed; top: calc(var(--medal-top, 14px) + 6px); left: 50%; transform: translateX(-50%); z-index: 45;
+  display: grid; gap: 8px; justify-items: center;
+}
+.occasion-hint {
+  position: relative; display: flex; align-items: center; gap: 14px; padding: 9px 12px 9px 18px;
+  border: 1px solid var(--brass); border-radius: 3px; background: linear-gradient(180deg, #221815, #120c0b);
+  box-shadow: 0 0 0 1px #3a2a1a, 0 12px 28px rgb(0 0 0 / .6), 0 0 18px rgb(227 194 122 / .14);
+  animation: occasion-swing .9s cubic-bezier(.2, .8, .3, 1.2) both;
+}
+.occasion-hint::before, .occasion-hint::after { content: ""; position: absolute; top: -12px; width: 1px; height: 12px; background: var(--brass); }
+.occasion-hint::before { left: 22px; } .occasion-hint::after { right: 22px; }
+.occasion-hint-when { font: 700 .62rem/1 var(--foyer-caps); letter-spacing: .24em; text-transform: uppercase; color: var(--foyer-gold); }
+.occasion-hint-name { font: 400 1.2rem/1.1 var(--font-display); color: var(--text); }
+.occasion-hint-text { display: grid; gap: 4px; }
+.occasion-hint button { all: unset; cursor: pointer; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: var(--text-muted); font-size: 1rem; pointer-events: auto; }
+.occasion-hint button:hover { color: var(--text); background: rgb(255 255 255 / .06); }
+.occasion-hint button:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+@keyframes occasion-swing { from { opacity: 0; transform: translateY(-14px) rotate(-2deg); } to { opacity: 1; transform: none; } }
+
+/* ---- Vorschau-Leiste (aus den Einstellungen) ---------------------------- */
+.occasion-preview-bar {
+  position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60;
+  display: flex; align-items: center; gap: 14px; padding: 10px 12px 10px 20px; border-radius: 999px;
+  background: rgb(20 13 12 / .92); border: 1px solid var(--brass); box-shadow: 0 16px 40px rgb(0 0 0 / .6);
+  backdrop-filter: blur(6px);
+}
+.occasion-preview-bar span { font: 700 .66rem var(--foyer-caps); letter-spacing: .22em; text-transform: uppercase; color: var(--foyer-gold); }
+.occasion-preview-bar b { font: 400 1.15rem var(--font-display); color: var(--text); }
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-occasion="halloween"] .foyer-board .foyer-bulbs, .occasion-hint { animation: none; }
+}
+.occasion-fx .occasion-streamers { position: absolute; inset: 0 0 auto; height: 160px; }
+.occasion-fx .occasion-streamers svg { height: 160px; }

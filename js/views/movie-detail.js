@@ -125,6 +125,7 @@ function render() {
     field("Erschienen", releaseLabel(movie)),
     field("Laufzeit", runtime ? `${runtimeLabel(runtime)}${titleKind(movie) === "series" ? " je Folge" : ""}${fixedFrom ? ` (korrigiert – IMDb meldet ${runtimeLabel(fixedFrom)})` : ""}` : ""),
     field("Art", movie.titleType),
+    field("In der Sammlung seit", formatDay(movie.collectedAt)),
     field("IMDb-Wertung", imdb ? `<b>${imdb.score}</b>${imdb.votes ? ` · ${escapeHtml(imdb.votes)}` : ""}` : "", { html: true }),
     field("Weitere Wertungen", extraScores),
     field("Staffeln", entry?.s || ""),

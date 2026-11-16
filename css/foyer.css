@@ -221,31 +221,33 @@
 :root[data-skin="foyer"] .section-head h2 { font-size: clamp(2rem, 3.2vw, 3rem); }
 /* Übersicht (2.48): engere Abstände, damit Programm, Kinothek und Schaukästen in ein Fenster passen */
 :root[data-skin="foyer"] .foyer-stage { margin-bottom: var(--s-6); }
-:root[data-skin="foyer"] .foyer-stage ~ .section { margin-bottom: var(--s-6); }
+:root[data-skin="foyer"] .foyer-stage ~ .section { margin-bottom: var(--s-5); }
 /* 2.48.1: unten kein Leerraum, der die Seite ein paar Millimeter scrollbar macht */
 :root[data-skin="foyer"] .foyer-stage ~ .section:last-child { margin-bottom: 0; }
-:root[data-skin="foyer"] .shell:has(> #foyer-stage) { padding-bottom: var(--s-5); }
-:root[data-skin="foyer"] .foyer-stage ~ .section .section-head { padding-bottom: var(--s-2); margin-bottom: var(--s-4); }
+:root[data-skin="foyer"] .shell:has(> #foyer-stage) { padding-bottom: var(--s-3); }
+:root[data-skin="foyer"] .foyer-stage ~ .section .section-head { padding-bottom: var(--s-2); margin-bottom: var(--s-3); }
 :root[data-skin="foyer"] .foyer-stage ~ .section .section-head h2 { font-size: clamp(1.8rem, 2.4vw, 2.4rem); }
 .foyer-head-eyebrow { margin: 0 auto 0 var(--s-4); align-self: baseline; }
 
 /* ---- Schaukästen (Favoriten) ----------------------------------------------- */
 
-:root[data-skin="foyer"] .bookmark-grid { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: var(--s-4); }
-/* Kleine Schaukästen (Nutzerwunsch 08.11.: noch 25 % kleiner) - nur das Seiten-Logo,
-   der Name erscheint beim Darüberfahren als Leuchtschild darunter */
+:root[data-skin="foyer"] .bookmark-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--s-4); }
+/* Schaukästen (08.11. verkleinert, 13.11.: gut 20 % höher als früher, Logo 41 px - 16 Favoriten
+   passen bei 2529 × 1295 in eine Reihe, nichts scrollt) - nur das
+   Seiten-Logo, der Name erscheint beim Darüberfahren als Leuchtschild darunter */
 :root[data-skin="foyer"] .bookmark-tile {
   position: relative; display: grid; place-items: center;
-  min-height: 80px; padding: 10px 6px; border: 0; border-radius: 3px;
+  min-height: 96px; padding: 10px 8px; border: 0; border-radius: 3px;
   background: radial-gradient(80% 60% at 50% 45%, #3a2a22, #160f0d 75%);
   box-shadow: 0 0 0 3px #b8934e, 0 0 0 4px #6e5022, inset 0 0 24px rgb(255 220 150 / .12), 0 12px 22px rgb(0 0 0 / .55);
   margin: 4px; overflow: visible;
 }
 :root[data-skin="foyer"] .bookmark-tile .favicon {
-  width: 34px; height: 34px; border-radius: 6px;
+  width: 41px; height: 41px; border-radius: 7px;
   filter: drop-shadow(0 0 12px rgb(255 220 150 / .35)) drop-shadow(0 2px 3px rgb(0 0 0 / .6));
   transition: transform .2s ease;
 }
+:root[data-skin="foyer"] .bookmark-tile .favicon.is-wordmark { width: auto; height: auto; max-width: 84%; max-height: 46px; border-radius: 0; object-fit: contain; }
 :root[data-skin="foyer"] .bookmark-tile .tile-title {
   position: absolute; z-index: 5; left: 50%; top: calc(100% + 14px);
   padding: 9px 14px 7px; border: 1px solid var(--brass); border-radius: 2px;
@@ -265,6 +267,10 @@
 :root[data-skin="foyer"] .bookmark-tile:is(:hover, :focus-visible) .tile-title { opacity: 1; transform: translate(-50%, 0); }
 :root[data-skin="foyer"] .bookmark-tile:is(:hover, :focus-visible) .favicon { transform: scale(1.08); }
 :root[data-skin="foyer"] .bookmark-tile:is(:hover, :focus-visible) { z-index: 6; }
+/* Auf der Übersicht stehen die Schaukästen ganz unten: Schild darüber, sonst ragt es aus dem Fenster und die Seite scrollt */
+:root[data-skin="foyer"] #pinned-bookmarks .bookmark-tile .tile-title { top: auto; bottom: calc(100% + 14px); transform: translate(-50%, 6px); }
+:root[data-skin="foyer"] #pinned-bookmarks .bookmark-tile .tile-title::before { top: auto; bottom: -9px; }
+:root[data-skin="foyer"] #pinned-bookmarks .bookmark-tile:is(:hover, :focus-visible) .tile-title { transform: translate(-50%, 0); }
 @media (prefers-reduced-motion: reduce) {
   :root[data-skin="foyer"] .bookmark-tile .tile-title { transition: opacity .1s linear; transform: translate(-50%, 0); }
 }

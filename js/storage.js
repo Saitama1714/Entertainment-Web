@@ -53,6 +53,7 @@ const DEFAULTS = {
   showcaseTakt: "day",            // Foyer, Reihe „Kinothek": Thema wechselt "tab" | "hour" | "day" (js/logic/showcase-logic.js)
   bookmarkSort: "own",            // Seite Lesezeichen: "own" (wie in Chrome) | "used" (oft genutzt zuerst, js/logic/bookmark-groups-logic.js)
   savedFilters: [],              // gemerkte Filter als Schnellfilter [{id, name, filters}] (js/logic/saved-filters-logic.js) - nur Dashboard
+  occasions: null,               // Anlässe im Foyer: {off, hijriOffset, oscarDate, me, birthdays} (js/logic/occasions-logic.js)
   castFetch: null,               // Abruf der Besetzung: {enabled, pausedUntil, lastError, activeAt} (js/cast-fetch.js)
 };
 const KEYS = Object.keys(DEFAULTS);
@@ -82,6 +83,8 @@ export async function loadState() {
   if (SITE) return loadSiteState();
   const state = await getDashboardData();
   state.movies = normalizeMovies(state.movies);
+  // 2.50.3: eigene Vitrinen-Bilder (2.50.2) wieder ausgebaut - Reste aufräumen
+  try { chrome.storage.local.remove("occasionImages")?.catch?.(() => {}); } catch { /* egal */ }
   syncBootMirror(state);
   return state;
 }

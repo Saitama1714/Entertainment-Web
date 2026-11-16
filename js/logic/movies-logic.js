@@ -309,7 +309,7 @@ export function facetCounts(movies, filters) {
 /*
  * Sortierung: ein Kriterium plus Richtung (absteigend/aufsteigend, Pfeil-Knopf
  * neben der Auswahl). Jedes Kriterium hat eine sinnvolle Startrichtung
- * (Bewertungen, Jahr, Laufzeit, Bewertet am: absteigend; Titel: A–Z).
+ * (Bewertungen, Jahr, Laufzeit, Bewertet am, In der Sammlung seit: absteigend; Titel: A–Z).
  * Fehlende Werte (keine Bewertung, kein Jahr, kein Datum) landen immer am
  * Ende, unabhängig von der Richtung. Bei Gleichstand entscheidet "neueste
  * zuerst" (createdAt). Standard: "Deine Bewertung" (DEFAULT_SORT) - im
@@ -325,6 +325,7 @@ export const SORT_OPTIONS = [
   { value: "year", label: "Jahr", direction: "desc" },
   { value: "runtimeMinutes", label: "Laufzeit", direction: "desc" },
   { value: "dateRated", label: "Bewertet am", direction: "desc" },
+  { value: "collectedAt", label: "In der Sammlung seit", direction: "desc" },
 ];
 
 /** Ältere Sortier-Werte (frühere Versionen), werden auf die heutigen abgebildet. */
@@ -354,8 +355,8 @@ const toNumber = value => {
 /** Sortierwert eines Titels, oder null wenn er fehlt. */
 function sortValue(movie, key) {
   if (key === "title") return String(movie.title || "").trim() || null;
-  if (key === "dateRated") {
-    const time = Date.parse(movie.dateRated || "");
+  if (key === "dateRated" || key === "collectedAt") {
+    const time = Date.parse(movie[key] || "");
     return Number.isFinite(time) ? time : null;
   }
   return toNumber(movie[key]);

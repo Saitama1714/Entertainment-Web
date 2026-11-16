@@ -9,6 +9,8 @@ import {
 import { CONFIG } from "../utils/constants.js";
 import { countUp } from "./count-up.js";
 import { igniteBoard, extinguishBoard } from "./board-ignite.js";
+import { currentProgramme, mountOccasion, unmountOccasion } from "./occasions.js";
+import { occasionBoard } from "../logic/occasions-logic.js";
 
 /*
  * Design „Foyer" (2.41) - die Oberfläche. Ist <html data-skin="foyer"> gesetzt
@@ -172,8 +174,11 @@ function renderBoard() {
   const board = $("#foyer-board-lines");
   if (!board || !state) return;
   const movies = state.movies || [];
-  const picks = programmPicks(movies, { day: dayKey(), round: boardRound });
-  const lines = boardLines({ picks, openCount: openWatchable(movies) });
+  // Anlass (2.50): eigenes Programm und eigene Zeilen auf der Tafel
+  const special = currentProgramme(state, { round: boardRound });
+  let picks = special?.programme?.picks?.length ? special.programme.picks : programmPicks(movies, { day: dayKey(), round: boardRound });
+  const lines = (special && occasionBoard(special.occasion, picks)) || boardLines({ picks, openCount: openWatchable(movies) });
+  if (special?.occasion?.id === "nye" && special.occasion.newYear) picks = picks.slice(0, 1);
   board.innerHTML = lines.map(line => `<p class="foyer-board-line">${line.tag ? `<span class="foyer-board-tag">${escapeHtml(line.tag)}</span> ` : ""}${escapeHtml(line.text)}</p>`).join("");
   const open = $("#foyer-board-open");
   if (picks[0]) {
@@ -260,6 +265,7 @@ function mountHome() {
   moveInto($("#quote-of-day"), $("#foyer-quote"));
   $("#foyer-board-reroll").addEventListener("click", () => { boardRound++; restickBoard(); });
   renderBoard();
+  mountOccasion(state); // Anlässe (2.50): Vitrine, Girlande, Effekte
 
   // 2.47 (Nutzerwunsch): Plakate direkt unter „Heute im Programm", Schaukästen
   // ganz unten; die Eintrittskarte steht jetzt unter Entertainment im Saal „Titel"
@@ -448,6 +454,7 @@ function unmount() {
   if (!mounted) return;
   mounted = false;
   closeSpool({ restoreFocus: false });
+  unmountOccasion();
   $$("[data-foyer]").forEach(el => el.remove());
   while (moved.length) {
     const { node, parent, next } = moved.pop();
@@ -483,6 +490,8 @@ export function initFoyer(appState, pageHooks = {}) {
     renderMoviesSign();
   });
   window.addEventListener("resize", () => { if (spool) closeSpool({ restoreFocus: false }); });
+  // Anlass gewechselt (Vorschau, Einstellungen): Tafel neu stecken
+  window.addEventListener("dashboard:occasion", () => { if (mounted && page === "home") restickBoard(); });
   sync();
 }
 

@@ -31,6 +31,8 @@ export const RANGE_FIELDS = [
   { key: "imdbRating", label: "IMDb-Bewertung", step: 0.1, value: movie => number(movie.imdbRating), format: decimal, fixed: [1, 10] },
   { key: "runtimeMinutes", label: "Laufzeit", step: 5, value: movie => number(movie.runtimeMinutes), format: value => `${value} min` },
   { key: "dateRated", label: "Bewertet am", step: 1, site: "rating", value: movie => monthIndex(movie.dateRated), format: monthText, month: true },
+  // nur Dashboard (wird nicht veröffentlicht): Tag auf der Sammlungsliste
+  { key: "collectedAt", label: "In der Sammlung seit", step: 1, site: "collectedAt", value: movie => monthIndex(movie.collectedAt), format: monthText, month: true },
 ];
 export const RANGE_KEYS = RANGE_FIELDS.map(field => field.key);
 export const rangeField = key => RANGE_FIELDS.find(field => field.key === key);
@@ -145,7 +147,7 @@ export function rangePresets(key, bounds, nowMonth = monthIndex(new Date().toISO
     list.push({ label: "Ab 7,0", range: [7, 10] }, { label: "Ab 8,0", range: [8, 10] }, { label: "Unter 6,0", range: [low, 5.9] });
   } else if (key === "runtimeMinutes") {
     list.push({ label: "Bis 90 min", range: [low, 90] }, { label: "Bis 2 Std.", range: [low, 120] }, { label: "Über 2,5 Std.", range: [150, high] });
-  } else if (key === "dateRated") {
+  } else if (key === "dateRated" || key === "collectedAt") {
     const year = Math.floor(high / 12);
     list.push({ label: "Letzte 12 Monate", range: [Math.max(low, Math.min(high, nowMonth) - 11), high] });
     for (let y = year; y > year - 3; y -= 1) list.push({ label: String(y), range: [y * 12, y * 12 + 11] });

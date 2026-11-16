@@ -20,6 +20,7 @@
 .bookmark-tile:hover { border-color: var(--line-strong); background: var(--surface-hover); }
 
 .favicon { width: 18px; height: 18px; border-radius: 3px; object-fit: contain; flex: none; }
+.favicon.is-wordmark { width: auto; max-width: 64px; border-radius: 0; } /* eigene Schriftzug-Logos (js/ui/sharp-favicon.js) */
 
 /* Favoriten bearbeiten (Seite Lesezeichen, js/ui/favorites-editor.js):
    Kacheln lassen sich per Ziehen (oder Pfeiltaste links/rechts) neu anordnen,

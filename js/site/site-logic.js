@@ -16,5 +16,6 @@ export function siteSortOptions(options) {
   return [...options]
     .sort((a, b) => (b.value === SITE_DEFAULT_SORT) - (a.value === SITE_DEFAULT_SORT))
     .filter(option => !["yourRating", "dateRated"].includes(option.value) || has("rating"))
+    .filter(option => option.value !== "collectedAt") // nur Dashboard, wird nicht veröffentlicht
     .map(option => (option.value === "yourRating" ? { ...option, label: "Meine Bewertung" } : option));
 }

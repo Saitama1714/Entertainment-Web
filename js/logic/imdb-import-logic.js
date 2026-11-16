@@ -52,6 +52,9 @@ const markChange = (before, after, stamp) =>
 
 const isIsoDay = value => /^\d{4}-\d{2}-\d{2}/.test(value || "");
 
+/** "In der Sammlung seit": frühester Tag, an dem der Titel auf eine Sammlungsliste kam. */
+const collectedDay = entry => [...entry.collected].sort()[0] || "";
+
 /*
  * Stichwörter in der Beschreibung (Groß-/Kleinschreibung egal, Zusätze wie
  * "Steelbook" stören nicht). Bei mehreren gewinnt die höchste Qualität.
@@ -159,7 +162,7 @@ export function mergeImdbLists(movies, lists, now) {
     : movie);
   for (const list of lists) {
     for (const row of list.movies) {
-      const entry = incoming.get(row.imdbId) || { fields: {}, lists: new Set(), created: [] };
+      const entry = incoming.get(row.imdbId) || { fields: {}, lists: new Set(), created: [], collected: [] };
       for (const field of IMDB_FIELDS) {
         const value = row[field];
         if (value !== undefined && value !== null && String(value).trim() !== "") entry.fields[field] = String(value).trim();
@@ -175,12 +178,13 @@ export function mergeImdbLists(movies, lists, now) {
       incoming.set(row.imdbId, entry);
       if (list.isCollection) {
         collectionIds.add(row.imdbId);
+        if (isIsoDay(row.imdbCreated)) entry.collected.push(row.imdbCreated);
         collectionMedium.set(row.imdbId, better(collectionMedium.get(row.imdbId) || "", mediumFromDescription(row.imdbDescription)));
       }
     }
   }
 
-  const snapshot = movie => JSON.stringify([...IMDB_FIELDS, "imdbLists", "seen", "medium"].map(key => movie[key]));
+  const snapshot = movie => JSON.stringify([...IMDB_FIELDS, "imdbLists", "seen", "medium", "collectedAt"].map(key => movie[key]));
   const known = new Set();
   let updated = 0;
   let unchanged = 0;
@@ -196,7 +200,7 @@ export function mergeImdbLists(movies, lists, now) {
       if (movie.imdbLists.length && !keptLists.length) detached++;
       let next = movie;
       // Aus der Sammlung gefallen → kein Medium mehr
-      if (keptLists.length !== movie.imdbLists.length) next = { ...movie, imdbLists: keptLists, ...(wasOwned ? { medium: "" } : {}) };
+      if (keptLists.length !== movie.imdbLists.length) next = { ...movie, imdbLists: keptLists, ...(wasOwned ? { medium: "", collectedAt: "" } : {}) };
       next = dropRating(next);
       if (next === movie) { unchanged++; return movie; }
       updated++;
@@ -217,8 +221,10 @@ export function mergeImdbLists(movies, lists, now) {
     if (entry.fields.yourRating) next.seen = true;
     if (collectionIds.has(movie.imdbId)) {
       next.medium = collectionMedium.get(movie.imdbId) || ""; // IMDb gewinnt immer
+      next.collectedAt = collectedDay(entry) || movie.collectedAt;
     } else if (wasOwned) {
       next.medium = ""; // aus der Sammlungsliste genommen
+      next.collectedAt = "";
     }
     next = dropRating(next);
     if (snapshot(next) === snapshot(movie)) unchanged++; else updated++;
@@ -242,6 +248,7 @@ export function mergeImdbLists(movies, lists, now) {
       createdAt: dates[0] || stamp,
       importAddedAt: stamp,
       runtimeFixedFrom: entry.fixedFrom || "",
+      collectedAt: owned ? collectedDay(entry) : "",
     }));
     added++;
   }

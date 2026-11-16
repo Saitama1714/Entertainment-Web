@@ -141,6 +141,21 @@
 .set-switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .set-switch, .set-switch::after { transition: none; } }
 
+/* Anlässe und Geburtstage (2.50) */
+.occasion-choices { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.occasion-bdays { display: grid; gap: 8px; width: 100%; }
+.occasion-bdays:empty { display: none; }
+.occasion-bday { display: grid; grid-template-columns: minmax(0, 1fr) 160px 190px auto; gap: 8px; align-items: center; width: 100%; }
+.occasion-bday.is-me { grid-template-columns: minmax(0, 1fr) 160px; max-width: 440px; }
+.occasion-bday input, .occasion-bday select, #oscar-date {
+  min-width: 0; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-control);
+  background: var(--surface-sunken); color: var(--text); font: inherit; font-size: .88rem; color-scheme: dark;
+}
+:root[data-theme="light"] .occasion-bday input, :root[data-theme="light"] .occasion-bday select, :root[data-theme="light"] #oscar-date { color-scheme: light; }
+.occasion-bday input:focus-visible, .occasion-bday select:focus-visible, #oscar-date:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+#bday-add { justify-self: start; margin-top: 6px; }
+@media (max-width: 680px) { .occasion-bday { grid-template-columns: 1fr 1fr; } }
+
 /* Auswahl als Radio-Gruppe (z. B. Einstellungen → Bewegung) */
 .choice-group { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: var(--s-3) 0 0; padding: 0; border: 0; min-width: 0; }
 .choice-group + .meta { margin-top: var(--s-3); }
@@ -296,4 +311,9 @@ kbd {
 .toast-action {
   margin-left: var(--s-3); padding: 2px 4px; border: 0; background: none; cursor: pointer;
   font: inherit; font-weight: 600; color: var(--brass); text-decoration: underline; text-underline-offset: 3px;
+}
+.set-control .intro-picker { flex-wrap: wrap; }
+@media (max-width: 680px) {
+  .set-control select { min-width: 0; }
+  .occasion-bday.is-me { grid-template-columns: 1fr 1fr; }
 }

@@ -29,6 +29,8 @@ import { SHOWCASE_TAKT_OPTIONS, DEFAULT_SHOWCASE_TAKT } from "../logic/showcase-
 import { setLogoMotion } from "./brand-medallion.js";
 import { applyTheme } from "./app-shell.js";
 import { readDesign, FOYER_MIN_WIDTH } from "../logic/foyer-logic.js";
+import { OCCASIONS, BIRTHDAY_LEADS, HIJRI_OFFSETS, readOccasions, nextDates } from "../logic/occasions-logic.js";
+import { previewOccasion, refreshOccasion } from "./occasions.js";
 
 /** Ist gerade das Foyer zu sehen (gewählt und Fenster breit genug)? Dann gibt es kein Hell/Dunkel. */
 const foyerShown = state => readDesign(state.design) === "foyer" && window.innerWidth >= FOYER_MIN_WIDTH;
@@ -95,6 +97,47 @@ const page = (id, title, lead, body) => `
       ${body}
     </section>`;
 const toggle = (id, checked, label) => `<input type="checkbox" class="set-switch" role="switch" id="${id}" ${checked ? "checked" : ""} aria-label="${escapeHtml(label)}">`;
+
+/*
+ * Anlässe im Foyer (2.50): welche an sind, Vorschau, Mondkalender, Oscar-Datum
+ * und die Geburtstage (eigener mit großem Fest, andere mit Hinweis-Vorlauf).
+ */
+const fmtDate = date => (date ? date.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "long", year: "numeric" }) : "–");
+function hijriHelp(occasions) {
+  const next = nextDates(occasions);
+  return `Berechnet nach dem Umm-al-Qura-Kalender. Weicht die Mondsichtung ab, hier verschieben. Nächste Termine: Ramadan ab ${fmtDate(next.ramadan)}, Eid al-Fitr ${fmtDate(next.fitr)}, Eid al-Adha ${fmtDate(next.adha)}.`;
+}
+function birthdayRowHtml(item, index) {
+  return `<div class="occasion-bday" data-bday="${index}">
+      <input type="text" class="occasion-bday-name" value="${escapeHtml(item.name)}" placeholder="Name" aria-label="Name" maxlength="40" autocomplete="off">
+      <input type="date" class="occasion-bday-date" value="${escapeHtml(item.date)}" aria-label="Geburtstag von ${escapeHtml(item.name || "…")}">
+      <select class="occasion-bday-lead" aria-label="Hinweis vorher">${BIRTHDAY_LEADS.map(lead => `<option value="${lead.value}" ${lead.value === item.lead ? "selected" : ""}>${lead.label}</option>`).join("")}</select>
+      <button type="button" class="small-button occasion-bday-remove" aria-label="${escapeHtml(item.name || "Geburtstag")} entfernen">Entfernen</button>
+    </div>`;
+}
+function occasionsHtml(state, onHome) {
+  const config = readOccasions(state.occasions);
+  const foyerHere = onHome && document.documentElement.dataset.skin === "foyer";
+  return `
+      ${group("Anlässe im Foyer", `
+        ${row({ id: "occasions-field", label: "Das Foyer verwandelt sich zu", wide: true,
+          help: "Deko, Licht und Programm auf Tafel und Kinothek-Reihe passend zum Anlass. Nur im Foyer; Kino-Noir bleibt schlicht.",
+          control: `<fieldset class="choice-group occasion-choices"><legend class="visually-hidden">Anlässe</legend>${OCCASIONS.map(item => `
+            <label class="choice" title="${escapeHtml(item.when)}"><input type="checkbox" name="occasion" value="${item.id}" ${config.off.includes(item.id) ? "" : "checked"}>${escapeHtml(item.label)}</label>`).join("")}</fieldset>` })}
+        ${row({ label: "Vorschau", labelFor: "occasion-preview-select",
+          help: foyerHere ? "Zeigt das Foyer zum gewählten Anlass; unten führt „Zurück zu den Einstellungen“ hierher zurück." : "Die Vorschau gibt es auf der Übersicht im Design „Foyer“.",
+          control: `<div class="intro-picker"><select id="occasion-preview-select">${OCCASIONS.map(item => `<option value="${item.id}">${escapeHtml(item.label)}</option>`).join("")}<option value="hint">Geburtstags-Hinweis</option></select>${foyerHere ? `<button class="small-button" type="button" id="occasion-preview-button">Vorschau</button>` : ""}</div>` })}
+        ${row({ label: "Muslimische Feiertage", labelFor: "hijri-offset-select", help: `<span id="hijri-help">${escapeHtml(hijriHelp(state.occasions))}</span>`,
+          control: `<select id="hijri-offset-select">${HIJRI_OFFSETS.map(item => `<option value="${item.value}" ${item.value === config.hijriOffset ? "selected" : ""}>${item.label}</option>`).join("")}</select>` })}
+        ${row({ label: "Oscar-Nacht", labelFor: "oscar-date", help: "Die Verleihung wandert – trag den Tag einmal im Jahr ein.",
+          control: `<input type="date" id="oscar-date" value="${escapeHtml(config.oscarDate)}">` })}`, { id: "settings-occasions" })}
+      ${group("Geburtstage", `
+        ${row({ label: "Dein Geburtstag", help: "Am Tag: das große Fest mit Ballons, Luftschlangen und Konfetti, die Tafel gratuliert mit Namen.", wide: true,
+          control: `<div class="occasion-bday is-me"><input type="text" id="bday-me-name" value="${escapeHtml(config.me.name)}" placeholder="Dein Name" aria-label="Dein Name" maxlength="40" autocomplete="off"><input type="date" id="bday-me-date" value="${escapeHtml(config.me.date)}" aria-label="Dein Geburtstag"></div>` })}
+        ${row({ label: "Weitere Geburtstage", wide: true,
+          help: "Vorher hängt ein Schild mit Name und Datum im Foyer (so viele Tage vorher, wie du wählst), am Tag selbst gibt es eine kleine Feier.",
+          control: `<div class="occasion-bdays" id="bday-list">${config.birthdays.map(birthdayRowHtml).join("")}</div><button type="button" class="small-button" id="bday-add">+ Geburtstag hinzufügen</button>` })}`, { id: "settings-birthdays" })}`;
+}
 
 /** Zuletzt gezeigter Bereich (bleibt, solange die Seite offen ist). */
 let currentPage = "look";
@@ -310,7 +353,8 @@ export function openSettingsModal(state, onImported, tools = null) {
     ${page("look", "Aussehen", "Wie das Dashboard aussieht.", `
       ${group("Design", `
         ${designPickerHtml(state)}
-        ${row({ label: "Lichtkegel mit Staub", labelFor: "projector-dust-check", help: "Im Kopf der Übersicht.", control: toggle("projector-dust-check", state.projectorDust !== false, "Lichtkegel mit Staub") })}`)}`)}
+        ${row({ label: "Lichtkegel mit Staub", labelFor: "projector-dust-check", help: "Im Kopf der Übersicht.", control: toggle("projector-dust-check", state.projectorDust !== false, "Lichtkegel mit Staub") })}`)}
+      ${occasionsHtml(state, onHome)}`)}
 
     ${page("start", "Start & Foyer", "Was beim Öffnen eines neuen Tabs passiert.", `
       ${group("Beim Öffnen", `
@@ -422,6 +466,7 @@ export function openSettingsModal(state, onImported, tools = null) {
     ["#logo-mode-select", LOGO_DEFAULTS.mode], ['input[name="logo-effect"]', LOGO_DEFAULTS.effects], ['input[name="logo-tempo"]', LOGO_DEFAULTS.tempo],
     ["#universe-intro-select", DEFAULT_UNIVERSE_INTRO], ["#duel-intro-select", DEFAULT_DUEL_INTRO], ["#bookmark-sort-select", "own"],
     ["#reminder-select", "30"], ["#import-window-select", String(IMPORT_WINDOW_DAYS)], ["#sort-downloads-check", true],
+    ['input[name="occasion"]', true], ["#hijri-offset-select", "0"],
     ["#backup-reminder-select", "30"], ["#auto-backup-check", true], ["#website-file-check", true],
     ...OPTIONAL_GROUPS.map(item => [`#website-options input[value="${item.key}"]`, item.standard]),
   ];
@@ -550,6 +595,56 @@ export function openSettingsModal(state, onImported, tools = null) {
     syncBootMirror(state);
     notify("Gilt ab dem nächsten neuen Tab.", "success");
   };
+  // Anlässe und Geburtstage (2.50): bei jeder Änderung alles neu einsammeln und speichern
+  const collectOccasions = () => readOccasions({
+    off: [...document.querySelectorAll('.modal input[name="occasion"]')].filter(input => !input.checked).map(input => input.value),
+    hijriOffset: Number($("#hijri-offset-select")?.value || 0),
+    oscarDate: $("#oscar-date")?.value || "",
+    me: { name: $("#bday-me-name")?.value || "", date: $("#bday-me-date")?.value || "" },
+    birthdays: [...document.querySelectorAll("#bday-list .occasion-bday")].map((row, index) => ({
+      id: readOccasions(state.occasions).birthdays[Number(row.dataset.bday)]?.id || `b${Date.now().toString(36)}${index}`,
+      name: row.querySelector(".occasion-bday-name").value, date: row.querySelector(".occasion-bday-date").value, lead: Number(row.querySelector(".occasion-bday-lead").value),
+    })),
+  });
+  const saveOccasions = async () => {
+    state.occasions = collectOccasions();
+    await saveDashboardData({ occasions: state.occasions });
+    const help = $("#hijri-help");
+    if (help) help.textContent = hijriHelp(state.occasions);
+    refreshOccasion(state);
+    notify("Gespeichert.", "success");
+  };
+  const occasionBox = $("#settings-page-look");
+  occasionBox?.addEventListener("change", event => {
+    if (event.target.closest(".set-group")?.querySelector("#settings-occasions, #settings-birthdays") && event.target.id !== "occasion-preview-select") {
+      const bdayRow = event.target.closest("#bday-list .occasion-bday");
+      if (bdayRow && !bdayRow.querySelector(".occasion-bday-date").value) return; // erst speichern, wenn ein Datum da ist
+      saveOccasions();
+    }
+  });
+  $("#bday-add")?.addEventListener("click", () => {
+    const list = $("#bday-list");
+    list.insertAdjacentHTML("beforeend", birthdayRowHtml({ name: "", date: "", lead: 3 }, list.children.length));
+    list.lastElementChild.querySelector(".occasion-bday-name").focus();
+  });
+  $("#bday-list")?.addEventListener("click", event => {
+    const remove = event.target.closest(".occasion-bday-remove");
+    if (!remove) return;
+    remove.closest(".occasion-bday").remove();
+    saveOccasions();
+  });
+  $("#occasion-preview-button")?.addEventListener("click", () => {
+    const id = $("#occasion-preview-select").value;
+    closeModal();
+    previewOccasion(id, state, () => {
+      openSettingsModal(state, onImported, tools);
+      const select = $("#occasion-preview-select");
+      if (select) select.value = id;
+      $("#settings-occasions")?.scrollIntoView({ block: "start" });
+      $("#occasion-preview-button")?.focus({ preventScroll: true });
+    });
+  });
+
   const buildPreview = $("#build-preview-button");
   if (buildPreview) {
     buildPreview.onclick = () => {

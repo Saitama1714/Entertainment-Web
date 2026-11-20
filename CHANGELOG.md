@@ -1,5 +1,10 @@
 # Änderungen
 
+## 1.26.1 – Gleichstand mit Dashboard 2.53.0
+- Gebaut aus Dashboard 2.53.0. Keine sichtbaren Änderungen: Der Bericht nach
+  „Fehlende Cover laden“ und die Sprünge zum passenden Reiter nach
+  Einstellungen gibt es nur im Dashboard.
+
 ## 1.26.0 – Mehr Filmzitate (Dashboard 2.52.0)
 - **Filmzitat:** 387 statt 120 Zitate im Wechsel. Filme, deren Originaltitel
   weder deutsch noch englisch ist, stehen jetzt mit Originaltitel da (z. B.

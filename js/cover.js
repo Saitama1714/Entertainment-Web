@@ -128,7 +128,7 @@ export async function fetchOmdbDetails(imdbId, apiKey) {
  * @param {Array} movies - komplette Sammlung (wird nicht verändert).
  * @param {string} apiKey
  * @param {Function} [onProgress] - (erledigt, gesamt, aktualisierterEintrag) nach jedem Versuch.
- * @returns {Promise<{movies: Array, updated: number, failed: number, fatal: string}>}
+ * @returns {Promise<{movies: Array, updated: number, failed: number, fatal: string, failedIds: string[], triedIds: string[]}>} triedIds: tatsächlich angefragte Titel (bei Abbruch fehlen die übrigen)
  */
 export async function fetchMissingCovers(movies, apiKey, onProgress) {
   const targets = movies.filter(movie => movie.imdbId && !movie.cover);
@@ -136,24 +136,28 @@ export async function fetchMissingCovers(movies, apiKey, onProgress) {
   let updated = 0;
   let failed = 0;
   let fatal = "";
+  const failedIds = [];
+  const triedIds = [];
 
   for (let index = 0; index < targets.length; index++) {
     const movie = targets[index];
     try {
+      triedIds.push(movie.id);
       const poster = await fetchOmdbCover(movie.imdbId, apiKey);
       if (poster) {
         byId.set(movie.id, { ...byId.get(movie.id), cover: poster });
         updated++;
       }
     } catch (error) {
-      if (error instanceof OmdbFatalError) { fatal = error.message; break; }
+      if (error instanceof OmdbFatalError) { fatal = error.message; triedIds.pop(); break; }
       failed++;
+      failedIds.push(movie.id);
     }
     onProgress?.(index + 1, targets.length, byId.get(movie.id));
     if (index < targets.length - 1) await wait(CONFIG.OMDB_FETCH_DELAY_MS);
   }
 
-  return { movies: [...byId.values()], updated, failed, fatal };
+  return { movies: [...byId.values()], updated, failed, fatal, failedIds, triedIds };
 }
 
 /**

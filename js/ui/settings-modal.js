@@ -289,6 +289,18 @@ function coverGapsHtml(state) {
   return `<strong>${n} ${ids.length === 1 ? "Titel" : "Titel"} ohne Cover</strong>${extra}. <a class="external-link" id="cover-gaps-link" href="${href}">Titel zeigen</a>`;
 }
 
+/** Welche Einstellung welchen Reiter unter Entertainment betrifft (unklar → „Titel“). */
+const ENTERTAINMENT_TABS = {
+  "universe-intro-select": "universe",
+  "duel-intro-select": "duel",
+  "import-window-select": "titles",
+  "reminder-select": "titles",
+  "sort-downloads-check": "titles",
+  "omdb-key": "titles",
+};
+/** Bittet Entertainment (falls offen), einen Reiter zu zeigen - js/views/movies-view.js hört zu. */
+const showEntertainmentTab = tab => window.dispatchEvent(new CustomEvent("dashboard:entertainment-tab", { detail: { tab } }));
+
 /** Werkzeuge der Kinothek: auf Entertainment direkt, sonst dorthin mit ?tool=… */
 const TOOLS = [
   { key: "import", id: "imdb-import-button", label: "IMDb-Listen importieren …", primary: true },
@@ -456,7 +468,20 @@ export function openSettingsModal(state, onImported, tools = null) {
 
     ${page("help", "Hilfe", "", `
       ${group("Hilfe", `
-        ${row({ label: "Tastenkürzel", help: "Überall auch mit der Taste „?“.", control: `<button class="small-button" type="button" id="show-shortcuts">Tastenkürzel anzeigen</button>` })}`)}`)}`);
+        ${row({ label: "Tastenkürzel", help: "Überall auch mit der Taste „?“.", control: `<button class="small-button" type="button" id="show-shortcuts">Tastenkürzel anzeigen</button>` })}`)}`)}`,
+  { onClose: () => { if (entertainmentTarget) showEntertainmentTab(entertainmentTarget); } });
+
+  // Einstellungen, die Entertainment betreffen: nach dem Schließen zum betroffenen
+  // Reiter springen, sonst zu „Titel“ (Nutzerwunsch 20.11.2026; nur auf Entertainment)
+  let entertainmentTarget = "";
+  const noteTarget = event => {
+    const el = event.target;
+    const tab = ENTERTAINMENT_TABS[el.id] || (el.closest("#cast-fetch, #settings-form") ? "titles" : "");
+    if (tab) entertainmentTarget = tab;
+  };
+  document.querySelector(".modal")?.addEventListener("change", noteTarget);
+  document.querySelector(".modal")?.addEventListener("submit", noteTarget);
+  document.querySelector(".modal")?.addEventListener("click", event => { if (event.target.closest("#cast-fetch button")) entertainmentTarget = "titles"; });
 
   // Standardwerte für Punkt und „Zurücksetzen“
   const defaults = [
@@ -486,7 +511,9 @@ export function openSettingsModal(state, onImported, tools = null) {
     const key = event.target.closest("[data-tool]")?.dataset.tool;
     if (!key) return;
     if (tools?.[key]) {
+      entertainmentTarget = "";
       closeModal();
+      showEntertainmentTab("titles"); // Werkzeuge der Kinothek wirken auf die Titel
       tools[key]();
       return;
     }

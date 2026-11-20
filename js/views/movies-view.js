@@ -25,6 +25,7 @@ import { CONFIG } from "../utils/constants.js";
 import { openImdbImport } from "../ui/imdb-import.js";
 import { openSeenCleanup } from "../ui/seen-cleanup.js";
 import { openOrphanCleanup } from "../ui/orphan-cleanup.js";
+import { openCoverReport } from "../ui/cover-report.js";
 import { renderImportReminder } from "../ui/import-reminder.js";
 import { initCurtain } from "../ui/curtain.js";
 import { initTimeline } from "../ui/timeline.js";
@@ -289,8 +290,10 @@ async function runCoverFetch() {
 
   if (coverFetchRunning) return; // läuft schon - kein zweiter paralleler Durchgang
   const missing = state.movies.filter(movie => movie.imdbId && !movie.cover).length;
+  const showAll = () => { location.href = "movies.html?cover=missing"; };
   if (missing === 0) {
     setStatus("Alle Titel mit IMDb-Verknüpfung haben bereits ein Cover.");
+    openCoverReport(state.movies, { loaded: 0, triedIds: [] }, { onShowAll: showAll }); // Ergebnis als Fenster
     return;
   }
 
@@ -316,7 +319,7 @@ async function runCoverFetch() {
     if (result.failed) parts.push(`${result.failed} fehlgeschlagen`);
     const summary = result.fatal ? `${parts.join(", ")}. Abgebrochen: ${result.fatal}` : `${parts.join(", ")}.`;
     setStatus(summary);
-    showToast(summary, result.fatal ? "error" : result.failed || noPoster ? "warning" : "success");
+    openCoverReport(state.movies, { loaded: result.updated, failedIds: result.failedIds, triedIds: result.triedIds, fatal: result.fatal }, { onShowAll: showAll });
   } catch (error) {
     const message = error.message || "Die Cover konnten nicht geladen werden.";
     setStatus(message);
@@ -790,7 +793,12 @@ async function init() {
   }
   if (!SITE && $("#quiz-panel")) quiz = initQuizPanel($("#quiz-panel"), () => state); // nur Dashboard
   bindEvents();
-  initTabs(tabFromUrl(location.search) || view.tab);
+  // Werkzeuge aus den Einstellungen einer anderen Seite (?tool=…, ?import=1) landen im Reiter
+  // „Titel“ - nicht im zuletzt gemerkten (sonst z. B. Filmjahr nach „Fehlende Cover laden“)
+  const fromTool = !SITE && /[?&](tool|import)=/.test(location.search);
+  initTabs(tabFromUrl(location.search) || (fromTool ? "titles" : view.tab));
+  // Einstellungen zu Entertainment springen zum betroffenen Reiter (js/ui/settings-modal.js)
+  if (!SITE) window.addEventListener("dashboard:entertainment-tab", event => selectTab(event.detail?.tab || "titles"));
   applyLinkFilter();
   renderMovies();
   renderStats(state);

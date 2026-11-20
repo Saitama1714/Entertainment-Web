@@ -38,6 +38,7 @@ function reset() {
   timers = [];
   document.querySelectorAll(".link-zoom, .cover-flight-veil, .cover-flight-card").forEach(element => element.remove());
   document.querySelectorAll(".movie-card-cover").forEach(cover => { cover.style.visibility = ""; });
+  ["detail-cover", "movie-title"].forEach(id => document.getElementById(id)?.style.removeProperty("view-transition-name"));
   delete document.documentElement.dataset.vtPlain;
   busy = false;
 }
@@ -46,51 +47,62 @@ function reset() {
 const HANDOFF_KEY = "cover-flight";
 
 /**
- * Wo das Cover auf der Detailseite stehen wird (Fensterkoordinaten, ganz oben
- * gescrollt): ein unsichtbarer Nachbau aus denselben Klassen wie
- * views/movie.html bzw. titel.html - Kopfleiste, Überschrift (mit dem echten
- * Titel, falls er umbricht) und Cover-Spalte. So stimmt das Ziel bei jeder
- * Fensterbreite, ohne die Detailseite zu kennen.
+ * Die Bühne der Detailseite als Nachbau im Schleier (views/movie.html bzw.
+ * titel.html): Kopf mit dem echten Titel, Cover-Spalte und - wie dort - das
+ * Cover groß und unscharf mit dem Lichtschein in seinen Farben
+ * (.detail-backdrop, css/detail.css). Aus denselben Klassen gebaut, darum
+ * stimmen Ziel und Aussehen bei jeder Fensterbreite und in beiden Designs.
+ * Der Schleier blendet beim Flug ein; was die Detailseite beim ersten
+ * Zeichnen zeigt (js/cover-flight.js), sieht genauso aus.
  */
-function detailCoverRect(title) {
+function buildStage(veil, title, src, amb) {
   const appbar = document.querySelector(".appbar");
-  const mock = document.createElement("div");
-  mock.className = "cover-flight-measure";
-  mock.setAttribute("aria-hidden", "true");
-  mock.innerHTML = `<main class="shell"><div class="page-head"><h1></h1></div>
-    <div class="detail-layout"><div class="detail-cover"><div class="movie-card-cover"></div></div><div class="detail-main"></div></div></main>`;
-  mock.querySelector("h1").textContent = title || "Titel";
-  document.body.append(mock);
-  const frame = mock.querySelector(".movie-card-cover").getBoundingClientRect();
-  const origin = mock.getBoundingClientRect();
-  mock.remove();
-  const top = (appbar?.offsetHeight || 0) + frame.top - origin.top;
-  return frame.width > 0 ? { left: frame.left, top, width: frame.width, height: frame.height } : null;
+  if (amb) {
+    veil.style.setProperty("--amb-1", amb[0]);
+    veil.style.setProperty("--amb-2", amb[1]);
+  }
+  veil.innerHTML = `${src ? `<div class="detail-backdrop is-ready${amb ? " has-ambient" : ""}"><img alt=""><span class="detail-backdrop-glow"></span></div>` : ""}
+    <div class="cover-flight-stage"><main class="shell"><div class="page-head"><h1></h1></div>
+    <div class="detail-layout"><div class="detail-cover"><div class="movie-card-cover"></div></div><div class="detail-main"></div></div></main></div>`;
+  if (src) veil.querySelector(".detail-backdrop img").src = src;
+  const stage = veil.querySelector(".cover-flight-stage");
+  stage.style.top = `${appbar?.offsetHeight || 0}px`;
+  stage.querySelector("h1").textContent = title || "";
+  return stage;
 }
 
 /**
  * Cover-Flug: Das angeklickte Cover löst sich aus dem Raster und fliegt an
- * seinen Platz auf der Detailseite, während die Seite dahinter zum leeren
- * Hintergrund verblasst. Navigiert wird erst danach; der Browser hält das
- * letzte Bild, bis die Detailseite steht - und dort sitzt das Cover genau an
- * derselben Stelle (js/cover-flight.js setzt es vor dem ersten Zeichnen ein).
+ * seinen Platz auf der Detailseite, während die Seite dahinter zu deren Bühne
+ * wird (Lichtschein, Titel). Navigiert wird erst danach. Das Cover trägt
+ * schon im Flug den Rahmen der Detailseite und heißt für den Seitenwechsel
+ * „detail-cover" (css/page-transition.css): Der Browser reicht es an das
+ * Cover der Detailseite weiter, ohne Lücke und ohne Bildwechsel.
  * @returns {Animation[]|null} null, wenn sich das Ziel nicht bestimmen lässt.
  */
 function playCoverFlight(card, duration) {
   const cover = card.querySelector(".movie-card-cover");
+  if (!cover) return null;
   const title = card.querySelector(".movie-card-title")?.textContent || "";
-  const target = cover && detailCoverRect(title);
-  if (!target) return null;
-  const from = cover.getBoundingClientRect();
   const img = cover.querySelector("img.cover-image");
-  const src = img?.complete && img.naturalWidth ? img.currentSrc || img.src : "";
-  try {
-    sessionStorage.setItem(HANDOFF_KEY, JSON.stringify({ id: card.dataset.movieId, src, title, at: Date.now() }));
-  } catch { /* ohne Speicher landet das Cover eben erst mit den Daten */ }
+  const attr = img?.getAttribute("src") || "";
+  // Adresse wie in den Daten (blob:-Ersatz aus dem Cover-Speicher gilt nur auf dieser Seite)
+  const src = img?.complete && img.naturalWidth && !attr.startsWith("blob:") ? attr : "";
+  const cardStyle = getComputedStyle(card);
+  const amb = card.dataset.amb === "1" ? [cardStyle.getPropertyValue("--amb-1").trim(), cardStyle.getPropertyValue("--amb-2").trim()] : null;
 
   const veil = document.createElement("div");
   veil.className = "cover-flight-veil";
   veil.setAttribute("aria-hidden", "true");
+  document.body.append(veil);
+  const stage = buildStage(veil, title, src, amb && amb[0] ? amb : null);
+  const slot = stage.querySelector(".movie-card-cover");
+  const target = slot.getBoundingClientRect();
+  if (!(target.width > 0)) { veil.remove(); return null; }
+  try {
+    sessionStorage.setItem(HANDOFF_KEY, JSON.stringify({ id: card.dataset.movieId, src, title, amb: amb && amb[0] ? amb : null, at: Date.now() }));
+  } catch { /* ohne Speicher landet das Cover eben erst mit den Daten */ }
+
   const flyer = document.createElement("div");
   flyer.className = "cover-flight-card";
   flyer.setAttribute("aria-hidden", "true");
@@ -99,25 +111,35 @@ function playCoverFlight(card, duration) {
     copy.alt = "";
     copy.src = src;
     flyer.append(copy);
+  } else if (img) {
+    flyer.append(img.cloneNode());
   }
+  const frame = getComputedStyle(slot);
   Object.assign(flyer.style, {
     left: `${target.left}px`, top: `${target.top}px`,
     width: `${target.width}px`, height: `${target.height}px`,
+    borderRadius: frame.borderRadius,
   });
-  document.body.append(veil, flyer);
+  document.body.append(flyer);
   cover.style.visibility = "hidden"; // das Original bleibt als Lücke im Raster zurück
+  // Von einer Detailseite aus („Ähnlich …"): deren Cover und Titel geben die Namen ab, sonst gäbe es sie doppelt
+  ["detail-cover", "movie-title"].forEach(id => { const own = document.getElementById(id); if (own) own.style.viewTransitionName = "none"; });
 
+  const from = cover.getBoundingClientRect();
   const dx = from.left - target.left;
   const dy = from.top - target.top;
   const sx = from.width / target.width;
   const sy = from.height / target.height;
   const fly = flyer.animate([
-    { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
-    { transform: "none" },
+    { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, boxShadow: getComputedStyle(cover).boxShadow === "none" ? "0 0 0 0 transparent" : getComputedStyle(cover).boxShadow },
+    { transform: "none", boxShadow: frame.boxShadow },
   ], { duration, easing: FLIGHT_EASING, fill: "forwards" });
   const fade = veil.animate([{ opacity: 0 }, { opacity: 1 }],
     { duration: duration * 0.75, easing: "ease-out", fill: "forwards" });
-  return [fly, fade];
+  // Der Titel kommt in der zweiten Hälfte dazu - auf der Detailseite steht er dann schon
+  const heading = stage.querySelector("h1").animate([{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+    { duration: duration * 0.6, delay: duration * 0.4, easing: "cubic-bezier(.2, .7, .2, 1)", fill: "both" });
+  return [fly, fade, heading];
 }
 
 /** Kachel-Zoom: Overlay startet auf dem Element und öffnet sich auf Vollbild. Liefert die Animationen. */

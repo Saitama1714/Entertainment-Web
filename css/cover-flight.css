@@ -1,11 +1,28 @@
 /* =========================================================================
-   Cover-Flug: auf der Detailseite gelandet (js/cover-flight.js)
-   Cover und Titel stehen schon, der Rest blendet weich ein.
+   Detailseite: Auftritt in einem Zug (2.54)
+   Bis die Daten da sind (js/views/movie-detail.js setzt <html data-detail-ready>),
+   stehen nur Rahmen, Cover und Titel - nach dem Cover-Flug (js/cover-flight.js,
+   <html data-cover-landed>) genau so, wie sie der Flug hinterlassen hat. Dann
+   heben sich Angaben, Knöpfe und „Ähnlich …" gestaffelt herein - einmal; spätere
+   Neuzeichnungen (Bewertung, Import) erscheinen ohne Auftritt (data-detail-settled).
    ========================================================================= */
 
+:root:not([data-detail-ready]) #movie-details,
+:root:not([data-detail-ready]) #detail-cover-actions,
+:root:not([data-detail-ready]) #detail-similar,
+:root:not([data-detail-ready]) #detail-pager { opacity: 0; }
+/* Direkt geöffnet: Platzhalter-Titel („Eintrag") nicht zeigen, der echte kommt mit den Daten */
+:root:not([data-detail-ready]):not([data-cover-landed]) #movie-title { opacity: 0; }
+
 @media (prefers-reduced-motion: no-preference) {
-  :root[data-cover-landed] #movie-details,
-  :root[data-cover-landed] #detail-cover-actions,
-  :root[data-cover-landed] .detail-pager { animation: cover-landed-in .4s ease-out both; }
+  :root[data-detail-ready]:not([data-detail-settled]) :is(.detail-main > *, #detail-cover-actions, #detail-similar, #detail-pager) {
+    animation: detail-rise .55s cubic-bezier(.2, .7, .2, 1) both;
+  }
+  :root[data-detail-ready]:not([data-detail-settled]) .detail-main > :nth-child(2) { animation-delay: 70ms; }
+  :root[data-detail-ready]:not([data-detail-settled]) .detail-main > :nth-child(3) { animation-delay: 140ms; }
+  :root[data-detail-ready]:not([data-detail-settled]) .detail-main > :nth-child(n + 4) { animation-delay: 210ms; }
+  :root[data-detail-ready]:not([data-detail-settled]) #detail-cover-actions { animation-delay: 120ms; }
+  :root[data-detail-ready]:not([data-detail-settled]) :is(#detail-similar, #detail-pager) { animation-delay: 280ms; }
+  :root[data-detail-ready]:not([data-detail-settled]):not([data-cover-landed]) #movie-title { animation: detail-rise .55s cubic-bezier(.2, .7, .2, 1) both; }
 }
-@keyframes cover-landed-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes detail-rise { from { opacity: 0; transform: translateY(10px); } }

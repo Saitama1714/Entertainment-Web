@@ -236,7 +236,11 @@ function renderBackdrop() {
   }
   const img = backdrop.querySelector("img");
   const url = movie.cover || "";
-  if (img.dataset.src === url) return;
+  if (img.dataset.src === url) {
+    // Vom Cover-Flug schon aufgebaut (js/cover-flight.js); Farben ggf. noch nachholen
+    if (url && !backdrop.classList.contains("has-ambient")) ambientFor(url, img, backdrop);
+    return;
+  }
   img.dataset.src = url;
   backdrop.classList.remove("is-ready", "has-ambient");
   applyAmbient(document.documentElement, null);
@@ -245,6 +249,11 @@ function renderBackdrop() {
   img.onerror = () => backdrop.classList.remove("is-ready");
   img.src = url;
   if (img.complete && img.naturalWidth) backdrop.classList.add("is-ready");
+  ambientFor(url, img, backdrop);
+}
+
+/** Lichtschein in den Farben des Covers, sobald sie bekannt sind (js/ui/ambient.js). */
+function ambientFor(url, img, backdrop) {
   coverAmbient(url).then(palette => {
     if (img.dataset.src !== url || !palette) return;
     applyAmbient(document.documentElement, palette);
@@ -400,4 +409,10 @@ async function init() {
   window.addEventListener("dashboard:skin", () => { if (movie) renderSimilar(); }); // Foyer: „Ebenfalls im Programm"
 }
 
-init().finally(markReady); // <html data-ready> für die Browser-Tests
+init().finally(() => {
+  // Auftritt der Angaben (css/cover-flight.css): einmal, danach ohne
+  const root = document.documentElement;
+  root.dataset.detailReady = "";
+  setTimeout(() => { root.dataset.detailSettled = ""; }, 1200);
+  markReady(); // <html data-ready> für die Browser-Tests
+});

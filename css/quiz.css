@@ -91,6 +91,14 @@ html.has-quiz-night { overflow: hidden; }
 .qq-frame { position: relative; width: 100%; aspect-ratio: 2 / 3; border-radius: 3px; overflow: hidden;
   background: #1b1211; box-shadow: 0 0 0 1px rgb(201 164 92 / .55), 0 0 0 5px #1a1210, 0 0 0 6px rgb(201 164 92 / .35), 0 18px 34px rgb(0 0 0 / .6); }
 .qq-cover { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Jede neue Frage: die vier Cover werden nacheinander ausgeteilt statt gleichzeitig aufzuploppen (2.54) */
+@media (prefers-reduced-motion: no-preference) {
+  .qq-frame { animation: qq-deal .45s cubic-bezier(.2, .7, .2, 1) both; }
+  .qq-choice:nth-child(2) .qq-frame { animation-delay: 60ms; }
+  .qq-choice:nth-child(3) .qq-frame { animation-delay: 120ms; }
+  .qq-choice:nth-child(4) .qq-frame { animation-delay: 180ms; }
+}
+@keyframes qq-deal { from { opacity: 0; transform: translateY(10px) scale(.98); } }
 .qq-frame.is-missing { background: linear-gradient(160deg, #2a1c1a, #120c0b); }
 .qq-plate { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 12px; padding: 14px; text-align: center;
   background: radial-gradient(80% 60% at 50% 30%, #3a1412, #140c0b 80%); }

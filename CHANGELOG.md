@@ -1,5 +1,17 @@
 # Änderungen
 
+## 1.27.0 – Laden ohne Springen (Dashboard 2.54.0)
+- **Kinothek:** Die Seite erscheint in einem Zug, sobald sie fertig ist –
+  kein kurz aufblitzender Reiter „Titel“ und kein nachrutschendes Gerüst mehr.
+- **Klick auf ein Cover:** Während das Cover fliegt, wird die Seite dahinter
+  schon zur Bühne der Titelseite (unscharfes Cover, Lichtschein, Titel); das
+  Cover landet ohne leeren Rahmen.
+- **Titelseite:** Titel, Angaben und „Ähnlich …“ erscheinen gemeinsam und
+  leicht gestaffelt statt nacheinander aufzuploppen – auch direkt geöffnet.
+- Nur im Dashboard bleiben: der nahtlose Seitenwechsel des Covers (Chromes
+  Übergänge zwischen Seiten), weich einblendende Favicons, die ausgeteilten
+  Cover im Quizabend und der Auftritt von Übersicht und Lesezeichen.
+
 ## 1.26.1 – Gleichstand mit Dashboard 2.53.0
 - Gebaut aus Dashboard 2.53.0. Keine sichtbaren Änderungen: Der Bericht nach
   „Fehlende Cover laden“ und die Sprünge zum passenden Reiter nach

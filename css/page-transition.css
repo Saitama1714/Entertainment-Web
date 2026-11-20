@@ -21,6 +21,20 @@
   :root[data-vt-plain]::view-transition-new(root) { animation: vt-fade-in .32s ease both; }
 }
 
+/* Cover-Flug (2.54): Das fliegende Cover (.cover-flight-card, css/link-transition.css)
+   und das Cover der Detailseite heißen gleich. Der Browser zeigt bis zum Ende
+   des Wechsels das Bild aus dem Flug, danach steht das echte an derselben
+   Stelle - kein leerer Rahmen, kein Bildwechsel (js/cover-flight.js hält den
+   Wechsel an, bis das Bild entschlüsselt ist). */
+:root[data-cover-landed] #detail-cover { view-transition-name: detail-cover; }
+:root[data-cover-landed] #movie-title { view-transition-name: detail-title; }
+.cover-flight-stage h1 { view-transition-name: detail-title; }
+/* Weicht das Ziel um ein paar Pixel ab (z. B. andere Kopfleiste), gleiten Cover und Titel hinüber statt zu springen */
+::view-transition-group(detail-cover),
+::view-transition-group(detail-title) { animation-duration: .32s; animation-timing-function: cubic-bezier(.2, .7, .2, 1); }
+::view-transition-old(detail-cover) { animation: none; opacity: 1; }
+::view-transition-new(detail-cover) { animation: none; opacity: 0; }
+
 @keyframes vt-page-out { to { opacity: 0; transform: translateY(-6px); } }
 @keyframes vt-page-in { from { opacity: 0; transform: translateY(12px); } }
 @keyframes vt-fade-out { to { opacity: 0; } }

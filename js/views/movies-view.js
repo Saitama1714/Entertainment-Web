@@ -434,7 +434,12 @@ function initTabs(initial) {
   });
   const start = tabs.find(tab => tab.id === `tab-${initial}`);
   if (start && start !== tabs[0]) select(start);
-  else window.dispatchEvent(new CustomEvent("dashboard:tab", { detail: { tab: "titles" } }));
+  else {
+    // „Titel" aus einem Link (?view=titles, Werkzeug): auch merken - sonst führte
+    // „Zurück" von der Detailseite zum zuvor gemerkten Reiter (2.54)
+    if (view.tab && view.tab !== "titles") rememberView({ tab: "titles" });
+    window.dispatchEvent(new CustomEvent("dashboard:tab", { detail: { tab: "titles" } }));
+  }
   placePill(current(), true);
   selectTab = name => { const tab = $(`#tab-${name}`); if (tab) select(tab); };
   initTabSwipe(tabs, select);

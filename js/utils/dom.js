@@ -59,4 +59,9 @@ export const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: r
  * Seite fertig aufgebaut (Daten geladen, erstes Zeichnen erledigt):
  * <html data-ready>. Hilft den Browser-Tests, gezielt zu warten statt nach Uhr.
  */
-export const markReady = () => { document.documentElement.dataset.ready = ""; };
+export const markReady = () => {
+  const root = document.documentElement;
+  root.dataset.ready = "";
+  // Auftritt der Seite (css/page-enter.css) ist danach vorbei - spätere Neuzeichnungen ohne
+  setTimeout(() => { root.dataset.entered = ""; }, 900);
+};

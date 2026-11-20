@@ -6,6 +6,7 @@ import { initBrandMedallion } from "./brand-medallion.js";
 import { initAutoBackup } from "./auto-backup.js";
 import { normalizeMovies } from "../collection.js";
 import { initFoyer } from "./foyer.js";
+import { initImageFade } from "./image-fade.js";
 import { foyerActive, FOYER_MIN_WIDTH } from "../logic/foyer-logic.js";
 
 /*
@@ -68,6 +69,7 @@ wideQuery.addEventListener("change", () => {
  *   rendern kann; tools sind die Werkzeuge der Kinothek (nur Entertainment).
  */
 export function initAppShell(state, hooks = {}) {
+  initImageFade(); // Favicons weich statt hart (2.54)
   initFoyer(state, { onSettings: () => openSettingsModal(state, hooks.onImported, hooks.tools) });
   applyTheme(state);
   followOtherTabs(state, hooks);

@@ -1,0 +1,205 @@
+/* =========================================================================
+   Quizabend (Filmquiz, js/ui/quiz.js) - eigenes Spiel im Kino-Noir-
+   Stil, immer dunkel (wie „Das Duell"): Samtvorhang an den Seiten, Zitat als
+   Leuchtschrift mit Messing-Linien, vier Cover in Messingrahmen, unten die
+   Leiste mit Tipp und Trefferquote. Auflösung mit Scheinwerfern von unten
+   links und unten rechts; bei falscher Antwort werden sie rot.
+   ========================================================================= */
+
+/* Eingang: das Zitat des Tages ist anklickbar */
+.quote-of-day.is-quiz-door { cursor: pointer; position: relative; }
+.quote-of-day.is-quiz-door:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+.quiz-night-cue {
+  position: absolute; right: 14px; bottom: 10px; font: 700 .62rem/1 var(--font-text); letter-spacing: .22em; text-transform: uppercase;
+  color: var(--brass); opacity: 0; transform: translateY(4px); transition: opacity .2s, transform .2s; pointer-events: none;
+}
+.quote-of-day.is-quiz-door:hover .quiz-night-cue, .quote-of-day.is-quiz-door:focus-visible .quiz-night-cue { opacity: 1; transform: none; }
+html.has-quiz-night { overflow: hidden; }
+
+.quiz-night {
+  --qq-gold: #e3c27a; --qq-brass: #c9a45c; --qq-ink: #f2e8d8; --qq-muted: #b3a596; --qq-red: #9c0205;
+  --beam: 255 240 205; --beam-strength: 1;
+  position: relative; display: grid; color: var(--qq-ink); overflow: hidden;
+  background:
+    radial-gradient(70% 55% at 50% 0%, rgb(156 2 5 / .28), transparent 70%),
+    radial-gradient(90% 60% at 50% 100%, rgb(201 164 92 / .07), transparent 70%),
+    #0c0807;
+}
+/* Als Ebene über der Übersicht (Klick aufs Zitat) */
+.quiz-night.is-overlay { position: fixed; inset: 0; z-index: 80; opacity: 0; transition: opacity .3s ease; }
+.quiz-night.is-overlay.is-open { opacity: 1; }
+/* Im Reiter „Quizabend" unter Entertainment */
+/* Höhe = sichtbarer Rest des Fensters (js/ui/quiz.js setzt --quiz-h): nichts zu scrollen, Tipps unten am Rand */
+.quiz-night.is-inline { height: var(--quiz-h, calc(100vh - 210px)); min-height: 480px; border-radius: var(--r-panel); box-shadow: 0 0 0 1px rgb(201 164 92 / .25), var(--shadow-pop); }
+.quiz-night.is-inline[hidden] { display: none; }
+
+/* Kategorien als Checkboxen */
+.qq-cats { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.qq-cat { position: relative; cursor: pointer; }
+.qq-cat input { position: absolute; opacity: 0; pointer-events: none; }
+.qq-cat span { display: inline-flex; align-items: center; gap: 7px; padding: 6px 13px; border-radius: 999px; border: 1px solid rgb(201 164 92 / .3);
+  font: 600 .76rem/1 var(--font-text); letter-spacing: .04em; color: var(--qq-muted); transition: background .2s, color .2s, border-color .2s; }
+.qq-cat span::before { content: ""; width: 9px; height: 9px; border-radius: 2px; border: 1px solid currentColor; transition: background .2s; }
+.qq-cat input:checked + span { color: var(--qq-gold); border-color: var(--qq-brass); background: rgb(201 164 92 / .1); }
+.qq-cat input:checked + span::before { background: var(--qq-gold); border-color: var(--qq-gold); box-shadow: 0 0 6px rgb(227 194 122 / .6); }
+.qq-cat input:focus-visible + span { outline: 2px solid var(--qq-gold); outline-offset: 2px; }
+.qq-cat:hover span { color: var(--qq-ink); }
+.quiz-night.is-red { --beam: 212 88 80; } /* gedämpftes Rot, nicht zu tief */
+
+/* Samtvorhang links und rechts */
+.qq-curtain { position: absolute; top: 0; bottom: 0; width: clamp(24px, 6vw, 110px); pointer-events: none;
+  background: repeating-linear-gradient(90deg, #4a0305 0 9px, #7d0508 18px, #5a0406 27px), #5a0406;
+  box-shadow: inset 0 0 40px rgb(0 0 0 / .65); }
+.qq-curtain::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(0 0 0 / .35), transparent 30%, transparent 70%, rgb(0 0 0 / .6)); }
+.qq-curtain-l { left: 0; } .qq-curtain-r { right: 0; transform: scaleX(-1); }
+
+.qq-stage {
+  position: relative; z-index: 2; display: grid; grid-template-rows: auto auto auto minmax(0, 1fr) auto auto; height: 100%; box-sizing: border-box; gap: clamp(8px, 1.3vh, 18px);
+  width: min(1500px, 100% - 2 * clamp(36px, 8vw, 140px)); margin: 0 auto; padding: clamp(12px, 2vh, 26px) 0 clamp(10px, 1.6vh, 20px); min-height: 0;
+}
+.qq-head { display: flex; align-items: center; justify-content: center; position: relative; }
+.qq-eyebrow { margin: 0; font: 700 .72rem/1 var(--font-text); letter-spacing: .34em; text-transform: uppercase; color: var(--qq-gold); display: flex; align-items: center; gap: 14px; }
+.qq-eyebrow::before, .qq-eyebrow::after { content: ""; width: 46px; height: 1px; background: linear-gradient(90deg, transparent, var(--qq-brass)); }
+.qq-eyebrow::after { transform: scaleX(-1); }
+.qq-close { all: unset; position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%;
+  font-size: 1.5rem; color: var(--qq-muted); cursor: pointer; border: 1px solid rgb(201 164 92 / .3); }
+.qq-close:hover { color: var(--qq-ink); border-color: var(--qq-brass); }
+.qq-close:focus-visible, .quiz-night button:focus-visible { outline: 2px solid var(--qq-gold); outline-offset: 3px; }
+
+/* Zitat als Leuchtschrift */
+.qq-marquee { margin: 0; text-align: center; padding: clamp(8px, 1.4vh, 18px) clamp(10px, 3vw, 40px);
+  border-block: 1px solid rgb(201 164 92 / .35); position: relative; }
+.qq-marquee::before, .qq-marquee::after { content: ""; position: absolute; left: 50%; width: 9px; height: 9px; background: var(--qq-brass); transform: translate(-50%, -50%) rotate(45deg); }
+.qq-marquee::before { top: 0; } .qq-marquee::after { top: 100%; }
+.qq-quote { margin: 0; font: italic 400 clamp(1.4rem, 2.6vw, 2.5rem)/1.22 var(--font-display); text-wrap: balance;
+  color: #fff6e4; text-shadow: 0 0 18px rgb(255 214 140 / .35), 0 0 2px rgb(255 240 210 / .6); }
+.qq-quote.is-quote::before { content: "\201E"; color: var(--qq-gold); } .qq-quote.is-quote::after { content: "\201C"; color: var(--qq-gold); }
+.qq-quote:not(.is-quote) { font-style: normal; font-size: clamp(1.25rem, 2.2vw, 2.1rem); }
+.qq-kicker { margin: 0 0 10px; font: 700 .68rem/1 var(--font-text); letter-spacing: .26em; text-transform: uppercase; color: var(--qq-gold); }
+.quiz-night[data-category="quotes"] .qq-kicker { order: 2; margin: 10px 0 0; color: var(--qq-muted); }
+.qq-marquee { display: flex; flex-direction: column; align-items: center; }
+.qq-quote { order: 1; } .qq-note { order: 3; }
+/* Nach der Auflösung: die Angabe zu jedem Cover (Jahr, Laufzeit, Note …) */
+.qq-fact { font: 600 .78rem/1.2 var(--font-text); color: var(--qq-gold); opacity: 0; transform: translateY(-4px); transition: opacity .4s .5s, transform .4s .5s; text-align: center; }
+.is-reveal .qq-fact { opacity: 1; transform: none; }
+.qq-note { margin: 8px 0 0; font: italic 400 .85rem/1.3 var(--font-text); color: var(--qq-muted); }
+
+/* Vier Cover */
+.qq-choices { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(12px, 2.4vw, 34px); align-items: stretch; min-height: 0; justify-self: center; width: 100%; }
+.qq-choice { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 10px; justify-items: center; min-width: 0; position: relative; z-index: 1;
+  transition: transform .25s cubic-bezier(.2, .8, .3, 1.2), opacity .3s, filter .4s; }
+.qq-frame { position: relative; width: 100%; aspect-ratio: 2 / 3; border-radius: 3px; overflow: hidden;
+  background: #1b1211; box-shadow: 0 0 0 1px rgb(201 164 92 / .55), 0 0 0 5px #1a1210, 0 0 0 6px rgb(201 164 92 / .35), 0 18px 34px rgb(0 0 0 / .6); }
+.qq-cover { width: 100%; height: 100%; object-fit: cover; display: block; }
+.qq-frame.is-missing { background: linear-gradient(160deg, #2a1c1a, #120c0b); }
+.qq-plate { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 12px; padding: 14px; text-align: center;
+  background: radial-gradient(80% 60% at 50% 30%, #3a1412, #140c0b 80%); }
+.qq-plate-title { font: 400 clamp(.95rem, 1.4vw, 1.3rem)/1.2 var(--font-display); color: var(--qq-ink); text-wrap: balance; }
+.qq-plate-rule { width: 40%; height: 1px; background: linear-gradient(90deg, transparent, var(--qq-brass), transparent); }
+.qq-caption { font: 400 .9rem/1.25 var(--font-text); color: var(--qq-muted); text-align: center; text-wrap: balance; max-width: 100%;
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.qq-frame:has(.qq-plate) ~ .qq-caption { display: none; }
+.qq-choice:not(:disabled):hover { transform: translateY(-6px); }
+.qq-choice:not(:disabled):hover .qq-caption { color: var(--qq-ink); }
+.qq-choice.is-out { opacity: .18; filter: grayscale(1); cursor: default; }
+
+/* Ergebnis und Weiter */
+.qq-result { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 20px; min-height: 40px; position: relative; z-index: 3; }
+.qq-verdict { margin: 0; font: 400 1.15rem/1.3 var(--font-display); text-align: center; }
+.qq-verdict b { font-weight: 700; color: var(--qq-gold); margin-right: 6px; }
+.is-wrong .qq-verdict b { color: #ef7a72; }
+.qq-verdict span { color: var(--qq-muted); }
+.qq-detail { margin-left: 10px; font: 600 .82rem var(--font-text); color: var(--qq-gold); }
+.qq-next { all: unset; cursor: pointer; padding: 10px 22px; border-radius: 999px; font: 700 .78rem/1 var(--font-text); letter-spacing: .14em; text-transform: uppercase;
+  color: #1a0f0d; background: linear-gradient(180deg, #f1d595, #c9a45c); box-shadow: 0 6px 18px rgb(201 164 92 / .25); }
+.qq-next:hover { filter: brightness(1.08); }
+.qq-next[hidden] { display: none; }
+
+/* Leiste: Tipp, Tipps, Trefferquote */
+.qq-rail { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; padding-top: 14px; border-top: 1px solid rgb(201 164 92 / .22); position: relative; z-index: 3; }
+.qq-tip { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px;
+  border: 1px solid var(--qq-brass); color: var(--qq-gold); font: 700 .74rem/1 var(--font-text); letter-spacing: .14em; text-transform: uppercase; }
+.qq-tip svg { width: 18px; height: 18px; }
+.qq-tip:hover:not(:disabled) { background: rgb(201 164 92 / .12); }
+.qq-tip:disabled { opacity: .4; cursor: default; }
+.qq-hints { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; flex: 1 1 auto; min-width: 0; }
+.qq-hints li { padding: 6px 12px; border-radius: 3px; background: #f2e6d0; color: #2a1b12; font: 600 .82rem/1.2 var(--font-text); box-shadow: 0 4px 10px rgb(0 0 0 / .4); animation: qq-hint .35s cubic-bezier(.2, .8, .3, 1.3) both; }
+@keyframes qq-hint { from { opacity: 0; transform: translateY(6px) rotate(-2deg); } to { opacity: 1; transform: none; } }
+.qq-score { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 18px; margin-left: auto; }
+.qq-stats { display: flex; flex-wrap: wrap; gap: 6px 16px; font: 400 .85rem/1.2 var(--font-text); color: var(--qq-muted); }
+.qq-stat b { color: var(--qq-ink); font-weight: 600; }
+.qq-reset { display: inline-flex; align-items: center; gap: 8px; }
+.qq-reset button { all: unset; cursor: pointer; font: 600 .78rem/1 var(--font-text); color: var(--qq-muted); padding: 6px 10px; border-radius: 999px; border: 1px solid rgb(201 164 92 / .25); }
+.qq-reset button:hover { color: var(--qq-ink); border-color: var(--qq-brass); }
+.qq-reset .qq-reset-yes { color: #f0b3a9; border-color: rgb(236 132 118 / .5); }
+.qq-reset-ask { font: italic 400 .82rem var(--font-text); color: var(--qq-ink); }
+
+/* Auflösung: Saal dunkler, Scheinwerfer, Konfetti */
+.quiz-night::after { content: ""; position: absolute; inset: 0; background: rgb(0 0 0 / .42); opacity: 0; transition: opacity .45s ease; pointer-events: none; z-index: 1; }
+.quiz-night.is-reveal::after { opacity: 1; }
+.is-reveal .qq-choice:not(.is-answer) { filter: brightness(.55); }
+.is-reveal .qq-choice.is-answer { z-index: 4; transform: translateY(-8px) scale(1.04); }
+.is-reveal .qq-choice.is-answer .qq-frame { box-shadow: 0 0 0 2px var(--qq-gold), 0 0 0 6px #1a1210, 0 0 0 7px var(--qq-gold), 0 0 32px rgb(var(--beam) / .3), 0 22px 40px rgb(0 0 0 / .7); transition: box-shadow .55s ease-in-out; }
+.is-reveal .qq-choice.is-answer .qq-caption { color: #fff; }
+.is-wrong .qq-choice.is-chosen { filter: none; }
+.is-wrong .qq-choice.is-chosen .qq-frame { box-shadow: 0 0 0 2px #c62a32, 0 0 0 6px #1a1210, 0 18px 34px rgb(0 0 0 / .6); animation: qq-shake .4s; }
+@keyframes qq-shake { 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-3px); } }
+.qq-fx { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.qq-fx canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* Zwei kleine Scheinwerfer unter jedem Cover: abgesenkt, bis sie gebraucht werden */
+.qq-lamps { display: flex; justify-content: space-between; width: 78%; height: 26px; margin-top: 4px; position: relative; }
+.qq-lamp { position: relative; width: 26px; height: 26px; display: grid; justify-items: center; }
+.qq-lamp-head { position: absolute; left: 3px; top: -4px; width: 20px; height: 26px; transform-origin: 50% 62%;
+  transform: rotate(var(--qq-rest)); transition: transform .9s cubic-bezier(.3, 1.4, .4, 1); }
+.qq-lamp-l { --qq-rest: -112deg; } .qq-lamp-r { --qq-rest: 112deg; }
+.qq-lamp-head svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.qq-lamp-body { fill: #2b211d; stroke: var(--qq-brass); stroke-width: 1; }
+.qq-lamp-lens { fill: #4a3a2c; stroke: var(--qq-brass); stroke-width: .8; transition: fill .4s; }
+.qq-lamp-yoke { position: absolute; left: 0; bottom: -4px; width: 26px; height: 14px; }
+.qq-lamp-yoke path { stroke: var(--qq-brass); stroke-width: 1.6; }
+.qq-lamp-yoke rect { fill: #2b211d; stroke: var(--qq-brass); stroke-width: .8; }
+.qq-beam { position: absolute; left: 50%; bottom: calc(100% - 4px); width: var(--qq-beam-w, 160px); height: var(--qq-beam-len, 300px);
+  transform: translateX(-50%); clip-path: polygon(46% 100%, 54% 100%, 100% 0, 0 0); pointer-events: none;
+  mix-blend-mode: screen; opacity: 0; transition: opacity .45s; }
+/* Rot nicht schlagartig: ein zweiter, roter Kegel blendet über den warmen */
+.qq-beam::before, .qq-beam::after { content: ""; position: absolute; inset: 0; transition: opacity .55s ease-in-out; }
+.qq-beam::before { background: linear-gradient(to top, rgb(255 240 205 / .42), rgb(255 240 205 / .12) 60%, rgb(255 240 205 / 0)); }
+.qq-beam::after { opacity: 0; background: linear-gradient(to top, rgb(212 88 80 / .4), rgb(212 88 80 / .12) 60%, rgb(212 88 80 / 0)); }
+.quiz-night.is-red .qq-beam::before { opacity: 0; }
+.quiz-night.is-red .qq-beam::after { opacity: 1; }
+.qq-choice.is-lit .qq-lamp-head { transform: rotate(var(--qq-tilt, 0deg)); }
+.qq-choice.is-lit .qq-beam { opacity: 1; transition-delay: .65s; }
+.qq-choice.is-lit .qq-lamp-lens { fill: rgb(var(--beam)); filter: drop-shadow(0 0 3px rgb(var(--beam) / .7)); transition: fill .55s ease-in-out .65s, filter .55s ease-in-out; }
+.quiz-night.is-red .qq-choice.is-lit .qq-lamp-lens { transition-delay: 0s; }
+.qq-choice.is-lit .qq-frame { box-shadow: 0 0 0 2px var(--qq-gold), 0 0 0 6px #1a1210, 0 0 0 7px var(--qq-gold), 0 0 32px rgb(var(--beam) / .3), 0 22px 40px rgb(0 0 0 / .7); transition: box-shadow .55s ease-in-out; }
+.qq-choice .qq-frame { z-index: 0; }
+.qq-streamers { position: absolute; inset: 0 0 auto; height: 160px; animation: qq-drop .9s cubic-bezier(.2, .8, .3, 1.1) both; }
+.qq-streamers svg { width: 100%; height: 160px; display: block; }
+@keyframes qq-drop { from { transform: translateY(-170px); } to { transform: none; } }
+.is-loading .qq-choices { opacity: .4; }
+
+/* Breite Fenster: Cover wachsen mit der freien Höhe, aber nie darüber hinaus
+   (Platz für Scheinwerfer, Titel und Angabe darunter bleibt reserviert) */
+@media (min-width: 761px) {
+  /* Kopf und Kategorien in einer Zeile: mehr Höhe für die Cover */
+  .qq-stage { grid-template-areas: "head" "q" "choices" "result" "rail"; grid-template-rows: auto auto minmax(0, 1fr) auto auto; }
+  .qq-head { grid-area: head; justify-content: flex-start; }
+  .qq-cats { grid-area: head; justify-self: center; z-index: 1; }
+  .qq-marquee { grid-area: q; } .qq-choices { grid-area: choices; } .qq-result { grid-area: result; } .qq-rail { grid-area: rail; }
+  .qq-choice { container-type: size; align-content: end; grid-template-rows: auto auto auto auto; }
+  .qq-frame { width: min(100cqw, calc((100cqh - 96px) * 2 / 3)); }
+  .qq-lamps { width: calc(min(100cqw, calc((100cqh - 96px) * 2 / 3)) * .78); }
+}
+@media (max-width: 760px) {
+  .qq-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(100%, 420px); padding: 8px; box-sizing: border-box; }
+  .qq-frame { max-height: 26vh; }
+  .qq-stage { grid-template-rows: auto auto auto auto auto; overflow-y: auto; }
+  .qq-score { margin-left: 0; justify-content: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .quiz-night, .qq-choice, .qq-lamp-head, .qq-beam, .qq-streamers, .qq-hints li, .is-chosen .qq-frame { transition: none; animation: none; }
+}
+
+/* Reiter „Quizabend": unten kein großer Seitenrand, damit die Leiste mit den Tipps am Fensterrand sitzt */
+.shell:has(> #quiz-panel:not([hidden])) { padding-bottom: 12px; }

@@ -32,6 +32,7 @@ import { initUniverse } from "../ui/universe.js";
 import { initFilmYear } from "../ui/film-year.js";
 import { initDuel } from "../ui/duel.js";
 import { initUpgrade } from "../ui/upgrade.js";
+import { initQuizPanel } from "../ui/quiz.js";
 import { runCastFetch, readCastFetch, enableCastFetch, castFetchActive } from "../cast-fetch.js";
 import { readCastData, castStatus, creditsOf, personKey } from "../logic/cast-logic.js";
 import { readEntertainmentView, tabFromUrl, swipeStep, SWIPE_TABS } from "../logic/view-logic.js";
@@ -90,6 +91,7 @@ const syncUniverse = (query, filtered) => universe?.update({ all: state.movies, 
 // Filmjahr und Upgrade: immer die ganze Kinothek (ohne Suche und Filter)
 let filmYear = null;
 let upgrade = null;
+let quiz = null;
 const syncFilmYear = () => { filmYear?.update(state.movies, state.castData); upgrade?.update(state.movies); };
 
 // Du gegen IMDb: dieselbe gesuchte und gefilterte Liste wie das Raster
@@ -398,7 +400,7 @@ function initTabs(initial) {
     const bar = target.parentElement;
     if (bar.scrollWidth > bar.clientWidth) bar.scrollLeft = Math.max(0, target.offsetLeft - (bar.clientWidth - target.offsetWidth) / 2);
     const controls = $("#entertainment-controls");
-    controls.hidden = tabName === "stats" || tabName === "year" || tabName === "upgrade";
+    controls.hidden = tabName === "stats" || tabName === "year" || tabName === "upgrade" || tabName === "quiz";
     controls.dataset.view = tabName;
     if (tabName === "timeline") {
       if (timelineStale) { timeline.update(timelineList); timelineStale = false; }
@@ -408,6 +410,7 @@ function initTabs(initial) {
     if (tabName === "year") filmYear.show();
     if (tabName === "duel") duel.show();
     if (tabName === "upgrade") upgrade?.show();
+    if (tabName === "quiz") quiz?.show();
     rememberView({ tab: tabName });
     window.dispatchEvent(new CustomEvent("dashboard:tab", { detail: { tab: tabName } })); // Foyer: Saalschild (js/ui/foyer.js)
   };
@@ -785,6 +788,7 @@ async function init() {
     });
     upgrade.update(state.movies);
   }
+  if (!SITE && $("#quiz-panel")) quiz = initQuizPanel($("#quiz-panel"), () => state); // nur Dashboard
   bindEvents();
   initTabs(tabFromUrl(location.search) || view.tab);
   applyLinkFilter();

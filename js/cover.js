@@ -155,3 +155,31 @@ export async function fetchMissingCovers(movies, apiKey, onProgress) {
 
   return { movies: [...byId.values()], updated, failed, fatal };
 }
+
+/**
+ * Plakat zu Titel und Jahr (Quizabend, für Filme außerhalb der Kinothek).
+ * `final` sagt, ob die Antwort endgültig ist (gefunden oder OMDb kennt den
+ * Film nicht) - bei Tageslimit, ungültigem Schlüssel oder ohne Netz nicht,
+ * dann wird später erneut gefragt.
+ * @param {string} title - Originaltitel.
+ * @param {number} year
+ * @param {string} apiKey
+ * @returns {Promise<{ url: string, final: boolean }>}
+ */
+export async function fetchPosterByTitle(title, year, apiKey) {
+  if (!title || !apiKey) return { url: "", final: false };
+  const url = new URL(OMDB_BASE);
+  url.searchParams.set("t", title);
+  if (year) url.searchParams.set("y", String(year));
+  url.searchParams.set("type", "movie");
+  url.searchParams.set("apikey", apiKey);
+  try {
+    const response = await fetch(url.toString());
+    if (!response.ok) return { url: "", final: false };
+    const data = await response.json();
+    if (data.Response === "False") return { url: "", final: /not found/i.test(data.Error || "") };
+    return { url: cleanField(data.Poster), final: true };
+  } catch {
+    return { url: "", final: false };
+  }
+}

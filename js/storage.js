@@ -19,6 +19,9 @@ const DEFAULTS = {
   pinnedBookmarkIds: [],         // IDs der angehefteten Chrome-Lesezeichen (Reihenfolge = Anzeige)
   movies: [],                    // Einträge unter Entertainment (Aufbau: collection.js/newMovie)
   omdbApiKey: "",
+  quizStats: null,               // Quizabend: {played, correct, streak, best} (js/logic/quiz-logic.js)
+  quizCategories: null,          // … gewählte Kategorien (null = alle): quotes | trivia | people | facts | mine
+  quizPosters: {},               // … Plakate für Filme außerhalb der Kinothek: {"v3|Titel (Jahr)": {u: url | "", t: Zeitpunkt}}
   introMode: "hourly",           // Kinovorhang: "always" | "hourly" | "every2h" | "daily" | "off"
   clickEffect: "zoom",           // Klick-Animation für Links: "zoom" | "off"
   clickDuration: 450,            // Dauer der Klick-Animation in ms: 250 | 450 | 800

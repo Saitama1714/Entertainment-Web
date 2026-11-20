@@ -1,5 +1,18 @@
 # Änderungen
 
+## 1.26.0 – Mehr Filmzitate (Dashboard 2.52.0)
+- **Filmzitat:** 387 statt 120 Zitate im Wechsel. Filme, deren Originaltitel
+  weder deutsch noch englisch ist, stehen jetzt mit Originaltitel da (z. B.
+  „Sen to Chihiro no kamikakushi“, „Il buono, il brutto, il cattivo“).
+- Nur im Dashboard bleibt der neue Quizabend (Filmquiz mit Zitaten, Trivia
+  und Fragen zur Kinothek); sein Code kommt über die gemeinsamen Dateien mit,
+  wird auf der Website aber nicht angezeigt.
+
+## 1.25.0 – Gleichstand mit Dashboard 2.51.0
+- Gebaut aus Dashboard 2.51.0. Keine sichtbaren Änderungen: „In der Sammlung
+  seit“, die Anlässe im Foyer und die größeren Schaukästen gibt es nur im
+  Dashboard.
+
 ## 1.24.0 – Filter „Bereiche“ (Dashboard 2.49.1)
 - **Filter „Bereiche“:** Neuer Knopf in der Filterleiste mit Reglern mit
   zwei Griffen für Jahr, IMDb-Bewertung, Laufzeit sowie – wenn

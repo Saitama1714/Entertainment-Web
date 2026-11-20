@@ -13,7 +13,7 @@
 import { emptyFilters } from "./movies-logic.js";
 import { readRanges } from "./range-filter-logic.js";
 
-export const VIEW_TABS = ["titles", "timeline", "universe", "stats", "year", "duel", "upgrade"];
+export const VIEW_TABS = ["titles", "timeline", "universe", "stats", "year", "duel", "quiz", "upgrade"];
 /** Früher eigene Registerkarten, heute im Filmuniversum (2.38). */
 const MERGED_TABS = { constellation: "universe", cast: "universe" };
 const TIMELINE = ["release", "rated"];

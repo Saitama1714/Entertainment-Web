@@ -17,3 +17,4 @@
 @import url("foyer.css");   /* Design „Foyer" (nur unter data-skin="foyer") */
 @import url("page-build.css");   /* Aufbau der Übersicht beim Öffnen */
 @import url("occasions.css");   /* Anlässe im Foyer (Advent … Geburtstage) */
+@import url("quiz.css");   /* Quizabend (Filmquiz) */

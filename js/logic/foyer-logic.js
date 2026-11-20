@@ -31,6 +31,7 @@ export const SAAL_ROOMS = [
   { tab: "stats", name: "Heute", line: "Was passt heute? Eingrenzen und einen ziehen" },
   { tab: "year", name: "Filmjahr", line: "Dein Jahr in Filmen, Akt für Akt" },
   { tab: "duel", name: "Du gegen IMDb", line: "Das Duell – deine Wertung gegen die der Welt" },
+  { tab: "quiz", name: "Quizabend", line: "Filmquiz – Zitate, Trivia und deine Kinothek, geantwortet wird mit Covern" },
   { tab: "upgrade", name: "Upgrade", line: "Das Kopierwerk – was den Sprung auf 4K verdient" },
 ];
 
